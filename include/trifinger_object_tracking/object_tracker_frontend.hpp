@@ -11,44 +11,31 @@
 
 namespace trifinger_object_tracking
 {
+//! @brief Frontend to access the object tracker data.
 class ObjectTrackerFrontend
 {
 public:
-    typedef time_series::Index TimeIndex;
-
     ObjectTrackerFrontend(ObjectTrackerData::Ptr data) : data_(data)
     {
     }
 
-    ObjectPose get_pose(const TimeIndex t) const
-    {
-        return (*data_->poses)[t];
-    }
+    //! @brief Get the object pose at time index t.
+    ObjectPose get_pose(const time_series::Index t) const;
 
-    ObjectPose get_current_pose() const
-    {
-        return data_->poses->newest_element();
-    }
+    //! @brief Get the latest object pose.
+    ObjectPose get_current_pose() const;
 
-    TimeIndex get_current_timeindex() const
-    {
-        return data_->poses->newest_timeindex();
-    }
+    //! @brief Get the index of the current time step.
+    time_series::Index get_current_timeindex() const;
 
-    TimeIndex get_oldest_timeindex() const
-    {
-        return data_->poses->oldest_timeindex();
-    }
+    //! @brief
+    time_series::Index get_oldest_timeindex() const;
 
-    void wait_until_timeindex(const TimeIndex t) const
-    {
-        data_->poses->timestamp_ms(t);
-    }
+    //! @brief Wait until time index t is reached.
+    void wait_until_timeindex(const time_series::Index t) const;
 
-    bool has_observations() const
-    {
-        return !data_->poses->is_empty();
-    }
+    //! @brief Returns true if there are observations in the time series.
+    bool has_observations() const;
 
 private:
     ObjectTrackerData::Ptr data_;

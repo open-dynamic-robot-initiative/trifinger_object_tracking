@@ -34,6 +34,7 @@ add_library(simulation_object_tracker
     src/object_tracker_data.cpp
     src/base_object_tracker_backend.cpp
     src/simulation_object_tracker_backend.cpp
+    src/object_tracker_frontend.cpp
 )
 target_link_libraries(simulation_object_tracker ${catkin_LIBRARIES})
 

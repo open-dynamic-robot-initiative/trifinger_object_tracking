@@ -6,7 +6,6 @@
 
 #include <fstream>
 
-#include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
 #include <cereal/types/vector.hpp>
 
@@ -26,12 +25,6 @@ void BaseObjectTrackerBackend::stop()
     }
 }
 
-/**
- * @brief Store the content of the time series buffer to a file.
- *
- * @param filename  Path to the file.  If it already exists, it will be
- *                  overwritten.
- */
 void BaseObjectTrackerBackend::store_buffered_data(
     const std::string &filename) const
 {

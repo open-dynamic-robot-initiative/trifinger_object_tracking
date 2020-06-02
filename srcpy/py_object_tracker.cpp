@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Python bindings for the object tracker interface.
+ * @copyright 2020, Max Planck Gesellschaft.  All rights reserved.
+ */
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
 #include <pybind11/eigen.h>
@@ -22,22 +27,20 @@ PYBIND11_MODULE(py_object_tracker, m)
         .def("__str__", &ObjectPose::to_string);
 
     pybind11::class_<ObjectTrackerData, ObjectTrackerData::Ptr>(
-        m, "ObjectTrackerData")
+        m, "Data")
         .def(pybind11::init<std::string, bool, size_t>(),
              "shared_memory_id_prefix"_a,
              "is_master"_a,
              "history_size"_a = 1000);
 
     pybind11::class_<SimulationObjectTrackerBackend>(
-        m, "SimulationObjectTrackerBackend")
-        .def(pybind11::init<ObjectTrackerData::Ptr, pybind11::object>(),
-             "data"_a,
-             "object"_a)
+        m, "SimulationBackend")
+        .def(pybind11::init<ObjectTrackerData::Ptr, pybind11::object>())
         .def("stop", &SimulationObjectTrackerBackend::stop)
         .def("store_buffered_data",
              &SimulationObjectTrackerBackend::store_buffered_data);
 
-    pybind11::class_<ObjectTrackerFrontend>(m, "ObjectTrackerFrontend")
+    pybind11::class_<ObjectTrackerFrontend>(m, "Frontend")
         .def(pybind11::init<ObjectTrackerData::Ptr>())
         .def("get_pose", &ObjectTrackerFrontend::get_pose)
         .def("get_current_pose",
@@ -49,5 +52,4 @@ PYBIND11_MODULE(py_object_tracker, m)
         .def("wait_until_timeindex",
              &ObjectTrackerFrontend::wait_until_timeindex)
         .def("has_observations", &ObjectTrackerFrontend::has_observations);
-    // FIXME simplify names
 }

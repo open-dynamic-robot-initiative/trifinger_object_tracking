@@ -42,6 +42,7 @@ public:
     void store_buffered_data(const std::string &filename) const;
 
 protected:
+    //! Get a new estimate of the object pose.
     virtual ObjectPose update_pose() = 0;
 
 private:

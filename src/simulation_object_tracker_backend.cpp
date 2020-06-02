@@ -33,8 +33,13 @@ ObjectPose SimulationObjectTrackerBackend::update_pose()
     // we use perfect information from the simulation, so confidence is 1.0
     pose.confidence = 1.0;
 
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_until(start_time + 1ms);
+    if (real_time_mode_)
+    {
+        // run at around 30 Hz
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_until(start_time + 30ms);
+    }
+    // FIXME what would be a reasonable behaviour for non-real-time mode?
 
     return pose;
 }
