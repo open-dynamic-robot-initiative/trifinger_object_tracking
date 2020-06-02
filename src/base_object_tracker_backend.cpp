@@ -10,17 +10,23 @@
 #include <cereal/archives/json.hpp>
 #include <cereal/types/vector.hpp>
 
-
 namespace trifinger_object_tracking
 {
 BaseObjectTrackerBackend::~BaseObjectTrackerBackend()
 {
+    stop();
+}
+
+
+void BaseObjectTrackerBackend::stop()
+{
     is_shutdown_requested_ = true;
-    if (background_loop.joinable())
+    if (loop_thread_.joinable())
     {
-        background_loop.join();
+        loop_thread_.join();
     }
 }
+
 
 /**
  * @brief Store the content of the time series buffer to a file.

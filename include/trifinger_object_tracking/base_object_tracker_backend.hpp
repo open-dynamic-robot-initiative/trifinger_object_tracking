@@ -5,7 +5,6 @@
 #pragma once
 
 #include <atomic>
-#include <fstream>
 #include <string>
 #include <thread>
 
@@ -27,9 +26,12 @@ public:
     BaseObjectTrackerBackend(ObjectTrackerData::Ptr data)
         : data_(data), is_shutdown_requested_(false)
     {
+        loop_thread_ = std::thread(&BaseObjectTrackerBackend::loop, this);
     }
 
     ~BaseObjectTrackerBackend();
+
+    void stop();
 
     /**
      * @brief Store the content of the time series buffer to a file.
@@ -45,7 +47,7 @@ protected:
 private:
     ObjectTrackerData::Ptr data_;
     std::atomic<bool> is_shutdown_requested_;
-    std::thread background_loop;
+    std::thread loop_thread_;
 
     void loop();
 };
