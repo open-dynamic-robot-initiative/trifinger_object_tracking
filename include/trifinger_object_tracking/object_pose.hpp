@@ -22,8 +22,16 @@ public:
     template <class Archive>
     void serialize(Archive& archive)
     {
-        archive(timestamp, position, orientation, confidence);
+        archive(cereal::make_nvp("t", timestamp),
+                cereal::make_nvp("x", position[0]),
+                cereal::make_nvp("y", position[1]),
+                cereal::make_nvp("z", position[2]),
+                cereal::make_nvp("roll", orientation[0]),
+                cereal::make_nvp("pitch", orientation[1]),
+                cereal::make_nvp("yaw", orientation[2]),
+                CEREAL_NVP(confidence));
     }
 };
+
 
 }  // namespace trifinger_object_tracking

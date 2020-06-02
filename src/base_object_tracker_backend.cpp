@@ -39,18 +39,22 @@ void BaseObjectTrackerBackend::store_buffered_data(
 {
     std::vector<ObjectPose> data;  // TODO use array instead?
     data.reserve(data_->poses->length());
-    for (auto t = data_->poses->oldest_timeindex();
-         t <= data_->poses->newest_timeindex();
-         t++)
+    if (!data_->poses->is_empty())
     {
-        data.push_back((*data_->poses)[t]);
+        // FIXME this is an issue that the time series moves one while this is
+        // running.  So oldest_timeindex might be invalid by the moment it is used.
+        auto t_end = data_->poses->newest_timeindex();
+        for (auto t = data_->poses->oldest_timeindex(); t <= t_end; t++)
+        {
+            data.push_back((*data_->poses)[t]);
+        }
     }
 
     std::ofstream outfile(filename);
-    //cereal::JSONOutputArchive archive(outfile);
-    // FIXME log should not be binary
-    cereal::BinaryOutputArchive archive(outfile);
-    archive(data);
+    cereal::JSONOutputArchive archive(outfile,
+            cereal::JSONOutputArchive::Options::NoIndent());
+    archive(cereal::make_nvp("object_poses", data));
+    std::cout << "Stored " << data.size() << " observations." << std::endl;
 }
 
 void BaseObjectTrackerBackend::loop()
