@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Eigen/Eigen>
+#include <cereal/archives/json.hpp>
 #include <serialization_utils/cereal_eigen.hpp>
 
 namespace trifinger_object_tracking
@@ -15,7 +16,7 @@ struct ObjectPose
 public:
     double timestamp;
     Eigen::Vector3d position;
-    Eigen::Vector3d orientation;
+    Eigen::Vector4d orientation;
     double confidence;
 
     //! For serialization with cereal.
@@ -23,13 +24,26 @@ public:
     void serialize(Archive& archive)
     {
         archive(cereal::make_nvp("t", timestamp),
-                cereal::make_nvp("x", position[0]),
-                cereal::make_nvp("y", position[1]),
-                cereal::make_nvp("z", position[2]),
-                cereal::make_nvp("roll", orientation[0]),
-                cereal::make_nvp("pitch", orientation[1]),
-                cereal::make_nvp("yaw", orientation[2]),
+                cereal::make_nvp("px", position[0]),
+                cereal::make_nvp("py", position[1]),
+                cereal::make_nvp("pz", position[2]),
+                cereal::make_nvp("qx", orientation[0]),
+                cereal::make_nvp("qy", orientation[1]),
+                cereal::make_nvp("qz", orientation[2]),
+                cereal::make_nvp("qw", orientation[3]),
                 CEREAL_NVP(confidence));
+    }
+
+    std::string to_string()
+    {
+        // use cereal JSON archive to get a nice string representation
+        std::stringstream ss;
+        {
+            cereal::JSONOutputArchive archive(ss);
+            this->serialize(archive);
+        }
+
+        return ss.str();
     }
 };
 
