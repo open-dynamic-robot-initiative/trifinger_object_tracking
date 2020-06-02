@@ -11,6 +11,7 @@ string(APPEND CMAKE_CXX_FLAGS " -Wfatal-errors")
 
 find_package(catkin REQUIRED COMPONENTS
     mpi_cmake_modules
+    pybind11_catkin
     serialization_utils
     time_series
 )
@@ -35,3 +36,6 @@ add_library(simulation_object_tracker
     src/simulation_object_tracker_backend.cpp
 )
 target_link_libraries(simulation_object_tracker ${catkin_LIBRARIES})
+
+
+catkin_add_pybind11_module(py_object_tracker simulation_object_tracker)
