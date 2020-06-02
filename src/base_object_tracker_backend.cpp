@@ -17,7 +17,6 @@ BaseObjectTrackerBackend::~BaseObjectTrackerBackend()
     stop();
 }
 
-
 void BaseObjectTrackerBackend::stop()
 {
     is_shutdown_requested_ = true;
@@ -26,7 +25,6 @@ void BaseObjectTrackerBackend::stop()
         loop_thread_.join();
     }
 }
-
 
 /**
  * @brief Store the content of the time series buffer to a file.
@@ -37,12 +35,17 @@ void BaseObjectTrackerBackend::stop()
 void BaseObjectTrackerBackend::store_buffered_data(
     const std::string &filename) const
 {
-    std::vector<ObjectPose> data;  // TODO use array instead?
-    data.reserve(data_->poses->length());
+    if (is_running_)
+    {
+        throw std::runtime_error(
+            "Cannot store buffer while running.  Call `stop()` first.");
+    }
+
+    std::vector<ObjectPose> data;
+
     if (!data_->poses->is_empty())
     {
-        // FIXME this is an issue that the time series moves one while this is
-        // running.  So oldest_timeindex might be invalid by the moment it is used.
+        data.reserve(data_->poses->length());
         auto t_end = data_->poses->newest_timeindex();
         for (auto t = data_->poses->oldest_timeindex(); t <= t_end; t++)
         {
@@ -51,19 +54,23 @@ void BaseObjectTrackerBackend::store_buffered_data(
     }
 
     std::ofstream outfile(filename);
-    cereal::JSONOutputArchive archive(outfile,
-            cereal::JSONOutputArchive::Options::NoIndent());
+    cereal::JSONOutputArchive archive(
+        outfile, cereal::JSONOutputArchive::Options::NoIndent());
     archive(cereal::make_nvp("object_poses", data));
     std::cout << "Stored " << data.size() << " observations." << std::endl;
 }
 
 void BaseObjectTrackerBackend::loop()
 {
+    is_running_ = true;
+
     while (!is_shutdown_requested_)
     {
         ObjectPose pose = update_pose();
         data_->poses->append(pose);
     }
+
+    is_running_ = false;
 }
 
 }  // namespace trifinger_object_tracking

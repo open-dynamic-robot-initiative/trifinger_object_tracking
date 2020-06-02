@@ -46,6 +46,7 @@ protected:
 
 private:
     ObjectTrackerData::Ptr data_;
+    std::atomic<bool> is_running_;
     std::atomic<bool> is_shutdown_requested_;
     std::thread loop_thread_;
 
