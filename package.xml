@@ -12,6 +12,12 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <build_depend>mpi_cmake_modules</build_depend>
+  <build_depend>pybind11_catkin</build_depend>
+
+  <depend>serialization_utils</depend>
+  <depend>time_series</depend>
+
   <export>
   </export>
 </package>
