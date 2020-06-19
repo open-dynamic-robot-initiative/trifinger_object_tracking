@@ -28,8 +28,11 @@ public:
     //! @brief Get the index of the current time step.
     time_series::Index get_current_timeindex() const;
 
-    //! @brief
+    //! @brief Get the index of the oldest time step still held in the buffer.
     time_series::Index get_oldest_timeindex() const;
+
+    //! @brief Get time stamp of the given time step.
+    time_series::Timestamp get_timestamp_ms(const time_series::Index t) const;
 
     //! @brief Wait until time index t is reached.
     void wait_until_timeindex(const time_series::Index t) const;

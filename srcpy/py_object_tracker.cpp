@@ -60,6 +60,9 @@ PYBIND11_MODULE(py_object_tracker, m)
         .def("get_oldest_timeindex",
              &ObjectTrackerFrontend::get_oldest_timeindex,
              pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("get_timestamp_ms",
+             &ObjectTrackerFrontend::get_timestamp_ms,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
         .def("wait_until_timeindex",
              &ObjectTrackerFrontend::wait_until_timeindex,
              pybind11::call_guard<pybind11::gil_scoped_release>())
