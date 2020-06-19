@@ -26,7 +26,14 @@ time_series::Index ObjectTrackerFrontend::get_oldest_timeindex() const
     return data_->poses->oldest_timeindex();
 }
 
-void ObjectTrackerFrontend::wait_until_timeindex(const time_series::Index t) const
+time_series::Timestamp ObjectTrackerFrontend::get_timestamp_ms(
+    const time_series::Index t) const
+{
+    return data_->poses->timestamp_ms(t);
+}
+
+void ObjectTrackerFrontend::wait_until_timeindex(
+    const time_series::Index t) const
 {
     data_->poses->timestamp_ms(t);
 }
