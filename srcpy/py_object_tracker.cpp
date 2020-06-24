@@ -12,6 +12,7 @@
 #include <trifinger_object_tracking/object_tracker_data.hpp>
 #include <trifinger_object_tracking/object_tracker_frontend.hpp>
 #include <trifinger_object_tracking/simulation_object_tracker_backend.hpp>
+#include <trifinger_object_tracking/fake_object_tracker_backend.hpp>
 
 using namespace pybind11::literals;
 using namespace trifinger_object_tracking;
@@ -44,6 +45,15 @@ PYBIND11_MODULE(py_object_tracker, m)
              pybind11::call_guard<pybind11::gil_scoped_release>())
         .def("store_buffered_data",
              &SimulationObjectTrackerBackend::store_buffered_data,
+             pybind11::call_guard<pybind11::gil_scoped_release>());
+
+    pybind11::class_<FakeObjectTrackerBackend>(m, "FakeBackend")
+        .def(pybind11::init<ObjectTrackerData::Ptr>(), "data"_a)
+        .def("stop",
+             &FakeObjectTrackerBackend::stop,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("store_buffered_data",
+             &FakeObjectTrackerBackend::store_buffered_data,
              pybind11::call_guard<pybind11::gil_scoped_release>());
 
     pybind11::class_<ObjectTrackerFrontend>(m, "Frontend")

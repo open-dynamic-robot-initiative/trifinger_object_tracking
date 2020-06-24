@@ -22,7 +22,7 @@ catkin_python_setup()
 
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES simulation_object_tracker
+    LIBRARIES simulation_object_tracker fake_object_tracker
 )
 
 
@@ -30,6 +30,9 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
 )
+
+
+# TODO frontend should be in separate library
 
 add_library(simulation_object_tracker
     src/object_tracker_data.cpp
@@ -40,4 +43,12 @@ add_library(simulation_object_tracker
 target_link_libraries(simulation_object_tracker ${catkin_LIBRARIES})
 
 
-catkin_add_pybind11_module(py_object_tracker simulation_object_tracker)
+add_library(fake_object_tracker
+    src/object_tracker_data.cpp
+    src/base_object_tracker_backend.cpp
+    src/fake_object_tracker_backend.cpp
+)
+target_link_libraries(fake_object_tracker ${catkin_LIBRARIES})
+
+
+catkin_add_pybind11_module(py_object_tracker simulation_object_tracker fake_object_tracker)
