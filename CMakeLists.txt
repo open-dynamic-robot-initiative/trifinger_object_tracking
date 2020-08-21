@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # stop build on first error
-string(APPEND CMAKE_CXX_FLAGS "-Wall -Wextra -Wfatal-errors")
+string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors")
 
-string(APPEND CMAKE_CXX_FLAGS_RELEASE "-O3")
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -O3")
 
 find_package(catkin REQUIRED COMPONENTS
     mpi_cmake_modules
