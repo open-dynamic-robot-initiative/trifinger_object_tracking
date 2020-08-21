@@ -1,0 +1,230 @@
+#include <chrono>
+#include <thread>
+#include <trifinger_object_tracking/image.hpp>
+#include <trifinger_object_tracking/pose.hpp>
+#include <trifinger_object_tracking/utils.hpp>
+
+int debug = 1;
+int cols_plot = 5;
+
+/**
+ * @brief Show multiple images in one.
+ *
+ * Creates a matrix of images of the same size.
+ */
+
+namespace trifinger_object_tracking
+{
+class CvSubImages
+{
+public:
+    CvSubImages(cv::Size img_size,
+                unsigned rows,
+                unsigned cols,
+                unsigned border = 5,
+                cv::Scalar background = cv::Scalar(255, 255, 255))
+        : subimg_size_(img_size), border_(border)
+    {
+        unsigned width = img_size.width * cols + border * (cols + 1);
+        unsigned height = img_size.height * rows + border * (rows + 1);
+
+        image_ = cv::Mat(height, width, CV_8UC3, background);
+    }
+
+    void set_subimg(const cv::Mat &image, unsigned row, unsigned col)
+    {
+        unsigned offset_row = border_ + row * (subimg_size_.height + border_);
+        unsigned offset_col = border_ + col * (subimg_size_.width + border_);
+
+        cv::Mat subimg = image_(cv::Rect(
+            offset_col, offset_row, subimg_size_.width, subimg_size_.height));
+
+        image.copyTo(subimg);
+    }
+
+    const cv::Mat &get_image() const
+    {
+        return image_;
+    }
+
+private:
+    cv::Size subimg_size_;
+    unsigned border_;
+    cv::Mat image_;
+};
+}  // namespace trifinger_object_tracking
+
+int main(int argc, char **argv)
+{
+    std::string data_dir = "../data/cube_dataset_real_cube";
+    if (argc > 1)
+    {
+        data_dir = argv[1];
+    }
+    std::vector<std::string> camera_data =
+        trifinger_object_tracking::get_directories(data_dir);
+
+    bool generate_gmm_dataset =
+        false;  // set true if you want to train gmm models for each color
+
+    // Generate dataset for GMM model for each color and train it
+    if (generate_gmm_dataset)
+    {
+        std::map<std::string, cv::Mat> training_dataset_for_gmm;
+        for (std::string folder_path : camera_data)
+        {
+            training_dataset_for_gmm =
+                trifinger_object_tracking::get_color_masks(
+                    folder_path, training_dataset_for_gmm);
+        }
+        trifinger_object_tracking::train_gmm(training_dataset_for_gmm);
+    }
+
+    // Use the trained GMM model to make predictions
+    if (!generate_gmm_dataset)
+    {
+        trifinger_object_tracking::CvSubImages subplot(
+            cv::Size(720, 540), 3, 5);
+        cv::namedWindow("debug", cv::WINDOW_NORMAL);
+        cv::resizeWindow(
+            "debug", subplot.get_image().cols, subplot.get_image().rows);
+
+        for (std::string folder_path : camera_data)
+        {
+            // getting frames from three cameras
+            //            folder_path = "../data/cube_dataset_real_cube/0015/";
+            std::vector<cv::Mat> frames =
+                trifinger_object_tracking::get_images(folder_path);
+
+            // sending frames color segmentation
+            auto start = std::chrono::high_resolution_clock::now();
+            std::vector<trifinger_object_tracking::Image> images;
+            int thread_type = 0;  // 1 = multi-threaded
+
+            if (thread_type == 0)
+            {
+                int i = 0;
+                for (auto &image : frames)
+                {
+                    trifinger_object_tracking::Image obj(image.clone());
+                    obj.startSingleThread();
+                    images.push_back(obj);
+
+                    if (debug == 1)
+                    {
+                        subplot.set_subimg(images[i].get_image(), i, 0);
+                        subplot.set_subimg(
+                            images[i].get_segmented_image(), i, 1);
+                        subplot.set_subimg(
+                            images[i].get_segmented_image_wout_outliers(),
+                            i,
+                            2);
+                        subplot.set_subimg(images[i].get_image_lines(), i, 3);
+                    }
+                    i++;
+                }
+            }
+            else
+            {
+                std::vector<std::thread> thread_vector;
+                for (auto &image : frames)
+                {
+                    trifinger_object_tracking::Image obj(image);
+                    images.push_back(obj);
+                    std::thread th(
+                        &trifinger_object_tracking::Image::startSingleThread,
+                        images.back());
+                    thread_vector.push_back(move(th));
+                }
+
+                // waiting for threads to finish
+                for (std::thread &th : thread_vector)
+                {
+                    if (th.joinable()) th.join();
+                }
+            }
+            auto finish = std::chrono::high_resolution_clock::now();
+            std::cout << "Segmentation took "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(
+                             finish - start)
+                             .count()
+                      << " milliseconds\n";
+            std::cout << "Segmentation complete"
+                      << "\n";
+            int display = 0;  // 0 = False
+            if (display == 1)
+            {
+                for (auto t : images)
+                {
+                    t.show();
+                }
+            }
+
+            int lines = 0;  // 0 = False
+            if (lines == 1)
+            {
+                for (auto t : images)
+                {
+                    std::cout << "Lines\n";
+                    for (auto &l : t.lines_)
+                    {
+                        std::cout << l.first.first << " " << l.first.second
+                                  << " " << l.second.first << " "
+                                  << l.second.second
+                                  << std::endl;  // prints color_pairs and
+                                                 // slope-intercept for the
+                                                 // separating line
+                    }
+                }
+            }
+
+            // Pose Detection from below
+            trifinger_object_tracking::Pose pose(images);
+            pose.find_pose();
+
+            std::cout << "Pose detected\n";
+
+            if (debug == 1)
+            {
+                for (int i = 0; i < images.size(); i++)
+                {
+                    std::vector<cv::Point2f> imgpoints =
+                        pose.projected_points_[i];
+                    cv::Mat poseimg = images[i].get_image().clone();
+                    // draw the cube edges in the image
+                    for (auto &it : images[i].object_model_)
+                    {
+                        cv::Point p1, p2;
+                        p1.x = imgpoints[it.second.first].x;
+                        p1.y = imgpoints[it.second.first].y;
+                        p2.x = imgpoints[it.second.second].x;
+                        p2.y = imgpoints[it.second.second].y;
+
+                        cv::line(poseimg, p1, p2, cv::Scalar(255, 100, 0), 2);
+                    }
+                    subplot.set_subimg(poseimg, i, 4);
+                }
+            }
+
+            cv::Mat debug_img = subplot.get_image();
+
+            cv::cvtColor(debug_img, debug_img, cv::COLOR_RGB2BGR);
+
+            // scale down debug image by factor 2, otherwise it is too big
+            cv::Mat rescaled_debug_img;
+            cv::resize(debug_img,
+                       rescaled_debug_img,
+                       cv::Size(debug_img.cols / 2, debug_img.rows / 2));
+
+            cv::imshow("debug", rescaled_debug_img);
+            char key = cv::waitKey(0);
+
+            if (key == 'q')
+            {
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
