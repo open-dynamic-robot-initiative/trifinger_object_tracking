@@ -18,6 +18,8 @@
   <depend>serialization_utils</depend>
   <depend>time_series</depend>
 
+  <test_depend>roslib</test_depend>
+
   <export>
   </export>
 </package>
