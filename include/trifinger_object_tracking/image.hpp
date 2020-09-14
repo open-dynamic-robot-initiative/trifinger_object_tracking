@@ -6,6 +6,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/ml/ml.hpp>
 #include <opencv2/opencv.hpp>
+#include <math.h>
 
 namespace trifinger_object_tracking
 {

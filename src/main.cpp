@@ -3,9 +3,14 @@
 #include <trifinger_object_tracking/image.hpp>
 #include <trifinger_object_tracking/pose.hpp>
 #include <trifinger_object_tracking/utils.hpp>
+#include <ostream>
+#include <fstream>
+
 
 int debug = 1;
 int cols_plot = 5;
+
+
 
 /**
  * @brief Show multiple images in one.
@@ -89,10 +94,30 @@ int main(int argc, char **argv)
         cv::resizeWindow(
             "debug", subplot.get_image().cols, subplot.get_image().rows);
 
+
+        // for saving to a video file
+        int frame_width = 1815;
+        int frame_height = 820;
+        cv::Size frame_size(frame_width, frame_height);
+        int frames_per_second = 1;
+        cv::VideoWriter oVideoWriter("./video_3.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
+                                      frames_per_second, frame_size, true);
+
+        //If the VideoWriter object is not initialized successfully, exit the program
+        if (oVideoWriter.isOpened() == false)
+        {
+            std::cout << "Cannot save the video to a file" << std::endl;
+            std::cin.get(); //wait for any key press
+            return -1;
+        }
+
+        int until = 0;
         for (std::string folder_path : camera_data)
         {
+            until++;
+//            if (until == 5) { break;}
             // getting frames from three cameras
-            //            folder_path = "../data/cube_dataset_real_cube/0015/";
+//            folder_path = "../data/cube_dataset_real_cube/0003/";
             std::vector<cv::Mat> frames =
                 trifinger_object_tracking::get_images(folder_path);
 
@@ -160,7 +185,8 @@ int main(int argc, char **argv)
                 }
             }
 
-            int lines = 0;  // 0 = False
+            std::cout << "\n@#$@#$@#$@#$@#$@#$\n\n";
+            int lines = 1;  // 0 = False
             if (lines == 1)
             {
                 for (auto t : images)
@@ -177,6 +203,56 @@ int main(int argc, char **argv)
                     }
                 }
             }
+
+            // TODO: remove the following part
+            if (true)
+            {
+                std::fstream file;
+                std::string word, filename = "../data/lines/" + std::to_string(until) + ".txt";
+                file.open(filename.c_str());
+                std::cout << filename << std::endl;
+                int iii = -1;
+                std::string c1,c2;
+                float f1,f2;
+                int counter;
+                while(file >> word) { //take word and print
+                    std::cout << word << std::endl;
+                    if (word == "new")
+                    {
+                        counter = 0;
+                        iii++;
+                        if (iii < 3)
+                        {
+                            images[iii].lines_.clear();
+                        }
+                    }
+                    else
+                    {
+                        switch(counter)
+                        {
+                            case 0:
+                                c1 = word;
+                                break;
+                            case 1:
+                                c2 = word;
+                                break;
+                            case 2:
+                                f1 = std::atof(word.c_str());
+                                break;
+                            case 3:
+                                f2 = std::atof(word.c_str());
+                                images[iii].lines_[std::make_pair(c1, c2)] = {f1, f2};
+                                counter = -1;
+                                break;
+                            default:
+                                break;
+                        }
+                        counter++;
+                    }
+                }
+
+            }
+
 
             // Pose Detection from below
             trifinger_object_tracking::Pose pose(images);
@@ -216,14 +292,25 @@ int main(int argc, char **argv)
                        rescaled_debug_img,
                        cv::Size(debug_img.cols / 2, debug_img.rows / 2));
 
-            cv::imshow("debug", rescaled_debug_img);
-            char key = cv::waitKey(0);
+            //write the video frame to the file
+            oVideoWriter.write(rescaled_debug_img);
 
-            if (key == 'q')
+            int show = 0;
+            if (show==1)
             {
-                break;
+                cv::imshow("debug", rescaled_debug_img);
+                char key = cv::waitKey(0);
+
+                if (key == 'q')
+                {
+                    break;
+                }
             }
+
+
         }
+        //Flush and close the video file
+        oVideoWriter.release();
     }
 
     return 0;
