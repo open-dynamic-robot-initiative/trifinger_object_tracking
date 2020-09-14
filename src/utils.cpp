@@ -51,8 +51,13 @@ bool comparator(const std::string &a, const std::string &b)
 std::vector<cv::Mat> get_images(const std::string &path, bool get_masks)
 {
     std::vector<cv::Mat> frames;
-    for (auto p : fs::recursive_directory_iterator(path))
+    auto files = fs::recursive_directory_iterator(path);
+
+    std::vector<std::string> file_names;
+    for (auto p : files)
     {
+
+
         int ascii = (int)p.path().string()[37];
 
         if (ascii >= 48 && ascii <= 57)
@@ -63,7 +68,7 @@ std::vector<cv::Mat> get_images(const std::string &path, bool get_masks)
                 cv::Mat image = cv::imread(p.path().string(), 1);
                 if (!image.data)
                 {
-                    std::cout << (p);
+                    std::cout << (p.path().string());
                     printf("No image data \n");
                     exit(0);
                 }
@@ -88,9 +93,17 @@ std::vector<cv::Mat> get_images(const std::string &path, bool get_masks)
             continue;
         }
 
+        file_names.push_back(p.path().string());
+
+    }
+
+    std::swap(file_names[0], file_names[1]);
+
+    for (auto p : file_names)
+    {
         std::cout << path << " " << p << "\n";
 
-        cv::Mat image = cv::imread(p.path().string(), 1);
+        cv::Mat image = cv::imread(p, 1);
         if (!image.data)
         {
             std::cout << (p);
@@ -102,6 +115,7 @@ std::vector<cv::Mat> get_images(const std::string &path, bool get_masks)
         cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
         frames.push_back(image);
     }
+
     return frames;
 }
 
