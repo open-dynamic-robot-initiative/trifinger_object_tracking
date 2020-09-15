@@ -73,8 +73,6 @@ public:
 
     void print_pixels();
 
-    void remove_outliers();
-
     std::vector<std::pair<FaceColor, FaceColor>> make_valid_combinations();
 
     void get_line_between_colors(FaceColor color1, FaceColor color2);
@@ -90,8 +88,6 @@ public:
     void gmm_mask();
 
     bool denoise();
-
-    void cuda_gmm();
 
     void start_timer();
 
