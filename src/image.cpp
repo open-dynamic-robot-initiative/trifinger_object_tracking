@@ -176,7 +176,6 @@ void Image::gmm_mask()
 // TODO what exactly is this doing?
 void Image::clean_mask(FaceColor color)
 {
-    auto start = std::chrono::high_resolution_clock::now();
     switch (color)
     {
         case FaceColor::CYAN:
@@ -216,8 +215,6 @@ void Image::clean_mask(FaceColor color)
         {
             cv::Mat mask;
             std::vector<int> merged(pixel_idx_[color]);
-            auto lower = color_bounds_[color].lower;
-            auto upper = color_bounds_[color].upper;
             int n = image_hsv_.rows * image_hsv_.cols;
             cv::inRange(
                 image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
@@ -247,8 +244,6 @@ void Image::clean_mask(FaceColor color)
         {
             cv::Mat mask;
             std::vector<int> merged(pixel_idx_[color]);
-            auto lower = color_bounds_[color].lower;
-            auto upper = color_bounds_[color].upper;
             int n = image_hsv_.rows * image_hsv_.cols;
             cv::inRange(
                 image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
@@ -278,13 +273,6 @@ void Image::clean_mask(FaceColor color)
             // do nothing
             break;
     }
-
-    auto finish = std::chrono::high_resolution_clock::now();
-    //    std::cout << "GMM masks took "
-    //              <<
-    //              std::chrono::duration_cast<std::chrono::milliseconds>(finish
-    //              - start).count()
-    //              << " milliseconds\n";
 }
 
 void Image::create_pixel_dataset(FaceColor color)
@@ -296,7 +284,7 @@ void Image::create_pixel_dataset(FaceColor color)
     color_count_[color] = poi.size();
 }
 
-void Image::find_dominant_colors(const int N_dominant_colors)
+void Image::find_dominant_colors(const unsigned int N_dominant_colors)
 {  // N dominant colors
     dominant_colors_.clear();
     std::map<FaceColor, int> color_count_copy(color_count_);
@@ -391,7 +379,7 @@ bool Image::denoise()
     cv::Mat dilated_mask, labels_im;
     cv::dilate(merged_mask, dilated_mask, kernel, cv::Point(-1, -1), 4);
 
-    int num_labels = cv::connectedComponents(dilated_mask, labels_im);
+    cv::connectedComponents(dilated_mask, labels_im);
 
     labels_im = labels_im.reshape(1, image_bgr_.rows * image_bgr_.cols);
     std::vector<int> unique_;
@@ -419,7 +407,7 @@ bool Image::denoise()
             std::make_pair(i, std::count(unique_.begin(), unique_.end(), i)));
     }
 
-    int element_number = 1;  // 1 because 0 is for background
+    unsigned int element_number = 1;  // 1 because 0 is for background
     std::vector<int> idx;
     float percentage_overlap = 40.0;
     do

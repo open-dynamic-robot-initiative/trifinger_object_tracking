@@ -66,7 +66,7 @@ public:
 
     void create_pixel_dataset(FaceColor color);
 
-    void find_dominant_colors(const int);
+    void find_dominant_colors(const unsigned int);
 
     void show();
 
