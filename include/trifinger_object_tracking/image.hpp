@@ -99,8 +99,6 @@ public:
 
     void print_time_taken(const std::string &message);
 
-    void initialize_variables();
-    void gmm_isolated();
 
     // member variables
     std::map<std::pair<FaceColor, FaceColor>, std::pair<float, float>> lines_;

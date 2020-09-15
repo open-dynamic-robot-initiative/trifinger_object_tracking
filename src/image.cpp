@@ -54,23 +54,8 @@ void Image::load_segmentation_models(const std::string &model_directory)
     }
 }
 
-void Image::initialize_variables()
-{
-    for (FaceColor color : cube_model_.get_colors())
-    {
-        masks_[color] = cv::Mat(cv::Size(1, image_bgr_.rows * image_bgr_.cols),
-                                CV_64FC1,
-                                cv::Scalar(0));
-
-        // TODO is this explicit clear needed?
-        pixel_idx_[color].clear();
-    }
-}
-
 void Image::run_line_detection()
 {
-    initialize_variables();
-
     gmm_mask();
 
     find_dominant_colors(3);
@@ -99,6 +84,14 @@ void Image::gmm_mask()
 
     std::map<int, FaceColor> idx2color;
     std::array<std::vector<int>, FaceColor::N_COLORS> pixel_idx;
+
+    // initialize masks
+    for (FaceColor color : cube_model_.get_colors())
+    {
+        masks_[color] = cv::Mat(cv::Size(1, image_bgr_.rows * image_bgr_.cols),
+                                CV_64FC1,
+                                cv::Scalar(0));
+    }
 
     // convert cv::Mat to arma::mat
     cv::Mat concatenated_data;
