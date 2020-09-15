@@ -153,25 +153,24 @@ void Image::gmm_mask()
     thread_vector.clear();
     for (FaceColor color : cube_model_.get_colors())
     {
-        std::thread th(&Image::create_final_mask, this, color);
+        std::thread th(
+            [this](FaceColor color) {
+                clean_mask(color);
+                for (auto &idx : pixel_idx_[color])
+                {
+                    masks_[color].at<double>(idx, 0) = 255.0;
+                }
+                masks_[color] = masks_[color].reshape(1, image_bgr_.rows);
+                masks_[color].convertTo(masks_[color], CV_8U);
+                create_pixel_dataset(color);
+            },
+            color);
         thread_vector.push_back(move(th));
     }
     for (std::thread &th : thread_vector)
     {
         if (th.joinable()) th.join();
     }
-}
-
-void Image::create_final_mask(FaceColor color)
-{
-    clean_mask(color);
-    for (auto &idx : pixel_idx_[color])
-    {
-        masks_[color].at<double>(idx, 0) = 255.0;
-    }
-    masks_[color] = masks_[color].reshape(1, image_bgr_.rows);
-    masks_[color].convertTo(masks_[color], CV_8U);
-    create_pixel_dataset(color);
 }
 
 // TODO what exactly is this doing?

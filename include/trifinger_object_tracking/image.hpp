@@ -92,8 +92,6 @@ public:
 
     void clean_mask(FaceColor color);
 
-    void create_final_mask(FaceColor color);
-
     void cuda_gmm();
 
     void start_timer();
