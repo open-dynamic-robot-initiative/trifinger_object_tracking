@@ -24,6 +24,10 @@ std::ostream& operator<<(std::ostream& os, const FaceColor& color)
         case FaceColor::MAGENTA:
             os << std::string("MAGENTA");
             break;
+        case FaceColor::N_COLORS:
+        default:
+            throw std::invalid_argument(
+                "N_COLORS does not refer to actual color");
     }
     return os;
 }

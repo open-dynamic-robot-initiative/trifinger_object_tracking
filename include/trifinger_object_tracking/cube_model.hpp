@@ -23,7 +23,6 @@ enum FaceColor
 
 std::ostream& operator<<(std::ostream& os, const FaceColor& color);
 
-
 class CubeModel
 {
 public:
@@ -61,6 +60,10 @@ public:
                 return "cyan";
             case FaceColor::MAGENTA:
                 return "magenta";
+            case FaceColor::N_COLORS:
+            default:
+                throw std::invalid_argument(
+                    "N_COLORS does not refer to actual color");
         }
     }
 
@@ -80,6 +83,10 @@ public:
                 return {0, 255, 255};
             case FaceColor::MAGENTA:
                 return {255, 0, 255};
+            case FaceColor::N_COLORS:
+            default:
+                throw std::invalid_argument(
+                    "N_COLORS does not refer to actual color");
         }
     }
 
@@ -99,6 +106,10 @@ public:
                 return {90, 255, 255};
             case FaceColor::MAGENTA:
                 return {150, 255, 255};
+            case FaceColor::N_COLORS:
+            default:
+                throw std::invalid_argument(
+                    "N_COLORS does not refer to actual color");
         }
     }
 
