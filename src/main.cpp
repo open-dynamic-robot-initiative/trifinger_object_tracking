@@ -1,19 +1,84 @@
 #include <chrono>
+#include <fstream>
+#include <ostream>
 #include <thread>
+#include <trifinger_object_tracking/cv_sub_images.hpp>
 #include <trifinger_object_tracking/image.hpp>
 #include <trifinger_object_tracking/pose.hpp>
 #include <trifinger_object_tracking/utils.hpp>
-#include <trifinger_object_tracking/cv_sub_images.hpp>
-#include <ostream>
-#include <fstream>
-
 
 int debug = 1;
 int cols_plot = 5;
 
+using namespace trifinger_object_tracking;
 
-using trifinger_object_tracking::FaceColor;
+[[deprecated]] std::vector<cv::Mat> get_images(const std::string &path,
+                                               bool get_masks = false) {
+    std::vector<cv::Mat> frames;
+    auto files = fs::recursive_directory_iterator(path);
 
+    std::vector<std::string> file_names;
+    for (auto p : files)
+    {
+        int ascii = (int)p.path().string()[37];
+
+        if (ascii >= 48 && ascii <= 57)
+        {
+            if (get_masks)
+            {
+                std::cout << p.path().string() << "\n";
+                cv::Mat image = cv::imread(p.path().string(), 1);
+                if (!image.data)
+                {
+                    std::cout << (p.path().string());
+                    printf("No image data \n");
+                    exit(0);
+                }
+                cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
+                cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
+                // cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
+                frames.push_back(image);
+
+                cv::Mat temp = image.reshape(1, image.rows * image.cols);
+                temp.convertTo(temp, CV_64FC1);
+                cv::Mat res;
+                remove_if(temp, res, is_zero, true);
+                std::cout << res.rows << " " << res.cols << std::endl;
+            }
+            else
+            {
+                continue;
+            }
+        }
+        if (get_masks)
+        {
+            continue;
+        }
+
+        file_names.push_back(p.path().string());
+    }
+
+    std::swap(file_names[0], file_names[1]);
+
+    for (auto p : file_names)
+    {
+        std::cout << path << " " << p << "\n";
+
+        cv::Mat image = cv::imread(p, 1);
+        if (!image.data)
+        {
+            std::cout << (p);
+            printf("No image data \n");
+            exit(0);
+        }
+        cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
+        cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
+        // cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
+        frames.push_back(image);
+    }
+
+    return frames;
+}
 
 int main(int argc, char **argv)
 {
@@ -50,20 +115,24 @@ int main(int argc, char **argv)
         cv::resizeWindow(
             "debug", subplot.get_image().cols, subplot.get_image().rows);
 
-
         // for saving to a video file
         int frame_width = 1815;
         int frame_height = 820;
         cv::Size frame_size(frame_width, frame_height);
         int frames_per_second = 1;
-        cv::VideoWriter oVideoWriter("./video_3.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
-                                      frames_per_second, frame_size, true);
+        cv::VideoWriter oVideoWriter(
+            "./video_3.avi",
+            cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
+            frames_per_second,
+            frame_size,
+            true);
 
-        //If the VideoWriter object is not initialized successfully, exit the program
+        // If the VideoWriter object is not initialized successfully, exit the
+        // program
         if (oVideoWriter.isOpened() == false)
         {
             std::cout << "Cannot save the video to a file" << std::endl;
-            std::cin.get(); //wait for any key press
+            std::cin.get();  // wait for any key press
             return -1;
         }
 
@@ -71,11 +140,10 @@ int main(int argc, char **argv)
         for (std::string folder_path : camera_data)
         {
             until++;
-//            if (until == 5) { break;}
+            //            if (until == 5) { break;}
             // getting frames from three cameras
-//            folder_path = "../data/cube_dataset_real_cube/0003/";
-            std::vector<cv::Mat> frames =
-                trifinger_object_tracking::get_images(folder_path);
+            //            folder_path = "../data/cube_dataset_real_cube/0003/";
+            std::vector<cv::Mat> frames = get_images(folder_path);
 
             // sending frames color segmentation
             auto start = std::chrono::high_resolution_clock::now();
@@ -87,7 +155,8 @@ int main(int argc, char **argv)
                 int i = 0;
                 for (auto &image : frames)
                 {
-                    trifinger_object_tracking::Image obj(image.clone(), "../data");
+                    trifinger_object_tracking::Image obj(image.clone(),
+                                                         "../data");
                     obj.run_line_detection();
                     images.push_back(obj);
 
@@ -164,12 +233,13 @@ int main(int argc, char **argv)
             if (true)
             {
                 std::fstream file;
-                std::string word, filename = "../data/lines/" + std::to_string(until) + ".txt";
+                std::string word, filename = "../data/lines/" +
+                                             std::to_string(until) + ".txt";
                 file.open(filename.c_str());
                 std::cout << filename << std::endl;
                 int iii = -1;
-                FaceColor c1,c2;
-                float f1,f2;
+                FaceColor c1, c2;
+                float f1, f2;
                 int counter;
 
                 std::map<std::string, FaceColor> color_from_string;
@@ -180,7 +250,8 @@ int main(int argc, char **argv)
                 color_from_string["cyan"] = FaceColor::CYAN;
                 color_from_string["magenta"] = FaceColor::MAGENTA;
 
-                while(file >> word) { //take word and print
+                while (file >> word)
+                {  // take word and print
                     std::cout << word << std::endl;
                     if (word == "new")
                     {
@@ -193,7 +264,7 @@ int main(int argc, char **argv)
                     }
                     else
                     {
-                        switch(counter)
+                        switch (counter)
                         {
                             case 0:
                                 c1 = color_from_string.at(word);
@@ -206,7 +277,8 @@ int main(int argc, char **argv)
                                 break;
                             case 3:
                                 f2 = std::atof(word.c_str());
-                                images[iii].lines_[std::make_pair(c1, c2)] = {f1, f2};
+                                images[iii].lines_[std::make_pair(c1, c2)] = {
+                                    f1, f2};
                                 counter = -1;
                                 break;
                             default:
@@ -215,9 +287,7 @@ int main(int argc, char **argv)
                         counter++;
                     }
                 }
-
             }
-
 
             // Pose Detection from below
             trifinger_object_tracking::Pose pose(images);
@@ -255,11 +325,11 @@ int main(int argc, char **argv)
                        rescaled_debug_img,
                        cv::Size(debug_img.cols / 2, debug_img.rows / 2));
 
-            //write the video frame to the file
+            // write the video frame to the file
             oVideoWriter.write(rescaled_debug_img);
 
             int show = 0;
-            if (show==1)
+            if (show == 1)
             {
                 cv::imshow("debug", rescaled_debug_img);
                 char key = cv::waitKey(0);
@@ -269,10 +339,8 @@ int main(int argc, char **argv)
                     break;
                 }
             }
-
-
         }
-        //Flush and close the video file
+        // Flush and close the video file
         oVideoWriter.release();
     }
 
