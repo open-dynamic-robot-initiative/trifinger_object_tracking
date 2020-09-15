@@ -54,7 +54,7 @@ include_directories(
 )
 
 add_library(lib_object_pose
-    src/image.cpp
+    src/line_detector.cpp
     src/pose.cpp
     src/utils.cpp
     src/cube_model.cpp
@@ -107,6 +107,6 @@ if (CATKIN_ENABLE_TESTING)
     find_package(roslib REQUIRED)
     include_directories(${roslib_INCLUDE_DIRS})
 
-    catkin_add_gtest(test_image test/test_image.cpp)
-    target_link_libraries(test_image lib_object_pose ${roslib_LIBRARIES})
+    #catkin_add_gtest(test_image test/test_image.cpp)
+    #target_link_libraries(test_image lib_object_pose ${roslib_LIBRARIES})
 endif()

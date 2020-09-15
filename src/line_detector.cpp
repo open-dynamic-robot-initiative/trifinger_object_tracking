@@ -1,7 +1,7 @@
 #include <chrono>
 #include <iostream>
 #include <thread>
-#include <trifinger_object_tracking/image.hpp>
+#include <trifinger_object_tracking/line_detector.hpp>
 #include <typeinfo>
 
 namespace trifinger_object_tracking
@@ -15,14 +15,15 @@ static float calculateAccuracyPercent(const cv::Mat &original,
     return 100 * (float)countNonZero(original == predicted) / predicted.rows;
 }
 
-Image::Image(const CubeModel &cube_model, const std::string &model_directory):
-    cube_model_(cube_model)
+LineDetector::LineDetector(const CubeModel &cube_model,
+                           const std::string &model_directory)
+    : cube_model_(cube_model)
 {
     set_color_bounds();
     load_segmentation_models(model_directory);
 }
 
-void Image::set_color_bounds()
+void LineDetector::set_color_bounds()
 {
     // The new colors
     // TODO: bounds not updated for new colors
@@ -35,7 +36,7 @@ void Image::set_color_bounds()
     color_bounds_[FaceColor::YELLOW] = {{27, 130, 160}, {37, 255, 255}};
 }
 
-void Image::load_segmentation_models(const std::string &model_directory)
+void LineDetector::load_segmentation_models(const std::string &model_directory)
 {
     for (FaceColor color : cube_model_.get_colors())
     {
@@ -52,7 +53,7 @@ void Image::load_segmentation_models(const std::string &model_directory)
     }
 }
 
-std::map<ColorPair, Line> Image::detect_lines(const cv::Mat &image_bgr)
+std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
 {
     // TODO better solution than class members
     image_bgr_ = image_bgr;
@@ -80,7 +81,7 @@ std::map<ColorPair, Line> Image::detect_lines(const cv::Mat &image_bgr)
     return lines_;
 }
 
-void Image::gmm_mask()
+void LineDetector::gmm_mask()
 {
     // FIXME magic numbers
     arma::mat gmm_result =
@@ -172,7 +173,9 @@ void Image::gmm_mask()
 }
 
 // TODO what exactly is this doing?
-void Image::clean_mask(FaceColor color, std::array<std::vector<int>, FaceColor::N_COLORS> &pixel_idx)
+void LineDetector::clean_mask(
+    FaceColor color,
+    std::array<std::vector<int>, FaceColor::N_COLORS> &pixel_idx)
 {
     switch (color)
     {
@@ -275,7 +278,7 @@ void Image::clean_mask(FaceColor color, std::array<std::vector<int>, FaceColor::
     }
 }
 
-void Image::create_pixel_dataset(FaceColor color)
+void LineDetector::create_pixel_dataset(FaceColor color)
 {
     std::vector<cv::Point> poi;
     cv::findNonZero(masks_[color], poi);
@@ -284,7 +287,7 @@ void Image::create_pixel_dataset(FaceColor color)
     color_count_[color] = poi.size();
 }
 
-void Image::find_dominant_colors(const unsigned int N_dominant_colors)
+void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
 {  // N dominant colors
     dominant_colors_.clear();
     std::map<FaceColor, int> color_count_copy(color_count_);
@@ -341,7 +344,7 @@ void Image::find_dominant_colors(const unsigned int N_dominant_colors)
     }
 }
 
-bool Image::denoise()
+bool LineDetector::denoise()
 {
     if (dominant_colors_.size() == 0)
     {
@@ -475,7 +478,7 @@ bool Image::denoise()
     return true;
 }
 
-void Image::show()
+void LineDetector::show()
 {
     cv::imshow("Image", image_bgr_);
 
@@ -499,7 +502,7 @@ void Image::show()
     cv::waitKey(0);
 }
 
-cv::Mat Image::get_segmented_image() const
+cv::Mat LineDetector::get_segmented_image() const
 {
     cv::Mat segmentation(
         image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -514,7 +517,7 @@ cv::Mat Image::get_segmented_image() const
     return segmentation.clone();
 }
 
-cv::Mat Image::get_segmented_image_wout_outliers() const
+cv::Mat LineDetector::get_segmented_image_wout_outliers() const
 {
     cv::Mat segmentation(
         image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -533,12 +536,12 @@ cv::Mat Image::get_segmented_image_wout_outliers() const
     return segmentation.clone();
 }
 
-cv::Mat Image::get_image() const
+cv::Mat LineDetector::get_image() const
 {
     return image_bgr_.clone();
 }
 
-cv::Mat Image::get_image_lines() const
+cv::Mat LineDetector::get_image_lines() const
 {
     cv::Mat segmentation(
         image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -567,7 +570,7 @@ cv::Mat Image::get_image_lines() const
     return segmentation.clone();
 }
 
-void Image::print_pixels() const
+void LineDetector::print_pixels() const
 {
     for (auto &i : pixel_dataset_)
     {
@@ -579,7 +582,8 @@ void Image::print_pixels() const
     }
 }
 
-std::vector<std::pair<FaceColor, FaceColor>> Image::make_valid_combinations()
+std::vector<std::pair<FaceColor, FaceColor>>
+LineDetector::make_valid_combinations()
 {
     std::vector<FaceColor> color_keys;
     std::vector<std::pair<FaceColor, FaceColor>> color_pairs;
@@ -602,7 +606,7 @@ std::vector<std::pair<FaceColor, FaceColor>> Image::make_valid_combinations()
     return color_pairs;
 }
 
-void Image::get_line_between_colors(FaceColor c1, FaceColor c2)
+void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
 {
     std::vector<cv::Point2f> classifier_input_data;
     std::vector<int> classifier_output_data;
@@ -711,17 +715,18 @@ void Image::get_line_between_colors(FaceColor c1, FaceColor c2)
     }
 }
 
-cv::Mat Image::get_mask(FaceColor color)
+cv::Mat LineDetector::get_mask(FaceColor color)
 {
     return masks_[color];
 }
 
-void Image::start_timer()
+void LineDetector::start_timer()
 {
     start_ = std::chrono::high_resolution_clock::now();
 }
 
-void Image::finish_timer(bool verbose = false, const std::string &message = "")
+void LineDetector::finish_timer(bool verbose = false,
+                                const std::string &message = "")
 {
     finish_ = std::chrono::high_resolution_clock::now();
 
@@ -731,7 +736,7 @@ void Image::finish_timer(bool verbose = false, const std::string &message = "")
     }
 }
 
-void Image::print_time_taken(const std::string &message = "")
+void LineDetector::print_time_taken(const std::string &message = "")
 {
     std::cout << message << " "
               << std::chrono::duration_cast<std::chrono::milliseconds>(finish_ -

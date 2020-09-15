@@ -13,7 +13,7 @@
 
 namespace trifinger_object_tracking
 {
-class Image
+class LineDetector
 {
 private:
     CubeModel cube_model_;
@@ -54,7 +54,7 @@ private:
 
 public:
     // constructor
-    Image(const CubeModel &cube_model, const std::string &model_directory);
+    LineDetector(const CubeModel &cube_model, const std::string &model_directory);
 
     // member functions
 

@@ -5,7 +5,7 @@
 
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
-#include <trifinger_object_tracking/image.hpp>
+#include <trifinger_object_tracking/line_detector.hpp>
 #include <trifinger_object_tracking/pose.hpp>
 #include <trifinger_object_tracking/utils.hpp>
 
@@ -140,7 +140,8 @@ int main(int argc, char **argv)
             return -1;
         }
 
-        trifinger_object_tracking::Image line_detector(cube_model, "../data");
+        trifinger_object_tracking::LineDetector line_detector(cube_model,
+                                                              "../data");
 
         int until = 0;
         for (std::string folder_path : camera_data)
@@ -167,9 +168,12 @@ int main(int argc, char **argv)
                 if (debug == 1)
                 {
                     subplot.set_subimg(line_detector.get_image(), i, 0);
-                    subplot.set_subimg(line_detector.get_segmented_image(), i, 1);
                     subplot.set_subimg(
-                        line_detector.get_segmented_image_wout_outliers(), i, 2);
+                        line_detector.get_segmented_image(), i, 1);
+                    subplot.set_subimg(
+                        line_detector.get_segmented_image_wout_outliers(),
+                        i,
+                        2);
                     subplot.set_subimg(line_detector.get_image_lines(), i, 3);
                 }
                 i++;

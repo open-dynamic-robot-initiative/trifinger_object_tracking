@@ -10,7 +10,7 @@
 
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
-#include <trifinger_object_tracking/image.hpp>
+#include <trifinger_object_tracking/line_detector.hpp>
 #include <trifinger_object_tracking/pose.hpp>
 
 /**
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
         cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
 
         // TODO: line detector class should not take a fixed image in c'tor
-        trifinger_object_tracking::Image line_detector(cube_model,
+        trifinger_object_tracking::LineDetector line_detector(cube_model,
                                                        model_directory);
 
         // TODO clone needed?
