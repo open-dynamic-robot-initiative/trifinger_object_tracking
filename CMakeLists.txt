@@ -58,8 +58,17 @@ add_library(lib_object_pose
 target_link_libraries(lib_object_pose
     ${catkin_LIBRARIES} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
+add_library(cv_sub_images src/cv_sub_images.cpp)
+target_link_libraries(cv_sub_images ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+
 add_executable(object_pose src/main.cpp)
-target_link_libraries(object_pose lib_object_pose pthread ${OpenMP_CXX_LIBRARIES})
+target_link_libraries(object_pose
+    lib_object_pose
+    cv_sub_images
+    pthread
+    ${OpenMP_CXX_LIBRARIES}
+)
 
 
 # TODO frontend should be in separate library

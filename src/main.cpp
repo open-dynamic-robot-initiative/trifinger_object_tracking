@@ -3,6 +3,7 @@
 #include <trifinger_object_tracking/image.hpp>
 #include <trifinger_object_tracking/pose.hpp>
 #include <trifinger_object_tracking/utils.hpp>
+#include <trifinger_object_tracking/cv_sub_images.hpp>
 #include <ostream>
 #include <fstream>
 
@@ -10,54 +11,6 @@
 int debug = 1;
 int cols_plot = 5;
 
-
-
-/**
- * @brief Show multiple images in one.
- *
- * Creates a matrix of images of the same size.
- */
-
-namespace trifinger_object_tracking
-{
-class CvSubImages
-{
-public:
-    CvSubImages(cv::Size img_size,
-                unsigned rows,
-                unsigned cols,
-                unsigned border = 5,
-                cv::Scalar background = cv::Scalar(255, 255, 255))
-        : subimg_size_(img_size), border_(border)
-    {
-        unsigned width = img_size.width * cols + border * (cols + 1);
-        unsigned height = img_size.height * rows + border * (rows + 1);
-
-        image_ = cv::Mat(height, width, CV_8UC3, background);
-    }
-
-    void set_subimg(const cv::Mat &image, unsigned row, unsigned col)
-    {
-        unsigned offset_row = border_ + row * (subimg_size_.height + border_);
-        unsigned offset_col = border_ + col * (subimg_size_.width + border_);
-
-        cv::Mat subimg = image_(cv::Rect(
-            offset_col, offset_row, subimg_size_.width, subimg_size_.height));
-
-        image.copyTo(subimg);
-    }
-
-    const cv::Mat &get_image() const
-    {
-        return image_;
-    }
-
-private:
-    cv::Size subimg_size_;
-    unsigned border_;
-    cv::Mat image_;
-};
-}  // namespace trifinger_object_tracking
 
 int main(int argc, char **argv)
 {
