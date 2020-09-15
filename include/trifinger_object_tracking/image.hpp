@@ -57,7 +57,7 @@ private:
 
 public:
     // constructor
-    Image(cv::Mat, std::string model_directory = "../data");
+    Image(cv::Mat, std::string model_directory);
 
     // member functions
     void set_color_bounds();

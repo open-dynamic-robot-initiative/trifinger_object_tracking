@@ -5,10 +5,12 @@
  * pose detection on them and visualize the result.
  */
 #include <iostream>
+
+#include <ros/package.h>
+
 #include <trifinger_object_tracking/cv_sub_images.hpp>
 #include <trifinger_object_tracking/image.hpp>
 #include <trifinger_object_tracking/pose.hpp>
-
 
 /**
  * @brief Load images camera{60,180,300}.png from the given directory.
@@ -31,17 +33,30 @@ std::array<cv::Mat, 3> load_images(const std::string &directory)
     return {image60, image180, image300};
 }
 
-
 int main(int argc, char **argv)
 {
-    if (argc != 2)
+    if (argc != 2 && argc != 3)
     {
         std::cout << "Invalid number of arguments." << std::endl;
-        std::cout << "Usage: " << argv[0] << " <path to images>" << std::endl;
+        std::cout << "Usage: " << argv[0]
+                  << " image_directory [segmentation_model_directory]"
+                  << std::endl;
         return 1;
     }
-
     const std::string data_dir = argv[1];
+
+    // if no path is provided, load the segmentation model from
+    // trifinger_object_tracking/data.
+    std::string model_directory;
+    if (argc < 3)
+    {
+        model_directory =
+            ros::package::getPath("trifinger_object_tracking") + "/data";
+    }
+    else
+    {
+        model_directory = argv[2];
+    }
 
     trifinger_object_tracking::CvSubImages subplot(cv::Size(720, 540), 3, 5);
     cv::namedWindow("debug", cv::WINDOW_NORMAL);
@@ -61,7 +76,8 @@ int main(int argc, char **argv)
         cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
 
         // TODO: line detector class should not take a fixed image in c'tor
-        trifinger_object_tracking::Image line_detector(image.clone());
+        trifinger_object_tracking::Image line_detector(image.clone(),
+                                                       model_directory);
 
         // FIXME name: "start" thread? This suggests that it does not wait until
         // it is finished, but I think it is doing this.
@@ -82,7 +98,6 @@ int main(int argc, char **argv)
     // needed
     trifinger_object_tracking::Pose pose(images);
     pose.find_pose();
-
 
     // visualize the detected pose
     // TODO: make this a method of pose detector?
@@ -115,7 +130,7 @@ int main(int argc, char **argv)
                cv::Size(debug_img.cols / 2, debug_img.rows / 2));
 
     cv::imshow("debug", rescaled_debug_img);
-    char key = cv::waitKey(0);
+    cv::waitKey(0);
 
     return 0;
 }

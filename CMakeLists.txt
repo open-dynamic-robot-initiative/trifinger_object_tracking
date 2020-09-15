@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
     pybind11_catkin
     serialization_utils
     time_series
+    roslib
 )
 
 search_for_eigen()
@@ -25,6 +26,7 @@ find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(Armadillo REQUIRED)
 
+# TODO can this be removed?
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
