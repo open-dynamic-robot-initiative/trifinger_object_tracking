@@ -10,14 +10,15 @@
 
 namespace trifinger_object_tracking
 {
-enum class FaceColor
+enum FaceColor
 {
     RED,
     GREEN,
     BLUE,
     YELLOW,
     CYAN,
-    MAGENTA
+    MAGENTA,
+    N_COLORS
 };
 
 std::ostream& operator<<(std::ostream& os, const FaceColor& color);

@@ -24,7 +24,9 @@ private:
     // private variables
     cv::Mat image_, image_hsv_, image_bgr_;
     std::string model_directory_;
-    std::map<FaceColor, ColorBounds> color_bounds_;
+
+    std::array<ColorBounds, FaceColor::N_COLORS> color_bounds_;
+
     //! individual color segment mask
     std::map<FaceColor, cv::Mat> masks_;
     std::map<FaceColor, std::vector<int>> pixel_idx_;
@@ -32,6 +34,7 @@ private:
     std::map<FaceColor, std::vector<cv::Point>> pixel_dataset_;
     //! total pixels with a particular color
     std::map<FaceColor, int> color_count_;
+
 
     struct cmp
     {  // Declaring a set that will store the std::pairs using the comparator

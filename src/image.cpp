@@ -234,6 +234,7 @@ void Image::gmm_lop_p(FaceColor color, const int row_idx)
     gmm_result_.row(row_idx) = result;
 }
 
+// TODO what exactly is this doing?
 void Image::clean_mask(FaceColor color)
 {
     auto start = std::chrono::high_resolution_clock::now();
@@ -322,8 +323,6 @@ void Image::clean_mask(FaceColor color)
                     idx2.push_back(i);
                 }
             }
-            //        std::sort(merged.begin(), merged.end());
-            //        std::sort(idx2.begin(), idx2.end());
             std::vector<int> final_idx(merged.size() + idx2.size());
             std::vector<int>::iterator it =
                 std::set_intersection(merged.begin(),
