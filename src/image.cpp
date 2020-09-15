@@ -15,7 +15,8 @@ static float calculateAccuracyPercent(const cv::Mat &original,
     return 100 * (float)countNonZero(original == predicted) / predicted.rows;
 }
 
-Image::Image(cv::Mat img_bgr, const std::string &model_directory) : image_bgr_(img_bgr)
+Image::Image(cv::Mat img_bgr, const std::string &model_directory)
+    : image_bgr_(img_bgr)
 {
     set_color_bounds();
     load_segmentation_models(model_directory);
@@ -57,20 +58,12 @@ void Image::initialize_variables()
 {
     for (FaceColor color : cube_model_.get_colors())
     {
-        // global variable initializer
-        if (masks_.find(color) == masks_.end())
-        {
-            cv::Mat m(cv::Size(1, image_bgr_.rows * image_bgr_.cols),
-                      CV_64FC1,
-                      cv::Scalar(0));
-            masks_[color] = m;
-        }
+        masks_[color] = cv::Mat(cv::Size(1, image_bgr_.rows * image_bgr_.cols),
+                                CV_64FC1,
+                                cv::Scalar(0));
 
-        if (pixel_idx_.find(color) == pixel_idx_.end())
-        {
-            std::vector<int> idx;
-            pixel_idx_[color] = idx;
-        }
+        // TODO is this explicit clear needed?
+        pixel_idx_[color].clear();
     }
 }
 
@@ -101,7 +94,8 @@ void Image::run_line_detection()
 void Image::gmm_mask()
 {
     // FIXME magic numbers
-    arma::mat gmm_result = arma::mat(FaceColor::N_COLORS, 388800, arma::fill::zeros);
+    arma::mat gmm_result =
+        arma::mat(FaceColor::N_COLORS, 388800, arma::fill::zeros);
 
     std::map<int, FaceColor> idx2color;
 
@@ -122,7 +116,8 @@ void Image::gmm_mask()
     {
         // getting GMM score for each color
         std::thread th(
-            [this, &input_data, &gmm_result](FaceColor color, const int row_idx) {
+            [this, &input_data, &gmm_result](FaceColor color,
+                                             const int row_idx) {
                 gmm_result.row(row_idx) =
                     segmentation_models_[color].log_p(input_data);
             },
@@ -178,7 +173,6 @@ void Image::create_final_mask(FaceColor color)
     masks_[color].convertTo(masks_[color], CV_8U);
     create_pixel_dataset(color);
 }
-
 
 // TODO what exactly is this doing?
 void Image::clean_mask(FaceColor color)
@@ -410,7 +404,6 @@ bool Image::denoise()
     int uniqueCount =
         std::unique(unique_.begin(), unique_.end()) - unique_.begin();
 
-
     struct compare_label_count
     {  // Declaring a set that will store the std::pairs using the comparator
        // logic
@@ -441,7 +434,8 @@ bool Image::denoise()
             std::cout << "Not enough elements\n";
             max_count_label = -1;
         }
-        std::pair<int, int> elem = *std::next(label_count.begin(), element_number);
+        std::pair<int, int> elem =
+            *std::next(label_count.begin(), element_number);
         max_count_label = elem.first;
 
         idx.clear();

@@ -27,8 +27,8 @@ private:
     std::array<ColorBounds, FaceColor::N_COLORS> color_bounds_;
 
     //! individual color segment mask
-    std::map<FaceColor, cv::Mat> masks_;
-    std::map<FaceColor, std::vector<int>> pixel_idx_;
+    std::array<cv::Mat, FaceColor::N_COLORS> masks_;
+    std::array<std::vector<int>, FaceColor::N_COLORS> pixel_idx_;
     //! pixel coordinates of the region of interest
     std::map<FaceColor, std::vector<cv::Point>> pixel_dataset_;
     //! total pixels with a particular color
