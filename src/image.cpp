@@ -58,6 +58,8 @@ std::map<ColorPair, Line> Image::detect_lines(const cv::Mat &image_bgr)
     image_bgr_ = image_bgr;
     cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
 
+    lines_.clear();
+
     gmm_mask();
     find_dominant_colors(3);
     denoise();

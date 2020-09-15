@@ -140,6 +140,8 @@ int main(int argc, char **argv)
             return -1;
         }
 
+        trifinger_object_tracking::Image line_detector(cube_model, "../data");
+
         int until = 0;
         for (std::string folder_path : camera_data)
         {
@@ -160,16 +162,15 @@ int main(int argc, char **argv)
             int i = 0;
             for (auto &image : frames)
             {
-                trifinger_object_tracking::Image obj(cube_model, "../data");
-                lines[i] = obj.detect_lines(image.clone());
+                lines[i] = line_detector.detect_lines(image.clone());
 
                 if (debug == 1)
                 {
-                    subplot.set_subimg(obj.get_image(), i, 0);
-                    subplot.set_subimg(obj.get_segmented_image(), i, 1);
+                    subplot.set_subimg(line_detector.get_image(), i, 0);
+                    subplot.set_subimg(line_detector.get_segmented_image(), i, 1);
                     subplot.set_subimg(
-                        obj.get_segmented_image_wout_outliers(), i, 2);
-                    subplot.set_subimg(obj.get_image_lines(), i, 3);
+                        line_detector.get_segmented_image_wout_outliers(), i, 2);
+                    subplot.set_subimg(line_detector.get_image_lines(), i, 3);
                 }
                 i++;
             }
