@@ -28,12 +28,12 @@ void Image::set_color_bounds()
     // The new colors
     // TODO: bounds not updated for new colors
     // TODO: are these bounds still needed?
-    colors_[FaceColor::MAGENTA] = {"magenta", {135, 150, 70}, {175, 235, 215}};
-    colors_[FaceColor::BLUE] = {"blue", {101, 243, 81}, {112, 255, 234}};
-    colors_[FaceColor::RED] = {"red", {0, 235, 180}, {16, 255, 255}};
-    colors_[FaceColor::GREEN] = {"green", {57, 185, 60}, {70, 255, 225}};
-    colors_[FaceColor::CYAN] = {"cyan", {75, 50, 40}, {97, 255, 180}};
-    colors_[FaceColor::YELLOW] = {"yellow", {27, 130, 160}, {37, 255, 255}};
+    color_bounds_[FaceColor::MAGENTA] = {{135, 150, 70}, {175, 235, 215}};
+    color_bounds_[FaceColor::BLUE] = {{101, 243, 81}, {112, 255, 234}};
+    color_bounds_[FaceColor::RED] = {{0, 235, 180}, {16, 255, 255}};
+    color_bounds_[FaceColor::GREEN] = {{57, 185, 60}, {70, 255, 225}};
+    color_bounds_[FaceColor::CYAN] = {{75, 50, 40}, {97, 255, 180}};
+    color_bounds_[FaceColor::YELLOW] = {{27, 130, 160}, {37, 255, 255}};
 }
 
 void Image::initialize_variables()
@@ -243,8 +243,8 @@ void Image::clean_mask(FaceColor color)
         {
             cv::Mat mask;
             std::vector<int> merged(pixel_idx_[color]);
-            auto lower = colors_[color].lower;
-            auto upper = colors_[color].upper;
+            auto lower = color_bounds_[color].lower;
+            auto upper = color_bounds_[color].upper;
             int n = image_.rows * image_.cols;
             cv::inRange(image_hsv_,
                         cv::Scalar(lower[0], lower[1], lower[2]),
@@ -276,8 +276,8 @@ void Image::clean_mask(FaceColor color)
         {
             cv::Mat mask;
             std::vector<int> merged(pixel_idx_[color]);
-            auto lower = colors_[color].lower;
-            auto upper = colors_[color].upper;
+            auto lower = color_bounds_[color].lower;
+            auto upper = color_bounds_[color].upper;
             int n = image_.rows * image_.cols;
             cv::inRange(
                 image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
@@ -307,8 +307,8 @@ void Image::clean_mask(FaceColor color)
         {
             cv::Mat mask;
             std::vector<int> merged(pixel_idx_[color]);
-            auto lower = colors_[color].lower;
-            auto upper = colors_[color].upper;
+            auto lower = color_bounds_[color].lower;
+            auto upper = color_bounds_[color].upper;
             int n = image_.rows * image_.cols;
             cv::inRange(
                 image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);

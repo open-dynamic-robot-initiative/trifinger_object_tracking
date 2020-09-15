@@ -14,7 +14,6 @@ namespace trifinger_object_tracking
 {
 struct ColorBounds
 {
-    std::string name;
     int lower[3];
     int upper[3];
 };
@@ -25,7 +24,7 @@ private:
     // private variables
     cv::Mat image_, image_hsv_, image_bgr_;
     std::string model_directory_;
-    std::map<FaceColor, ColorBounds> colors_;
+    std::map<FaceColor, ColorBounds> color_bounds_;
     //! individual color segment mask
     std::map<FaceColor, cv::Mat> masks_;
     std::map<FaceColor, std::vector<int>> pixel_idx_;
