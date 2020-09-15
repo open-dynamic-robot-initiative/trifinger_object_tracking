@@ -1,19 +1,86 @@
 #include <chrono>
+#include <fstream>
+#include <ostream>
 #include <thread>
-#include <trifinger_object_tracking/image.hpp>
+
+#include <trifinger_object_tracking/cube_model.hpp>
+#include <trifinger_object_tracking/cv_sub_images.hpp>
+#include <trifinger_object_tracking/line_detector.hpp>
 #include <trifinger_object_tracking/pose.hpp>
 #include <trifinger_object_tracking/utils.hpp>
-#include <trifinger_object_tracking/cv_sub_images.hpp>
-#include <ostream>
-#include <fstream>
-
 
 int debug = 1;
 int cols_plot = 5;
 
+using namespace trifinger_object_tracking;
 
-using trifinger_object_tracking::FaceColor;
+[[deprecated]] std::vector<cv::Mat> get_images(const std::string &path,
+                                               bool get_masks = false) {
+    std::vector<cv::Mat> frames;
+    auto files = fs::recursive_directory_iterator(path);
 
+    std::vector<std::string> file_names;
+    for (auto p : files)
+    {
+        int ascii = (int)p.path().string()[37];
+
+        if (ascii >= 48 && ascii <= 57)
+        {
+            if (get_masks)
+            {
+                std::cout << p.path().string() << "\n";
+                cv::Mat image = cv::imread(p.path().string(), 1);
+                if (!image.data)
+                {
+                    std::cout << (p.path().string());
+                    printf("No image data \n");
+                    exit(0);
+                }
+                cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
+                cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
+                // cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
+                frames.push_back(image);
+
+                cv::Mat temp = image.reshape(1, image.rows * image.cols);
+                temp.convertTo(temp, CV_64FC1);
+                cv::Mat res;
+                remove_if(temp, res, is_zero, true);
+                std::cout << res.rows << " " << res.cols << std::endl;
+            }
+            else
+            {
+                continue;
+            }
+        }
+        if (get_masks)
+        {
+            continue;
+        }
+
+        file_names.push_back(p.path().string());
+    }
+
+    std::swap(file_names[0], file_names[1]);
+
+    for (auto p : file_names)
+    {
+        std::cout << path << " " << p << "\n";
+
+        cv::Mat image = cv::imread(p, 1);
+        if (!image.data)
+        {
+            std::cout << (p);
+            printf("No image data \n");
+            exit(0);
+        }
+        cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
+        cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
+        // cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
+        frames.push_back(image);
+    }
+
+    return frames;
+}
 
 int main(int argc, char **argv)
 {
@@ -25,8 +92,10 @@ int main(int argc, char **argv)
     std::vector<std::string> camera_data =
         trifinger_object_tracking::get_directories(data_dir);
 
-    bool generate_gmm_dataset =
-        false;  // set true if you want to train gmm models for each color
+    // set true if you want to train gmm models for each color
+    bool generate_gmm_dataset = false;
+
+    trifinger_object_tracking::CubeModel cube_model;
 
     // Generate dataset for GMM model for each color and train it
     if (generate_gmm_dataset)
@@ -50,80 +119,66 @@ int main(int argc, char **argv)
         cv::resizeWindow(
             "debug", subplot.get_image().cols, subplot.get_image().rows);
 
-
         // for saving to a video file
         int frame_width = 1815;
         int frame_height = 820;
         cv::Size frame_size(frame_width, frame_height);
         int frames_per_second = 1;
-        cv::VideoWriter oVideoWriter("./video_3.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
-                                      frames_per_second, frame_size, true);
+        cv::VideoWriter oVideoWriter(
+            "./video_3.avi",
+            cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
+            frames_per_second,
+            frame_size,
+            true);
 
-        //If the VideoWriter object is not initialized successfully, exit the program
+        // If the VideoWriter object is not initialized successfully, exit the
+        // program
         if (oVideoWriter.isOpened() == false)
         {
             std::cout << "Cannot save the video to a file" << std::endl;
-            std::cin.get(); //wait for any key press
+            std::cin.get();  // wait for any key press
             return -1;
         }
+
+        trifinger_object_tracking::LineDetector line_detector(cube_model,
+                                                              "../data");
 
         int until = 0;
         for (std::string folder_path : camera_data)
         {
             until++;
-//            if (until == 5) { break;}
+            //            if (until == 5) { break;}
             // getting frames from three cameras
-//            folder_path = "../data/cube_dataset_real_cube/0003/";
-            std::vector<cv::Mat> frames =
-                trifinger_object_tracking::get_images(folder_path);
+            //            folder_path = "../data/cube_dataset_real_cube/0003/";
+            std::vector<cv::Mat> frames = get_images(folder_path);
 
             // sending frames color segmentation
             auto start = std::chrono::high_resolution_clock::now();
-            std::vector<trifinger_object_tracking::Image> images;
-            int thread_type = 0;  // 1 = multi-threaded
 
-            if (thread_type == 0)
+            std::array<std::map<trifinger_object_tracking::ColorPair,
+                                trifinger_object_tracking::Line>,
+                       3>
+                lines;
+
+            int i = 0;
+            for (auto &image : frames)
             {
-                int i = 0;
-                for (auto &image : frames)
-                {
-                    trifinger_object_tracking::Image obj(image.clone(), "../data");
-                    obj.run_line_detection();
-                    images.push_back(obj);
+                lines[i] = line_detector.detect_lines(image.clone());
 
-                    if (debug == 1)
-                    {
-                        subplot.set_subimg(images[i].get_image(), i, 0);
-                        subplot.set_subimg(
-                            images[i].get_segmented_image(), i, 1);
-                        subplot.set_subimg(
-                            images[i].get_segmented_image_wout_outliers(),
-                            i,
-                            2);
-                        subplot.set_subimg(images[i].get_image_lines(), i, 3);
-                    }
-                    i++;
-                }
-            }
-            else
-            {
-                std::vector<std::thread> thread_vector;
-                for (auto &image : frames)
+                if (debug == 1)
                 {
-                    trifinger_object_tracking::Image obj(image, "../data");
-                    images.push_back(obj);
-                    std::thread th(
-                        &trifinger_object_tracking::Image::run_line_detection,
-                        images.back());
-                    thread_vector.push_back(move(th));
+                    subplot.set_subimg(line_detector.get_image(), i, 0);
+                    subplot.set_subimg(
+                        line_detector.get_segmented_image(), i, 1);
+                    subplot.set_subimg(
+                        line_detector.get_segmented_image_wout_outliers(),
+                        i,
+                        2);
+                    subplot.set_subimg(line_detector.get_image_lines(), i, 3);
                 }
+                i++;
+            }
 
-                // waiting for threads to finish
-                for (std::thread &th : thread_vector)
-                {
-                    if (th.joinable()) th.join();
-                }
-            }
             auto finish = std::chrono::high_resolution_clock::now();
             std::cout << "Segmentation took "
                       << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -132,27 +187,18 @@ int main(int argc, char **argv)
                       << " milliseconds\n";
             std::cout << "Segmentation complete"
                       << "\n";
-            int display = 0;  // 0 = False
-            if (display == 1)
-            {
-                for (auto t : images)
-                {
-                    t.show();
-                }
-            }
 
             std::cout << "\n@#$@#$@#$@#$@#$@#$\n\n";
-            int lines = 1;  // 0 = False
-            if (lines == 1)
+            int print_lines = 1;  // 0 = False
+            if (print_lines == 1)
             {
-                for (auto t : images)
+                for (const auto &image_lines : lines)
                 {
                     std::cout << "Lines\n";
-                    for (auto &l : t.lines_)
+                    for (const auto &l : image_lines)
                     {
                         std::cout << l.first.first << " " << l.first.second
-                                  << " " << l.second.first << " "
-                                  << l.second.second
+                                  << " " << l.second.a << " " << l.second.b
                                   << std::endl;  // prints color_pairs and
                                                  // slope-intercept for the
                                                  // separating line
@@ -164,12 +210,13 @@ int main(int argc, char **argv)
             if (true)
             {
                 std::fstream file;
-                std::string word, filename = "../data/lines/" + std::to_string(until) + ".txt";
+                std::string word, filename = "../data/lines/" +
+                                             std::to_string(until) + ".txt";
                 file.open(filename.c_str());
                 std::cout << filename << std::endl;
                 int iii = -1;
-                FaceColor c1,c2;
-                float f1,f2;
+                FaceColor c1, c2;
+                float f1, f2;
                 int counter;
 
                 std::map<std::string, FaceColor> color_from_string;
@@ -180,7 +227,8 @@ int main(int argc, char **argv)
                 color_from_string["cyan"] = FaceColor::CYAN;
                 color_from_string["magenta"] = FaceColor::MAGENTA;
 
-                while(file >> word) { //take word and print
+                while (file >> word)
+                {  // take word and print
                     std::cout << word << std::endl;
                     if (word == "new")
                     {
@@ -188,12 +236,12 @@ int main(int argc, char **argv)
                         iii++;
                         if (iii < 3)
                         {
-                            images[iii].lines_.clear();
+                            lines[iii].clear();
                         }
                     }
                     else
                     {
-                        switch(counter)
+                        switch (counter)
                         {
                             case 0:
                                 c1 = color_from_string.at(word);
@@ -206,7 +254,8 @@ int main(int argc, char **argv)
                                 break;
                             case 3:
                                 f2 = std::atof(word.c_str());
-                                images[iii].lines_[std::make_pair(c1, c2)] = {f1, f2};
+                                lines[iii][std::make_pair(c1, c2)] =
+                                    Line(f1, f2);
                                 counter = -1;
                                 break;
                             default:
@@ -215,25 +264,23 @@ int main(int argc, char **argv)
                         counter++;
                     }
                 }
-
             }
 
-
             // Pose Detection from below
-            trifinger_object_tracking::Pose pose(images);
+            trifinger_object_tracking::Pose pose(cube_model, lines);
             pose.find_pose();
 
             std::cout << "Pose detected\n";
 
             if (debug == 1)
             {
-                for (int i = 0; i < images.size(); i++)
+                for (int i = 0; i < frames.size(); i++)
                 {
                     std::vector<cv::Point2f> imgpoints =
                         pose.projected_points_[i];
-                    cv::Mat poseimg = images[i].get_image().clone();
+                    cv::Mat poseimg = frames[i].clone();
                     // draw the cube edges in the image
-                    for (auto &it : images[i].cube_model_.object_model_)
+                    for (auto &it : cube_model.object_model_)
                     {
                         cv::Point p1, p2;
                         p1.x = imgpoints[it.second.first].x;
@@ -249,19 +296,17 @@ int main(int argc, char **argv)
 
             cv::Mat debug_img = subplot.get_image();
 
-            cv::cvtColor(debug_img, debug_img, cv::COLOR_RGB2BGR);
-
             // scale down debug image by factor 2, otherwise it is too big
             cv::Mat rescaled_debug_img;
             cv::resize(debug_img,
                        rescaled_debug_img,
                        cv::Size(debug_img.cols / 2, debug_img.rows / 2));
 
-            //write the video frame to the file
+            // write the video frame to the file
             oVideoWriter.write(rescaled_debug_img);
 
-            int show = 0;
-            if (show==1)
+            int show = 1;
+            if (show == 1)
             {
                 cv::imshow("debug", rescaled_debug_img);
                 char key = cv::waitKey(0);
@@ -271,10 +316,8 @@ int main(int argc, char **argv)
                     break;
                 }
             }
-
-
         }
-        //Flush and close the video file
+        // Flush and close the video file
         oVideoWriter.release();
     }
 

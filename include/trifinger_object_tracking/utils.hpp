@@ -12,9 +12,6 @@ std::vector<std::string> get_directories(const std::string &s);
 
 bool comparator(const std::string &a, const std::string &b);
 
-std::vector<cv::Mat> get_images(const std::string &path,
-                                bool get_masks = false);
-
 std::map<char, std::string> initialize();
 
 std::map<std::string, cv::Mat> get_color_masks(

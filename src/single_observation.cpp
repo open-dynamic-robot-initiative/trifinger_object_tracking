@@ -8,8 +8,9 @@
 
 #include <ros/package.h>
 
+#include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
-#include <trifinger_object_tracking/image.hpp>
+#include <trifinger_object_tracking/line_detector.hpp>
 #include <trifinger_object_tracking/pose.hpp>
 
 /**
@@ -65,23 +66,25 @@ int main(int argc, char **argv)
 
     auto frames = load_images(data_dir);
 
-    std::vector<trifinger_object_tracking::Image> images;
+    trifinger_object_tracking::CubeModel cube_model;
+    std::array<std::map<trifinger_object_tracking::ColorPair,
+                        trifinger_object_tracking::Line>,
+               3>
+        lines;
 
     int i = 0;
-    for (auto image : frames)
+    for (const cv::Mat &image : frames)
     {
         // FIXME: move this processing to somewhere else!
         cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
         cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
-        cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
 
         // TODO: line detector class should not take a fixed image in c'tor
-        trifinger_object_tracking::Image line_detector(image.clone(),
+        trifinger_object_tracking::LineDetector line_detector(cube_model,
                                                        model_directory);
 
-        line_detector.run_line_detection();
-
-        images.push_back(line_detector);
+        // TODO clone needed?
+        lines[i] = line_detector.detect_lines(image.clone());
 
         subplot.set_subimg(line_detector.get_image(), i, 0);
         subplot.set_subimg(line_detector.get_segmented_image(), i, 1);
@@ -94,17 +97,17 @@ int main(int argc, char **argv)
 
     // TODO: do not pass the full line detection class but only what is really
     // needed
-    trifinger_object_tracking::Pose pose(images);
+    trifinger_object_tracking::Pose pose(cube_model, lines);
     pose.find_pose();
 
     // visualize the detected pose
     // TODO: make this a method of pose detector?
-    for (int i = 0; i < images.size(); i++)
+    for (int i = 0; i < frames.size(); i++)
     {
         std::vector<cv::Point2f> imgpoints = pose.projected_points_[i];
-        cv::Mat poseimg = images[i].get_image().clone();
+        cv::Mat poseimg = frames[i].clone();
         // draw the cube edges in the image
-        for (auto &it : images[i].cube_model_.object_model_)
+        for (auto &it : cube_model.object_model_)
         {
             cv::Point p1, p2;
             p1.x = imgpoints[it.second.first].x;
@@ -118,8 +121,6 @@ int main(int argc, char **argv)
     }
 
     cv::Mat debug_img = subplot.get_image();
-
-    cv::cvtColor(debug_img, debug_img, cv::COLOR_RGB2BGR);
 
     // scale down debug image by factor 2, otherwise it is too big
     cv::Mat rescaled_debug_img;

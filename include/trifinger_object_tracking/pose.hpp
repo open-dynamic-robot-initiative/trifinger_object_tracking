@@ -1,10 +1,11 @@
 #pragma once
-#include <opencv2/opencv.hpp>
-#include <trifinger_object_tracking/image.hpp>
 #include <Eigen/Geometry>
 
+#include <opencv2/opencv.hpp>
 #include <opencv2/core/eigen.hpp>
 
+#include <trifinger_object_tracking/cube_model.hpp>
+#include <trifinger_object_tracking/types.hpp>
 
 namespace trifinger_object_tracking
 {
@@ -19,7 +20,9 @@ struct Stats
 
 class Pose
 {
-    std::vector<Image> image_objects_;
+    CubeModel cube_model_;
+    std::array<std::map<ColorPair, Line>, 3> lines_;
+
     cv::Mat camera_matrix_;       // camera matrix
     cv::Mat distortion_coeffs_;   // distortion coeffs
     cv::Mat rotation_matrix_;     // rotation matrix
@@ -36,7 +39,7 @@ class Pose
     std::vector<cv::Mat> pos_cams_w_frame_;
 
 public:
-    Pose(const std::vector<Image>&);
+    Pose(const CubeModel &cube_model, const std::array<std::map<ColorPair, Line>, 3> &lines);
 
     void cross_entropy_method();
 
