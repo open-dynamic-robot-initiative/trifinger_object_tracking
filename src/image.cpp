@@ -429,10 +429,21 @@ bool Image::denoise()
     std::sort(unique_.begin(), unique_.end());
     int uniqueCount =
         std::unique(unique_.begin(), unique_.end()) - unique_.begin();
-    label_count_.clear();
+
+
+    struct compare_label_count
+    {  // Declaring a set that will store the std::pairs using the comparator
+       // logic
+        bool operator()(std::pair<int, int> elem1, std::pair<int, int> elem2)
+        {
+            return elem1.second > elem2.second;
+        }
+    };
+
+    std::set<std::pair<int, int>, compare_label_count> label_count;
     for (int i = 0; i < uniqueCount; i++)
     {
-        label_count_.insert(
+        label_count.insert(
             std::make_pair(i, std::count(unique_.begin(), unique_.end(), i)));
     }
 
@@ -441,7 +452,18 @@ bool Image::denoise()
     float percentage_overlap = 40.0;
     do
     {
-        int max_count_label = getNthElement(element_number);
+        // get n-th element from label_count
+        // TODO: accessing a set with an index feels wrong.  use different data
+        // structure?
+        int max_count_label;
+        if (element_number >= label_count.size())
+        {
+            std::cout << "Not enough elements\n";
+            max_count_label = -1;
+        }
+        std::pair<int, int> elem = *std::next(label_count.begin(), element_number);
+        max_count_label = elem.first;
+
         idx.clear();
         for (int i = 0; i < labels_im.rows; i++)
         {
@@ -490,17 +512,6 @@ bool Image::denoise()
 
     find_dominant_colors(3);
     return true;
-}
-
-int Image::getNthElement(int n)
-{
-    if (n >= label_count_.size())
-    {
-        std::cout << "Not enough elements\n";
-        return -1;
-    }
-    std::pair<int, int> elem = *std::next(label_count_.begin(), n);
-    return elem.first;
 }
 
 void Image::show()

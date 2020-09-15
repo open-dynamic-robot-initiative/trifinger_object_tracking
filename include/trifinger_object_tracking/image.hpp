@@ -51,18 +51,6 @@ private:
 
     std::set<std::pair<FaceColor, int>, cmp> dominant_colors_;
 
-    struct cmp2
-    {  // Declaring a set that will store the std::pairs using the comparator
-       // logic
-        bool operator()(std::pair<int, int> elem1, std::pair<int, int> elem2)
-        {
-            return elem1.second > elem2.second;
-        }
-    };
-
-    std::set<std::pair<int, int>, cmp2> label_count_;
-
-
     void set_color_bounds();
     void load_segmentation_models(const std::string &model_directory);
 
@@ -103,8 +91,6 @@ public:
     bool denoise();
 
     void clean_mask(FaceColor color);
-
-    int getNthElement(int n);
 
     void create_final_mask(FaceColor color);
 
