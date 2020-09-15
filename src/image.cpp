@@ -101,40 +101,34 @@ void Image::run_line_detection()
     auto start = std::chrono::high_resolution_clock::now();
     gmm_mask();
     auto finish = std::chrono::high_resolution_clock::now();
-    std::cout << "GMM masks took "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(finish -
-                                                                       start)
-                     .count()
-              << " milliseconds\n";
+    //std::cout << "GMM masks took "
+    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish -
+    //                                                                   start)
+    //                 .count()
+    //          << " milliseconds\n";
 
     find_dominant_colors(3);
-
-    std::cout << "***************\n";
 
     start = std::chrono::high_resolution_clock::now();
     bool status = denoise();
     finish = std::chrono::high_resolution_clock::now();
-    std::cout << "denoise "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(finish -
-                                                                       start)
-                     .count()
-              << " milliseconds\n";
+    //std::cout << "denoise "
+    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish -
+    //                                                                   start)
+    //                 .count()
+    //          << " milliseconds\n";
 
-    // cv::imshow("Orig", image_bgr_);
     for (auto &i : dominant_colors_)
     {
         cv::Mat output;
         cv::bitwise_and(image_bgr_, image_bgr_, output, masks_[i.first]);
-        // cv::imshow(i.first, output);
     }
-    // cv::waitKey(0);
 
     std::vector<std::pair<std::string, std::string>> color_pairs =
         make_valid_combinations();
     for (auto &i : color_pairs)
     {
-        std::cout << "$$$$$$$$$$$$$$$$$$\n";
-        std::cout << i.first << " " << i.second << std::endl;
+        //std::cout << i.first << " " << i.second << std::endl;
         get_line_between_colors(i.first, i.second);
     }
 }
