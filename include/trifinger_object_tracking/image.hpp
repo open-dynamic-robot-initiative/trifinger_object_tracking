@@ -22,7 +22,7 @@ class Image
 {
 private:
     // private variables
-    cv::Mat image_, image_hsv_, image_bgr_;
+    cv::Mat image_hsv_, image_bgr_;
 
     std::array<ColorBounds, FaceColor::N_COLORS> color_bounds_;
 

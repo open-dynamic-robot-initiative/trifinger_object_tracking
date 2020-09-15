@@ -73,7 +73,6 @@ int main(int argc, char **argv)
         // FIXME: move this processing to somewhere else!
         cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
         cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
-        cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
 
         // TODO: line detector class should not take a fixed image in c'tor
         trifinger_object_tracking::Image line_detector(image.clone(),
@@ -118,8 +117,6 @@ int main(int argc, char **argv)
     }
 
     cv::Mat debug_img = subplot.get_image();
-
-    cv::cvtColor(debug_img, debug_img, cv::COLOR_RGB2BGR);
 
     // scale down debug image by factor 2, otherwise it is too big
     cv::Mat rescaled_debug_img;

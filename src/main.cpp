@@ -249,8 +249,6 @@ int main(int argc, char **argv)
 
             cv::Mat debug_img = subplot.get_image();
 
-            cv::cvtColor(debug_img, debug_img, cv::COLOR_RGB2BGR);
-
             // scale down debug image by factor 2, otherwise it is too big
             cv::Mat rescaled_debug_img;
             cv::resize(debug_img,

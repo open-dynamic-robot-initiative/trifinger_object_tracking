@@ -75,7 +75,7 @@ std::vector<cv::Mat> get_images(const std::string &path, bool get_masks)
                 }
                 cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
                 cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
-                cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
+                //cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
                 frames.push_back(image);
 
                 cv::Mat temp = image.reshape(1, image.rows * image.cols);
@@ -113,7 +113,7 @@ std::vector<cv::Mat> get_images(const std::string &path, bool get_masks)
         }
         cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
         cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
-        cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
+        //cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
         frames.push_back(image);
     }
 

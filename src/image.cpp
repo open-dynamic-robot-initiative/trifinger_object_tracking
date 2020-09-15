@@ -15,15 +15,12 @@ static float calculateAccuracyPercent(const cv::Mat &original,
     return 100 * (float)countNonZero(original == predicted) / predicted.rows;
 }
 
-Image::Image(cv::Mat img, const std::string &model_directory) : image_(img)
+Image::Image(cv::Mat img_bgr, const std::string &model_directory) : image_bgr_(img_bgr)
 {
     set_color_bounds();
     load_segmentation_models(model_directory);
 
-    // FIXME we should not use both RGB and BGR, get rid of one of them
-    // (probably RGB)
-    cv::cvtColor(image_, image_hsv_, cv::COLOR_RGB2HSV);
-    cv::cvtColor(image_, image_bgr_, cv::COLOR_RGB2BGR);
+    cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
 }
 
 void Image::set_color_bounds()
@@ -63,7 +60,7 @@ void Image::initialize_variables()
         // global variable initializer
         if (masks_.find(color) == masks_.end())
         {
-            cv::Mat m(cv::Size(1, image_.rows * image_.cols),
+            cv::Mat m(cv::Size(1, image_bgr_.rows * image_bgr_.cols),
                       CV_64FC1,
                       cv::Scalar(0));
             masks_[color] = m;
@@ -81,27 +78,11 @@ void Image::run_line_detection()
 {
     initialize_variables();
 
-    auto start = std::chrono::high_resolution_clock::now();
     gmm_mask();
-    auto finish = std::chrono::high_resolution_clock::now();
-    // std::cout << "GMM masks took "
-    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish
-    //          -
-    //                                                                   start)
-    //                 .count()
-    //          << " milliseconds\n";
 
     find_dominant_colors(3);
 
-    start = std::chrono::high_resolution_clock::now();
     denoise();
-    finish = std::chrono::high_resolution_clock::now();
-    // std::cout << "denoise "
-    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish
-    //          -
-    //                                                                   start)
-    //                 .count()
-    //          << " milliseconds\n";
 
     for (auto &i : dominant_colors_)
     {
@@ -113,7 +94,6 @@ void Image::run_line_detection()
         make_valid_combinations();
     for (auto &i : color_pairs)
     {
-        // std::cout << i.first << " " << i.second << std::endl;
         get_line_between_colors(i.first, i.second);
     }
 }
@@ -194,7 +174,7 @@ void Image::create_final_mask(FaceColor color)
     {
         masks_[color].at<double>(idx, 0) = 255.0;
     }
-    masks_[color] = masks_[color].reshape(1, image_.rows);
+    masks_[color] = masks_[color].reshape(1, image_bgr_.rows);
     masks_[color].convertTo(masks_[color], CV_8U);
     create_pixel_dataset(color);
 }
@@ -212,7 +192,7 @@ void Image::clean_mask(FaceColor color)
             std::vector<int> merged(pixel_idx_[color]);
             auto lower = color_bounds_[color].lower;
             auto upper = color_bounds_[color].upper;
-            int n = image_.rows * image_.cols;
+            int n = image_bgr_.rows * image_bgr_.cols;
             cv::inRange(image_hsv_,
                         cv::Scalar(lower[0], lower[1], lower[2]),
                         cv::Scalar(upper[0], upper[1], upper[2]),
@@ -245,7 +225,7 @@ void Image::clean_mask(FaceColor color)
             std::vector<int> merged(pixel_idx_[color]);
             auto lower = color_bounds_[color].lower;
             auto upper = color_bounds_[color].upper;
-            int n = image_.rows * image_.cols;
+            int n = image_bgr_.rows * image_bgr_.cols;
             cv::inRange(
                 image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
             mask = mask.reshape(1, n);
@@ -276,7 +256,7 @@ void Image::clean_mask(FaceColor color)
             std::vector<int> merged(pixel_idx_[color]);
             auto lower = color_bounds_[color].lower;
             auto upper = color_bounds_[color].upper;
-            int n = image_.rows * image_.cols;
+            int n = image_bgr_.rows * image_bgr_.cols;
             cv::inRange(
                 image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
             mask = mask.reshape(1, n);
@@ -395,14 +375,14 @@ bool Image::denoise()
 
     std::cout << "Denoising\n";
     cv::Mat merged_mask(
-        cv::Size(1, image_.rows * image_.cols), CV_8U, cv::Scalar(0));
+        cv::Size(1, image_bgr_.rows * image_bgr_.cols), CV_8U, cv::Scalar(0));
     std::vector<int> merged_idx;
 
     for (auto &color : dominant_colors_)
     {
         std::cout << color.first << std::endl;
         cv::Mat mask = masks_[color.first];
-        mask = mask.reshape(1, image_.rows * image_.cols);
+        mask = mask.reshape(1, image_bgr_.rows * image_bgr_.cols);
         for (int i = 0; i < mask.rows; i++)
         {
             if (mask.at<uchar>(i, 0) == 255)
@@ -413,14 +393,14 @@ bool Image::denoise()
         }
     }
 
-    merged_mask = merged_mask.reshape(1, image_.rows);
+    merged_mask = merged_mask.reshape(1, image_bgr_.rows);
 
     cv::Mat dilated_mask, labels_im;
     cv::dilate(merged_mask, dilated_mask, kernel, cv::Point(-1, -1), 4);
 
     int num_labels = cv::connectedComponents(dilated_mask, labels_im);
 
-    labels_im = labels_im.reshape(1, image_.rows * image_.cols);
+    labels_im = labels_im.reshape(1, image_bgr_.rows * image_bgr_.cols);
     std::vector<int> unique_;
     for (int i = 0; i < labels_im.rows; i++)
     {
@@ -490,7 +470,7 @@ bool Image::denoise()
     {
         int j = 0;
         cv::Mat mask = masks_[color.first];
-        mask = mask.reshape(1, image_.rows * image_.cols);
+        mask = mask.reshape(1, image_bgr_.rows * image_bgr_.cols);
         for (int i = 0; i < mask.rows; i++)
         {
             if (mask.at<uchar>(i, 0) == 255)
@@ -506,7 +486,7 @@ bool Image::denoise()
                 }
             }
         }
-        masks_[color.first] = mask.reshape(1, image_.rows);
+        masks_[color.first] = mask.reshape(1, image_bgr_.rows);
         create_pixel_dataset(color.first);
     }
 
@@ -516,12 +496,10 @@ bool Image::denoise()
 
 void Image::show()
 {
-    cv::Mat bgr_image;
-    cv::cvtColor(image_, bgr_image, cv::COLOR_HSV2BGR);
-    cv::imshow("Image", bgr_image);
+    cv::imshow("Image", image_bgr_);
 
     cv::Mat segmentation(
-        image_.rows, image_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+        image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
 
     std::cout << "Dominant colours: ";
     for (auto &m : dominant_colors_)
@@ -534,6 +512,7 @@ void Image::show()
         segmentation.setTo(color, masks_[m.first]);
     }
     std::cout << std::endl;
+    cv::Mat bgr_image;
     cv::cvtColor(segmentation, bgr_image, cv::COLOR_HSV2BGR);
     cv::imshow("Segmentation", bgr_image);
     cv::waitKey(0);
@@ -542,7 +521,7 @@ void Image::show()
 cv::Mat Image::get_segmented_image()
 {
     cv::Mat segmentation(
-        image_.rows, image_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+        image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
 
     for (auto &m : dominant_colors_)
     {
@@ -550,14 +529,14 @@ cv::Mat Image::get_segmented_image()
         cv::Scalar color(rgb[0], rgb[1], rgb[2]);
         segmentation.setTo(color, masks_[m.first]);
     }
-    cv::cvtColor(segmentation, segmentation, cv::COLOR_HSV2RGB);
+    cv::cvtColor(segmentation, segmentation, cv::COLOR_HSV2BGR);
     return segmentation.clone();
 }
 
 cv::Mat Image::get_segmented_image_wout_outliers()
 {
     cv::Mat segmentation(
-        image_.rows, image_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+        image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
 
     for (auto &m : dominant_colors_)
     {
@@ -569,19 +548,20 @@ cv::Mat Image::get_segmented_image_wout_outliers()
             segmentation.at<cv::Vec3b>(d.y, d.x) = color;
         }
     }
-    cv::cvtColor(segmentation, segmentation, cv::COLOR_HSV2RGB);
+    cv::cvtColor(segmentation, segmentation, cv::COLOR_HSV2BGR);
     return segmentation.clone();
 }
 
 cv::Mat Image::get_image()
 {
-    return image_.clone();
+    return image_bgr_.clone();
 }
 
 cv::Mat Image::get_image_lines()
 {
+    // FIXME Do not use HSV image as base
     cv::Mat segmentation(
-        image_.rows, image_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+        image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
 
     for (auto &m : dominant_colors_)
     {
@@ -597,13 +577,13 @@ cv::Mat Image::get_image_lines()
         float a = line.second.first;
         float b = line.second.second;
         int xmin = 0;
-        int xmax = image_.cols;
+        int xmax = image_bgr_.cols;
 
         cv::Point p1((a * xmin) + b, xmin);
         cv::Point p2((a * xmax) + b, xmax);
         cv::line(segmentation, p1, p2, cv::Scalar(20, 100, 100), 10);
     }
-    cv::cvtColor(segmentation, segmentation, cv::COLOR_HSV2RGB);
+    cv::cvtColor(segmentation, segmentation, cv::COLOR_HSV2BGR);
     return segmentation.clone();
 }
 
