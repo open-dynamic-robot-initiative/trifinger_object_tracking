@@ -330,11 +330,11 @@ std::vector<float> Pose::cost_function(
         }
     }
     auto finish = std::chrono::high_resolution_clock::now();
-    std::cout << "CEM creating 3d proposed points took "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(finish -
-                                                                       start)
-                     .count()
-              << " milliseconds\n";
+    //std::cout << "CEM creating 3d proposed points took "
+    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish -
+    //                                                                   start)
+    //                 .count()
+    //          << " milliseconds\n";
     proposed_new_cube_pts_w =
         proposed_new_cube_pts_w.reshape(3, number_of_particles * 8);
 
@@ -408,11 +408,11 @@ std::vector<float> Pose::cost_function(
         }
     }
     finish = std::chrono::high_resolution_clock::now();
-    std::cout << "CEM projecting the points and line error calc took "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(finish -
-                                                                       start)
-                     .count()
-              << " milliseconds\n";
+    //std::cout << "CEM projecting the points and line error calc took "
+    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish -
+    //                                                                   start)
+    //                 .count()
+    //          << " milliseconds\n";
     return error;
 }
 
@@ -476,11 +476,11 @@ void Pose::cross_entropy_method()
                                   "orientation");
         }
         auto finish = std::chrono::high_resolution_clock::now();
-        std::cout << "CEM sampling part took "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(
-                         finish - start)
-                         .count()
-                  << " milliseconds\n";
+        //std::cout << "CEM sampling part took "
+        //          << std::chrono::duration_cast<std::chrono::milliseconds>(
+        //                 finish - start)
+        //                 .count()
+        //          << " milliseconds\n";
         costs = cost_function(sample_p, sample_o);
 
         std::vector<float> sorted_costs = costs;
