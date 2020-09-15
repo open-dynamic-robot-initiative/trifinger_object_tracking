@@ -148,51 +148,30 @@ int main(int argc, char **argv)
             // sending frames color segmentation
             auto start = std::chrono::high_resolution_clock::now();
             std::vector<trifinger_object_tracking::Image> images;
-            int thread_type = 0;  // 1 = multi-threaded
 
-            if (thread_type == 0)
+            std::array<std::map<trifinger_object_tracking::ColorPair,
+                                trifinger_object_tracking::Line>,
+                       3>
+                lines;
+
+            int i = 0;
+            for (auto &image : frames)
             {
-                int i = 0;
-                for (auto &image : frames)
-                {
-                    trifinger_object_tracking::Image obj(image.clone(),
-                                                         "../data");
-                    obj.run_line_detection();
-                    images.push_back(obj);
+                trifinger_object_tracking::Image obj(image.clone(), "../data");
+                lines[i] = obj.run_line_detection();
+                images.push_back(obj);
 
-                    if (debug == 1)
-                    {
-                        subplot.set_subimg(images[i].get_image(), i, 0);
-                        subplot.set_subimg(
-                            images[i].get_segmented_image(), i, 1);
-                        subplot.set_subimg(
-                            images[i].get_segmented_image_wout_outliers(),
-                            i,
-                            2);
-                        subplot.set_subimg(images[i].get_image_lines(), i, 3);
-                    }
-                    i++;
-                }
-            }
-            else
-            {
-                std::vector<std::thread> thread_vector;
-                for (auto &image : frames)
+                if (debug == 1)
                 {
-                    trifinger_object_tracking::Image obj(image, "../data");
-                    images.push_back(obj);
-                    std::thread th(
-                        &trifinger_object_tracking::Image::run_line_detection,
-                        images.back());
-                    thread_vector.push_back(move(th));
+                    subplot.set_subimg(images[i].get_image(), i, 0);
+                    subplot.set_subimg(images[i].get_segmented_image(), i, 1);
+                    subplot.set_subimg(
+                        images[i].get_segmented_image_wout_outliers(), i, 2);
+                    subplot.set_subimg(images[i].get_image_lines(), i, 3);
                 }
+                i++;
+            }
 
-                // waiting for threads to finish
-                for (std::thread &th : thread_vector)
-                {
-                    if (th.joinable()) th.join();
-                }
-            }
             auto finish = std::chrono::high_resolution_clock::now();
             std::cout << "Segmentation took "
                       << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -211,17 +190,16 @@ int main(int argc, char **argv)
             }
 
             std::cout << "\n@#$@#$@#$@#$@#$@#$\n\n";
-            int lines = 1;  // 0 = False
-            if (lines == 1)
+            int print_lines = 1;  // 0 = False
+            if (print_lines == 1)
             {
-                for (auto t : images)
+                for (const auto &image_lines : lines)
                 {
                     std::cout << "Lines\n";
-                    for (auto &l : t.lines_)
+                    for (const auto &l : image_lines)
                     {
                         std::cout << l.first.first << " " << l.first.second
-                                  << " " << l.second.first << " "
-                                  << l.second.second
+                                  << " " << l.second.a << " " << l.second.b
                                   << std::endl;  // prints color_pairs and
                                                  // slope-intercept for the
                                                  // separating line
@@ -259,7 +237,7 @@ int main(int argc, char **argv)
                         iii++;
                         if (iii < 3)
                         {
-                            images[iii].lines_.clear();
+                            lines[iii].clear();
                         }
                     }
                     else
@@ -277,8 +255,8 @@ int main(int argc, char **argv)
                                 break;
                             case 3:
                                 f2 = std::atof(word.c_str());
-                                images[iii].lines_[std::make_pair(c1, c2)] = {
-                                    f1, f2};
+                                lines[iii][std::make_pair(c1, c2)] =
+                                    Line(f1, f2);
                                 counter = -1;
                                 break;
                             default:
@@ -290,7 +268,7 @@ int main(int argc, char **argv)
             }
 
             // Pose Detection from below
-            trifinger_object_tracking::Pose pose(images);
+            trifinger_object_tracking::Pose pose(images[0].cube_model_, lines);
             pose.find_pose();
 
             std::cout << "Pose detected\n";

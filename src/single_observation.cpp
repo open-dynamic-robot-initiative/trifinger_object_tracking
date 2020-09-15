@@ -66,6 +66,10 @@ int main(int argc, char **argv)
     auto frames = load_images(data_dir);
 
     std::vector<trifinger_object_tracking::Image> images;
+    std::array<std::map<trifinger_object_tracking::ColorPair,
+                        trifinger_object_tracking::Line>,
+               3>
+        lines;
 
     int i = 0;
     for (auto image : frames)
@@ -78,7 +82,7 @@ int main(int argc, char **argv)
         trifinger_object_tracking::Image line_detector(image.clone(),
                                                        model_directory);
 
-        line_detector.run_line_detection();
+        lines[i] = line_detector.run_line_detection();
 
         images.push_back(line_detector);
 
@@ -93,7 +97,7 @@ int main(int argc, char **argv)
 
     // TODO: do not pass the full line detection class but only what is really
     // needed
-    trifinger_object_tracking::Pose pose(images);
+    trifinger_object_tracking::Pose pose(images[0].cube_model_, lines);
     pose.find_pose();
 
     // visualize the detected pose

@@ -9,15 +9,10 @@
 #include <opencv2/opencv.hpp>
 
 #include <trifinger_object_tracking/cube_model.hpp>
+#include <trifinger_object_tracking/types.hpp>
 
 namespace trifinger_object_tracking
 {
-struct ColorBounds
-{
-    int lower[3];
-    int upper[3];
-};
-
 class Image
 {
 private:
@@ -36,6 +31,8 @@ private:
     std::array<arma::gmm_diag, FaceColor::N_COLORS> segmentation_models_;
 
     std::chrono::high_resolution_clock::time_point start_, finish_;
+
+    std::map<ColorPair, Line> lines_;
 
 
     struct cmp
@@ -63,7 +60,7 @@ public:
 
     cv::Mat get_mask(FaceColor color);
 
-    void run_line_detection();
+    std::map<ColorPair, Line> run_line_detection();
 
     void create_pixel_dataset(FaceColor color);
 
@@ -97,7 +94,6 @@ public:
 
 
     // member variables
-    std::map<std::pair<FaceColor, FaceColor>, std::pair<float, float>> lines_;
 
     CubeModel cube_model_;
 };

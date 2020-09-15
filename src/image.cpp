@@ -54,7 +54,7 @@ void Image::load_segmentation_models(const std::string &model_directory)
     }
 }
 
-void Image::run_line_detection()
+std::map<ColorPair, Line> Image::run_line_detection()
 {
     gmm_mask();
 
@@ -74,6 +74,8 @@ void Image::run_line_detection()
     {
         get_line_between_colors(i.first, i.second);
     }
+
+    return lines_;
 }
 
 void Image::gmm_mask()
@@ -551,8 +553,8 @@ cv::Mat Image::get_image_lines()
     }
     for (auto &line : lines_)
     {
-        float a = line.second.first;
-        float b = line.second.second;
+        float a = line.second.a;
+        float b = line.second.b;
         int xmin = 0;
         int xmax = image_bgr_.cols;
 
@@ -702,7 +704,7 @@ void Image::get_line_between_colors(FaceColor c1, FaceColor c2)
 
         if (accuracy_ > 90.0)
         {
-            lines_[std::make_pair(c1, c2)] = {a, b};
+            lines_[std::make_pair(c1, c2)] = Line(a, b);
         }
     }
 }
