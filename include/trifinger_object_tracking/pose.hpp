@@ -25,7 +25,7 @@ class Pose
     cv::Mat rotation_matrix_;     // rotation matrix
     cv::Mat translation_matrix_;  // traslation matrixtranslation matrix
     cv::Mat reference_center_Point_3d_;
-    std::map<std::string, int> face_normals_v_;
+    std::map<FaceColor, int> face_normals_v_;
     cv::Mat reference_vector_normals_;
     Stats position_;
     Stats orientation_;
@@ -36,7 +36,7 @@ class Pose
     std::vector<cv::Mat> pos_cams_w_frame_;
 
 public:
-    Pose(std::vector<Image>);
+    Pose(const std::vector<Image>&);
 
     void cross_entropy_method();
 

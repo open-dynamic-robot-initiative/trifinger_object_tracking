@@ -19,7 +19,6 @@ Image::Image(cv::Mat img, std::string model_directory)
     : image_(img), model_directory_(model_directory)
 {
     set_color_bounds();
-    initialise_object_model();
     cv::cvtColor(image_, image_hsv_, cv::COLOR_RGB2HSV);
     cv::cvtColor(image_, image_bgr_, cv::COLOR_RGB2BGR);
 }
@@ -28,70 +27,51 @@ void Image::set_color_bounds()
 {
     // The new colors
     // TODO: bounds not updated for new colors
-    colors_["magenta"] = {"magenta", {135, 150, 70}, {175, 235, 215}};
-    colors_["blue"] = {"blue", {101, 243, 81}, {112, 255, 234}};
-    colors_["red"] = {"red", {0, 235, 180}, {16, 255, 255}};
-    colors_["green"] = {"green", {57, 185, 60}, {70, 255, 225}};
-    colors_["cyan"] = {"cyan", {75, 50, 40}, {97, 255, 180}};
-    colors_["yellow"] = {"yellow", {27, 130, 160}, {37, 255, 255}};
-}
-
-void Image::initialise_object_model()
-{
-    object_model_[std::make_pair("yellow", "cyan")] = {0, 1};
-    object_model_[std::make_pair("yellow", "magenta")] = {0, 2};
-    object_model_[std::make_pair("yellow", "green")] = {1, 3};
-    object_model_[std::make_pair("yellow", "blue")] = {2, 3};
-    object_model_[std::make_pair("blue", "green")] = {3, 7};
-    object_model_[std::make_pair("cyan", "green")] = {1, 5};
-    object_model_[std::make_pair("cyan", "magenta")] = {0, 4};
-    object_model_[std::make_pair("blue", "magenta")] = {2, 6};
-    object_model_[std::make_pair("red", "magenta")] = {4, 6};
-    object_model_[std::make_pair("red", "cyan")] = {4, 5};
-    object_model_[std::make_pair("red", "green")] = {5, 7};
-    object_model_[std::make_pair("red", "blue")] = {6, 7};
-
-    for (auto &i : object_model_)
-    {
-        object_model_[std::make_pair(i.first.second, i.first.first)] = i.second;
-    }
+    // TODO: are these bounds still needed?
+    colors_[FaceColor::MAGENTA] = {"magenta", {135, 150, 70}, {175, 235, 215}};
+    colors_[FaceColor::BLUE] = {"blue", {101, 243, 81}, {112, 255, 234}};
+    colors_[FaceColor::RED] = {"red", {0, 235, 180}, {16, 255, 255}};
+    colors_[FaceColor::GREEN] = {"green", {57, 185, 60}, {70, 255, 225}};
+    colors_[FaceColor::CYAN] = {"cyan", {75, 50, 40}, {97, 255, 180}};
+    colors_[FaceColor::YELLOW] = {"yellow", {27, 130, 160}, {37, 255, 255}};
 }
 
 void Image::initialize_variables()
 {
-    for (auto &color : colors_)
+    for (FaceColor color : cube_model_.get_colors())
     {
         // global variable initializer
-        if (masks_.find(color.first) == masks_.end())
+        if (masks_.find(color) == masks_.end())
         {
             cv::Mat m(cv::Size(1, image_.rows * image_.cols),
                       CV_64FC1,
                       cv::Scalar(0));
-            masks_[color.first] = m;
+            masks_[color] = m;
         }
 
-        if (pixel_idx_.find(color.first) == pixel_idx_.end())
+        if (pixel_idx_.find(color) == pixel_idx_.end())
         {
             std::vector<int> idx;
-            pixel_idx_[color.first] = idx;
+            pixel_idx_[color] = idx;
         }
     }
 
     // for BGR + HSV input
-    //    threshold_ = {{"red", -38.0},
-    //                 {"green", -34.0},
-    //                 {"blue", -35.0},
-    //                 {"yellow", -35.0},
-    //                 {"magenta", -33.0},
-    //                 {"cyan", -35.0}};
+    //    threshold_ = {{FaceColor::RED, -38.0},
+    //                 {FaceColor::GREEN, -34.0},
+    //                 {FaceColor::BLUE, -35.0},
+    //                 {FaceColor::YELLOW, -35.0},
+    //                 {FaceColor::MAGENTA, -33.0},
+    //                 {FaceColor::CYAN, -35.0}};
 
+    // TODO what threshold is this?
     // for HSV input
-    threshold_ = {{"red", -18.0},
-                  {"green", -18.0},
-                  {"blue", -16.0},
-                  {"yellow", -20.0},
-                  {"magenta", -18.0},
-                  {"cyan", -16.0}};
+    threshold_ = {{FaceColor::RED, -18.0},
+                  {FaceColor::GREEN, -18.0},
+                  {FaceColor::BLUE, -16.0},
+                  {FaceColor::YELLOW, -20.0},
+                  {FaceColor::MAGENTA, -18.0},
+                  {FaceColor::CYAN, -16.0}};
 }
 
 void Image::run_line_detection()
@@ -101,8 +81,9 @@ void Image::run_line_detection()
     auto start = std::chrono::high_resolution_clock::now();
     gmm_mask();
     auto finish = std::chrono::high_resolution_clock::now();
-    //std::cout << "GMM masks took "
-    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish -
+    // std::cout << "GMM masks took "
+    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish
+    //          -
     //                                                                   start)
     //                 .count()
     //          << " milliseconds\n";
@@ -110,10 +91,11 @@ void Image::run_line_detection()
     find_dominant_colors(3);
 
     start = std::chrono::high_resolution_clock::now();
-    bool status = denoise();
+    denoise();
     finish = std::chrono::high_resolution_clock::now();
-    //std::cout << "denoise "
-    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish -
+    // std::cout << "denoise "
+    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish
+    //          -
     //                                                                   start)
     //                 .count()
     //          << " milliseconds\n";
@@ -124,11 +106,11 @@ void Image::run_line_detection()
         cv::bitwise_and(image_bgr_, image_bgr_, output, masks_[i.first]);
     }
 
-    std::vector<std::pair<std::string, std::string>> color_pairs =
+    std::vector<std::pair<FaceColor, FaceColor>> color_pairs =
         make_valid_combinations();
     for (auto &i : color_pairs)
     {
-        //std::cout << i.first << " " << i.second << std::endl;
+        // std::cout << i.first << " " << i.second << std::endl;
         get_line_between_colors(i.first, i.second);
     }
 }
@@ -152,14 +134,14 @@ void Image::gmm_mask()
     start_timer();
     int color_idx = 0;
     std::vector<std::thread> thread_vector;
-    for (auto &color : colors_)
+    for (FaceColor color : cube_model_.get_colors())
     {
         // getting GMM score for each color
-        std::thread th(&Image::gmm_lop_p, this, color.first, color_idx);
+        std::thread th(&Image::gmm_lop_p, this, color, color_idx);
         thread_vector.push_back(move(th));
 
         // used for getting argmax -> color
-        idx2color_[color_idx] = color.first;
+        idx2color_[color_idx] = color;
         color_idx++;
     }
 
@@ -177,7 +159,7 @@ void Image::gmm_mask()
     {
         auto max_idx = gmm_result_.col(row_idx).index_max();
         auto max_val = gmm_result_.col(row_idx).max();
-        std::string color = idx2color_[max_idx];
+        FaceColor color = idx2color_[max_idx];
         if (max_val > -18.0)
         {
             pixel_idx_[color].push_back(row_idx);
@@ -190,9 +172,9 @@ void Image::gmm_mask()
     // Background cleaning and reshaping
     start_timer();
     thread_vector.clear();
-    for (auto &color : colors_)
+    for (FaceColor color : cube_model_.get_colors())
     {
-        std::thread th(&Image::create_final_mask, this, color.first);
+        std::thread th(&Image::create_final_mask, this, color);
         thread_vector.push_back(move(th));
     }
     for (std::thread &th : thread_vector)
@@ -202,7 +184,7 @@ void Image::gmm_mask()
     finish_timer(true, "final cleaning and reshaping ");
 }
 
-void Image::create_final_mask(const std::string &color)
+void Image::create_final_mask(FaceColor color)
 {
     clean_mask(color);
     for (auto &idx : pixel_idx_[color])
@@ -220,7 +202,7 @@ void Image::arg_max(const int idx)
     {
         auto max_idx = gmm_result_.col(row_idx).index_max();
         auto max_val = gmm_result_.col(row_idx).max();
-        std::string color = idx2color_[max_idx];
+        FaceColor color = idx2color_[max_idx];
         if (max_val > threshold_[color])
         {
             pixel_idx_[color].push_back(row_idx);
@@ -228,15 +210,16 @@ void Image::arg_max(const int idx)
     }
 }
 
-void Image::gmm_lop_p(const std::string &color, const int row_idx)
+void Image::gmm_lop_p(FaceColor color, const int row_idx)
 {
     arma::gmm_diag model;
-    std::string saved_model_path =
-        model_directory_ + "/" + color + "_diag_hsv.gmm";
+    std::string saved_model_path = model_directory_ + "/" +
+                                   cube_model_.get_color_name(color) +
+                                   "_diag_hsv.gmm";
     bool status = model.load(saved_model_path);
     if (status == false)
     {
-        throw std::runtime_error("Failed to load GMM for " + color);
+        throw std::runtime_error("Failed to load GMM from " + saved_model_path);
     }
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -251,101 +234,111 @@ void Image::gmm_lop_p(const std::string &color, const int row_idx)
     gmm_result_.row(row_idx) = result;
 }
 
-void Image::clean_mask(const std::string &color)
+void Image::clean_mask(FaceColor color)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    if (color == "cyan")
+    switch (color)
     {
-        cv::Mat mask;
-        std::vector<int> merged(pixel_idx_[color]);
-        auto lower = colors_[color].lower;
-        auto upper = colors_[color].upper;
-        int n = image_.rows * image_.cols;
-        cv::inRange(image_hsv_,
-                    cv::Scalar(lower[0], lower[1], lower[2]),
-                    cv::Scalar(upper[0], upper[1], upper[2]),
-                    mask);
-        mask = mask.reshape(1, n);
-        mask.convertTo(mask, CV_64FC1);
-        std::vector<int> idx2;
-        for (int i = 0; i < n; i++)
+        case FaceColor::CYAN:
         {
-            if ((float)mask.at<double>(i, 0) == 255)
+            cv::Mat mask;
+            std::vector<int> merged(pixel_idx_[color]);
+            auto lower = colors_[color].lower;
+            auto upper = colors_[color].upper;
+            int n = image_.rows * image_.cols;
+            cv::inRange(image_hsv_,
+                        cv::Scalar(lower[0], lower[1], lower[2]),
+                        cv::Scalar(upper[0], upper[1], upper[2]),
+                        mask);
+            mask = mask.reshape(1, n);
+            mask.convertTo(mask, CV_64FC1);
+            std::vector<int> idx2;
+            for (int i = 0; i < n; i++)
             {
-                idx2.push_back(i);
+                if ((float)mask.at<double>(i, 0) == 255)
+                {
+                    idx2.push_back(i);
+                }
             }
+            std::vector<int> final_idx(merged.size() + idx2.size());
+            std::vector<int>::iterator it =
+                std::set_intersection(merged.begin(),
+                                      merged.end(),
+                                      idx2.begin(),
+                                      idx2.end(),
+                                      final_idx.begin());
+            final_idx.resize(it - final_idx.begin());
+            pixel_idx_[color] = final_idx;
         }
-        std::vector<int> final_idx(merged.size() + idx2.size());
-        std::vector<int>::iterator it =
-            std::set_intersection(merged.begin(),
-                                  merged.end(),
-                                  idx2.begin(),
-                                  idx2.end(),
-                                  final_idx.begin());
-        final_idx.resize(it - final_idx.begin());
-        pixel_idx_[color] = final_idx;
-    }
+        break;
 
-    if (color == "green")
-    {
-        cv::Mat mask;
-        std::vector<int> merged(pixel_idx_[color]);
-        auto lower = colors_[color].lower;
-        auto upper = colors_[color].upper;
-        int n = image_.rows * image_.cols;
-        cv::inRange(
-            image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
-        mask = mask.reshape(1, n);
-        mask.convertTo(mask, CV_64FC1);
-        std::vector<int> idx2;
-        for (int i = 0; i < n; i++)
+        case FaceColor::GREEN:
         {
-            if ((float)mask.at<double>(i, 0) == 0)
+            cv::Mat mask;
+            std::vector<int> merged(pixel_idx_[color]);
+            auto lower = colors_[color].lower;
+            auto upper = colors_[color].upper;
+            int n = image_.rows * image_.cols;
+            cv::inRange(
+                image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
+            mask = mask.reshape(1, n);
+            mask.convertTo(mask, CV_64FC1);
+            std::vector<int> idx2;
+            for (int i = 0; i < n; i++)
             {
-                idx2.push_back(i);
+                if ((float)mask.at<double>(i, 0) == 0)
+                {
+                    idx2.push_back(i);
+                }
             }
+            std::vector<int> final_idx(merged.size() + idx2.size());
+            std::vector<int>::iterator it =
+                std::set_intersection(merged.begin(),
+                                      merged.end(),
+                                      idx2.begin(),
+                                      idx2.end(),
+                                      final_idx.begin());
+            final_idx.resize(it - final_idx.begin());
+            pixel_idx_[color] = final_idx;
         }
-        std::vector<int> final_idx(merged.size() + idx2.size());
-        std::vector<int>::iterator it =
-            std::set_intersection(merged.begin(),
-                                  merged.end(),
-                                  idx2.begin(),
-                                  idx2.end(),
-                                  final_idx.begin());
-        final_idx.resize(it - final_idx.begin());
-        pixel_idx_[color] = final_idx;
-    }
+        break;
 
-    if (color == "yellow")
-    {
-        cv::Mat mask;
-        std::vector<int> merged(pixel_idx_[color]);
-        auto lower = colors_[color].lower;
-        auto upper = colors_[color].upper;
-        int n = image_.rows * image_.cols;
-        cv::inRange(
-            image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
-        mask = mask.reshape(1, n);
-        mask.convertTo(mask, CV_64FC1);
-        std::vector<int> idx2;
-        for (int i = 0; i < n; i++)
+        case FaceColor::YELLOW:
         {
-            if ((float)mask.at<double>(i, 0) == 0)
+            cv::Mat mask;
+            std::vector<int> merged(pixel_idx_[color]);
+            auto lower = colors_[color].lower;
+            auto upper = colors_[color].upper;
+            int n = image_.rows * image_.cols;
+            cv::inRange(
+                image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
+            mask = mask.reshape(1, n);
+            mask.convertTo(mask, CV_64FC1);
+            std::vector<int> idx2;
+            for (int i = 0; i < n; i++)
             {
-                idx2.push_back(i);
+                if ((float)mask.at<double>(i, 0) == 0)
+                {
+                    idx2.push_back(i);
+                }
             }
+            //        std::sort(merged.begin(), merged.end());
+            //        std::sort(idx2.begin(), idx2.end());
+            std::vector<int> final_idx(merged.size() + idx2.size());
+            std::vector<int>::iterator it =
+                std::set_intersection(merged.begin(),
+                                      merged.end(),
+                                      idx2.begin(),
+                                      idx2.end(),
+                                      final_idx.begin());
+            final_idx.resize(it - final_idx.begin());
+            pixel_idx_[color] = final_idx;
         }
-        //        std::sort(merged.begin(), merged.end());
-        //        std::sort(idx2.begin(), idx2.end());
-        std::vector<int> final_idx(merged.size() + idx2.size());
-        std::vector<int>::iterator it =
-            std::set_intersection(merged.begin(),
-                                  merged.end(),
-                                  idx2.begin(),
-                                  idx2.end(),
-                                  final_idx.begin());
-        final_idx.resize(it - final_idx.begin());
-        pixel_idx_[color] = final_idx;
+        break;
+
+        default:
+            // do nothing
+            break;
     }
 
     auto finish = std::chrono::high_resolution_clock::now();
@@ -356,7 +349,7 @@ void Image::clean_mask(const std::string &color)
     //              << " milliseconds\n";
 }
 
-void Image::create_pixel_dataset(const std::string &color)
+void Image::create_pixel_dataset(FaceColor color)
 {
     std::vector<cv::Point> poi;
     cv::findNonZero(masks_[color], poi);
@@ -368,7 +361,7 @@ void Image::create_pixel_dataset(const std::string &color)
 void Image::find_dominant_colors(const int N_dominant_colors)
 {  // N dominant colors
     dominant_colors_.clear();
-    std::map<std::string, int> color_count_copy(color_count_);
+    std::map<FaceColor, int> color_count_copy(color_count_);
 
     int contains_blue = 0;
     int contains_cyan = 0;
@@ -377,32 +370,32 @@ void Image::find_dominant_colors(const int N_dominant_colors)
     {
         if (i.second > 100)
         {
-            if (i.first == "blue")
+            if (i.first == FaceColor::BLUE)
             {
                 contains_blue = 1;
             }
-            if (i.first == "cyan")
+            if (i.first == FaceColor::CYAN)
             {
                 contains_cyan = 1;
             }
 
             if (contains_blue == 1 && contains_cyan == 1)
             {
-                if (color_count_["blue"] > color_count_["cyan"])
+                if (color_count_[FaceColor::BLUE] >
+                    color_count_[FaceColor::CYAN])
                 {
-                    color_count_.erase("cyan");
+                    color_count_.erase(FaceColor::CYAN);
                     contains_cyan = 0;
                 }
                 else
                 {
-                    color_count_.erase("blue");
+                    color_count_.erase(FaceColor::BLUE);
                     contains_blue = 0;
                 }
             }
             else
             {
-                std::pair<std::string, int> c =
-                    std::make_pair(i.first, i.second);
+                auto c = std::make_pair(i.first, i.second);
                 dominant_colors_.insert(c);
             }
         }
@@ -414,7 +407,6 @@ void Image::find_dominant_colors(const int N_dominant_colors)
     }
 
     // Removing unwanted entries from the last
-    std::set<std::pair<std::string, int>>::iterator it;
     while (dominant_colors_.size() > N_dominant_colors)
     {
         auto aa = *std::prev(dominant_colors_.end());
@@ -572,12 +564,8 @@ void Image::show()
     {
         std::cout << m.first << ", ";
 
-        auto bounds = colors_[m.first];
-        // use the average of upper and lower bound to get a colour for
-        // visualization
-        cv::Scalar color((bounds.upper[0] + bounds.lower[0]) / 2,
-                         (bounds.upper[1] + bounds.lower[1]) / 2,
-                         (bounds.upper[2] + bounds.lower[2]) / 2);
+        auto rgb = cube_model_.get_hsv(m.first);
+        cv::Scalar color(rgb[0], rgb[1], rgb[2]);
 
         segmentation.setTo(color, masks_[m.first]);
     }
@@ -594,12 +582,9 @@ cv::Mat Image::get_segmented_image()
 
     for (auto &m : dominant_colors_)
     {
-        auto bounds = colors_[m.first];
-        // use the average of upper and lower bound to get a colour for
-        // visualization
-        cv::Scalar color((bounds.upper[0] + bounds.lower[0]) / 2,
-                         (bounds.upper[1] + bounds.lower[1]) / 2,
-                         (bounds.upper[2] + bounds.lower[2]) / 2);
+        auto rgb = cube_model_.get_hsv(m.first);
+        cv::Scalar color(rgb[0], rgb[1], rgb[2]);
+        std::cout << m.first << ": " << color << std::endl;
 
         segmentation.setTo(color, masks_[m.first]);
     }
@@ -614,12 +599,9 @@ cv::Mat Image::get_segmented_image_wout_outliers()
 
     for (auto &m : dominant_colors_)
     {
-        auto bounds = colors_[m.first];
-        // use the average of upper and lower bound to get a colour for
-        // visualization
-        cv::Vec3b color((bounds.upper[0] + bounds.lower[0]) / 2,
-                        (bounds.upper[1] + bounds.lower[1]) / 2,
-                        (bounds.upper[2] + bounds.lower[2]) / 2);
+        auto rgb = cube_model_.get_hsv(m.first);
+        cv::Vec3b color(rgb[0], rgb[1], rgb[2]);
+
         for (auto &d : pixel_dataset_[m.first])
         {
             segmentation.at<cv::Vec3b>(d.y, d.x) = color;
@@ -641,12 +623,8 @@ cv::Mat Image::get_image_lines()
 
     for (auto &m : dominant_colors_)
     {
-        auto bounds = colors_[m.first];
-        // use the average of upper and lower bound to get a colour for
-        // visualization
-        cv::Vec3b color((bounds.upper[0] + bounds.lower[0]) / 2,
-                        (bounds.upper[1] + bounds.lower[1]) / 2,
-                        (bounds.upper[2] + bounds.lower[2]) / 2);
+        auto rgb = cube_model_.get_hsv(m.first);
+        cv::Vec3b color(rgb[0], rgb[1], rgb[2]);
         for (auto &d : pixel_dataset_[m.first])
         {
             segmentation.at<cv::Vec3b>(d.y, d.x) = color;
@@ -679,29 +657,30 @@ void Image::print_pixels()
     }
 }
 
-std::vector<std::pair<std::string, std::string>>
-Image::make_valid_combinations()
+std::vector<std::pair<FaceColor, FaceColor>> Image::make_valid_combinations()
 {
-    std::vector<std::string> color_keys;
-    std::vector<std::pair<std::string, std::string>> color_pairs;
+    std::vector<FaceColor> color_keys;
+    std::vector<std::pair<FaceColor, FaceColor>> color_pairs;
     transform(dominant_colors_.begin(),
               dominant_colors_.end(),
               back_inserter(color_keys),
-              [](std::pair<std::string, int> elem) { return elem.first; });
+              [](std::pair<FaceColor, int> elem) { return elem.first; });
     for (auto it = color_keys.begin(); it != color_keys.end(); it++)
     {
         for (auto it2 = it + 1; it2 != color_keys.end(); it2++)
         {
             auto p = std::make_pair(*it, *it2);
-            auto idx = object_model_.find(p);
-            if (idx != object_model_.end()) color_pairs.push_back(p);
+            auto idx = cube_model_.object_model_.find(p);
+            if (idx != cube_model_.object_model_.end())
+            {
+                color_pairs.push_back(p);
+            }
         }
     }
     return color_pairs;
 }
 
-void Image::get_line_between_colors(const std::string &c1,
-                                    const std::string &c2)
+void Image::get_line_between_colors(FaceColor c1, FaceColor c2)
 {
     std::vector<cv::Point2f> classifier_input_data;
     std::vector<int> classifier_output_data;
@@ -810,9 +789,9 @@ void Image::get_line_between_colors(const std::string &c1,
     }
 }
 
-cv::Mat Image::get_mask(const std::string &color_name)
+cv::Mat Image::get_mask(FaceColor color)
 {
-    return masks_[color_name];
+    return masks_[color];
 }
 
 void Image::start_timer()

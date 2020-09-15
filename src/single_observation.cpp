@@ -104,7 +104,7 @@ int main(int argc, char **argv)
         std::vector<cv::Point2f> imgpoints = pose.projected_points_[i];
         cv::Mat poseimg = images[i].get_image().clone();
         // draw the cube edges in the image
-        for (auto &it : images[i].object_model_)
+        for (auto &it : images[i].cube_model_.object_model_)
         {
             cv::Point p1, p2;
             p1.x = imgpoints[it.second.first].x;
