@@ -98,6 +98,7 @@ void Image::gmm_mask()
         arma::mat(FaceColor::N_COLORS, 388800, arma::fill::zeros);
 
     std::map<int, FaceColor> idx2color;
+    std::array<std::vector<int>, FaceColor::N_COLORS> pixel_idx;
 
     // convert cv::Mat to arma::mat
     cv::Mat concatenated_data;
@@ -144,8 +145,8 @@ void Image::gmm_mask()
         FaceColor color = idx2color[max_idx];
         if (max_val > -18.0)
         {
-            pixel_idx_[color].push_back(row_idx);
-            pixel_idx_[color].push_back(row_idx + 1);
+            pixel_idx[color].push_back(row_idx);
+            pixel_idx[color].push_back(row_idx + 1);
         }
     }
 
@@ -154,9 +155,9 @@ void Image::gmm_mask()
     for (FaceColor color : cube_model_.get_colors())
     {
         std::thread th(
-            [this](FaceColor color) {
-                clean_mask(color);
-                for (auto &idx : pixel_idx_[color])
+            [this, &pixel_idx](FaceColor color) {
+                clean_mask(color, pixel_idx);
+                for (auto &idx : pixel_idx[color])
                 {
                     masks_[color].at<double>(idx, 0) = 255.0;
                 }
@@ -174,14 +175,14 @@ void Image::gmm_mask()
 }
 
 // TODO what exactly is this doing?
-void Image::clean_mask(FaceColor color)
+void Image::clean_mask(FaceColor color, std::array<std::vector<int>, FaceColor::N_COLORS> &pixel_idx)
 {
     switch (color)
     {
         case FaceColor::CYAN:
         {
             cv::Mat mask;
-            std::vector<int> merged(pixel_idx_[color]);
+            std::vector<int> merged(pixel_idx[color]);
             auto lower = color_bounds_[color].lower;
             auto upper = color_bounds_[color].upper;
             int n = image_hsv_.rows * image_hsv_.cols;
@@ -207,14 +208,14 @@ void Image::clean_mask(FaceColor color)
                                       idx2.end(),
                                       final_idx.begin());
             final_idx.resize(it - final_idx.begin());
-            pixel_idx_[color] = final_idx;
+            pixel_idx[color] = final_idx;
         }
         break;
 
         case FaceColor::GREEN:
         {
             cv::Mat mask;
-            std::vector<int> merged(pixel_idx_[color]);
+            std::vector<int> merged(pixel_idx[color]);
             int n = image_hsv_.rows * image_hsv_.cols;
             cv::inRange(
                 image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
@@ -236,15 +237,17 @@ void Image::clean_mask(FaceColor color)
                                       idx2.end(),
                                       final_idx.begin());
             final_idx.resize(it - final_idx.begin());
-            pixel_idx_[color] = final_idx;
+            pixel_idx[color] = final_idx;
         }
         break;
 
         case FaceColor::YELLOW:
         {
             cv::Mat mask;
-            std::vector<int> merged(pixel_idx_[color]);
+            std::vector<int> merged(pixel_idx[color]);
             int n = image_hsv_.rows * image_hsv_.cols;
+            // FIXME these are the same bounds as above for GREEN.  Does this
+            // make sense?
             cv::inRange(
                 image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
             mask = mask.reshape(1, n);
@@ -265,7 +268,7 @@ void Image::clean_mask(FaceColor color)
                                       idx2.end(),
                                       final_idx.begin());
             final_idx.resize(it - final_idx.begin());
-            pixel_idx_[color] = final_idx;
+            pixel_idx[color] = final_idx;
         }
         break;
 

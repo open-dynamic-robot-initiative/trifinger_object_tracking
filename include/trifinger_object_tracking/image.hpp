@@ -28,7 +28,6 @@ private:
 
     //! individual color segment mask
     std::array<cv::Mat, FaceColor::N_COLORS> masks_;
-    std::array<std::vector<int>, FaceColor::N_COLORS> pixel_idx_;
     //! pixel coordinates of the region of interest
     std::map<FaceColor, std::vector<cv::Point>> pixel_dataset_;
     //! total pixels with a particular color
@@ -53,6 +52,8 @@ private:
 
     void set_color_bounds();
     void load_segmentation_models(const std::string &model_directory);
+
+    void clean_mask(FaceColor color, std::array<std::vector<int>, FaceColor::N_COLORS> &pixel_idx);
 
 public:
     // constructor
@@ -89,8 +90,6 @@ public:
     void gmm_mask();
 
     bool denoise();
-
-    void clean_mask(FaceColor color);
 
     void cuda_gmm();
 
