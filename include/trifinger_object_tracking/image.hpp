@@ -1,4 +1,5 @@
 #pragma once
+#include <math.h>
 #include <armadillo>
 #include <chrono>
 #include <future>
@@ -6,7 +7,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/ml/ml.hpp>
 #include <opencv2/opencv.hpp>
-#include <math.h>
 
 namespace trifinger_object_tracking
 {
@@ -19,16 +19,19 @@ struct ColorBounds
 
 class Image
 {
+private:
     // private variables
     cv::Mat image_, image_hsv_, image_bgr_;
     std::string model_directory_;
     std::map<std::string, ColorBounds> colors_;
-    std::map<std::string, cv::Mat> masks_;  // individual color segment mask
+    //! individual color segment mask
+    std::map<std::string, cv::Mat> masks_;
     std::map<std::string, std::vector<int>> pixel_idx_;
-    std::map<std::string, std::vector<cv::Point>>
-        pixel_dataset_;  // pixel coordinates of the region of interest
-    std::map<std::string, int>
-        color_count_;  // total pixels with a particular color
+    //! pixel coordinates of the region of interest
+    std::map<std::string, std::vector<cv::Point>> pixel_dataset_;
+    //! total pixels with a particular color
+    std::map<std::string, int> color_count_;
+
     struct cmp
     {  // Declaring a set that will store the std::pairs using the comparator
        // logic
