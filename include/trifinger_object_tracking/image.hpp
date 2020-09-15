@@ -36,7 +36,6 @@ private:
 
     std::array<arma::gmm_diag, FaceColor::N_COLORS> segmentation_models_;
 
-    std::map<FaceColor, float> threshold_;
     std::chrono::high_resolution_clock::time_point start_, finish_;
 
 
@@ -117,8 +116,7 @@ public:
 
     void print_time_taken(const std::string &message);
 
-    void initialize_variables();  // initialized masks_, pixel_idx_ and
-                                  // threshold_ variables
+    void initialize_variables();
     void gmm_isolated();
 
     // member variables

@@ -75,23 +75,6 @@ void Image::initialize_variables()
             pixel_idx_[color] = idx;
         }
     }
-
-    // for BGR + HSV input
-    //    threshold_ = {{FaceColor::RED, -38.0},
-    //                 {FaceColor::GREEN, -34.0},
-    //                 {FaceColor::BLUE, -35.0},
-    //                 {FaceColor::YELLOW, -35.0},
-    //                 {FaceColor::MAGENTA, -33.0},
-    //                 {FaceColor::CYAN, -35.0}};
-
-    // TODO what threshold is this?
-    // for HSV input
-    threshold_ = {{FaceColor::RED, -18.0},
-                  {FaceColor::GREEN, -18.0},
-                  {FaceColor::BLUE, -16.0},
-                  {FaceColor::YELLOW, -20.0},
-                  {FaceColor::MAGENTA, -18.0},
-                  {FaceColor::CYAN, -16.0}};
 }
 
 void Image::run_line_detection()
