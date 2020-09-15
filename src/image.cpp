@@ -94,7 +94,7 @@ void Image::initialize_variables()
                   {"cyan", -16.0}};
 }
 
-void Image::startSingleThread()
+void Image::run_line_detection()
 {
     initialize_variables();
 

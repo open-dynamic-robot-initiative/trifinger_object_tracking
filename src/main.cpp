@@ -85,7 +85,7 @@ int main(int argc, char **argv)
                 for (auto &image : frames)
                 {
                     trifinger_object_tracking::Image obj(image.clone(), "../data");
-                    obj.startSingleThread();
+                    obj.run_line_detection();
                     images.push_back(obj);
 
                     if (debug == 1)
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
                     trifinger_object_tracking::Image obj(image, "../data");
                     images.push_back(obj);
                     std::thread th(
-                        &trifinger_object_tracking::Image::startSingleThread,
+                        &trifinger_object_tracking::Image::run_line_detection,
                         images.back());
                     thread_vector.push_back(move(th));
                 }

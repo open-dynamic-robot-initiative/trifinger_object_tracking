@@ -68,7 +68,7 @@ public:
 
     cv::Mat get_mask(const std::string &color_name);
 
-    void startSingleThread();
+    void run_line_detection();
 
     void create_pixel_dataset(const std::string &);
 
