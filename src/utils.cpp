@@ -48,6 +48,7 @@ bool comparator(const std::string &a, const std::string &b)
     return std::stoi(split_a.back(), &sz) < std::stoi(split_b.back(), &sz);
 }
 
+[[deprecated]]
 std::vector<cv::Mat> get_images(const std::string &path, bool get_masks)
 {
     std::vector<cv::Mat> frames;

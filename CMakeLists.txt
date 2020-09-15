@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(trifinger_object_tracking)
 
 # Specify C++ Standard
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # stop build on first error
@@ -68,6 +68,13 @@ target_link_libraries(object_pose
     cv_sub_images
     pthread
     ${OpenMP_CXX_LIBRARIES}
+)
+
+add_executable(single_observation src/single_observation.cpp)
+target_link_libraries(single_observation
+    lib_object_pose
+    cv_sub_images
+    pthread
 )
 
 
