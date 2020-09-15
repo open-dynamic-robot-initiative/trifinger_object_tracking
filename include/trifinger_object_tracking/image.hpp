@@ -37,7 +37,6 @@ private:
     std::array<arma::gmm_diag, FaceColor::N_COLORS> segmentation_models_;
 
     std::map<FaceColor, float> threshold_;
-    std::map<int, FaceColor> idx2color_;
     std::chrono::high_resolution_clock::time_point start_, finish_;
 
 

@@ -137,13 +137,16 @@ void Image::run_line_detection()
 
 void Image::gmm_mask()
 {
+    // FIXME magic numbers
+    arma::mat gmm_result = arma::mat(FaceColor::N_COLORS, 388800, arma::fill::zeros);
+
+    std::map<int, FaceColor> idx2color;
+
+    // convert cv::Mat to arma::mat
     cv::Mat concatenated_data;
     cv::Mat data = image_hsv_.reshape(1, image_hsv_.rows * image_hsv_.cols);
     data.convertTo(data, CV_64FC1);
     concatenated_data = data;
-
-    arma::mat gmm_result = arma::mat(6, 388800, arma::fill::zeros);
-
     arma::mat input_data =
         arma::mat(reinterpret_cast<double *>(concatenated_data.data),
                   concatenated_data.cols,
@@ -165,7 +168,7 @@ void Image::gmm_mask()
         thread_vector.push_back(move(th));
 
         // used for getting argmax -> color
-        idx2color_[color_idx] = color;
+        idx2color[color_idx] = color;
         color_idx++;
     }
 
@@ -180,7 +183,7 @@ void Image::gmm_mask()
     {
         auto max_idx = gmm_result.col(row_idx).index_max();
         auto max_val = gmm_result.col(row_idx).max();
-        FaceColor color = idx2color_[max_idx];
+        FaceColor color = idx2color[max_idx];
         if (max_val > -18.0)
         {
             pixel_idx_[color].push_back(row_idx);
