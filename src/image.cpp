@@ -185,7 +185,7 @@ void Image::clean_mask(FaceColor color)
             std::vector<int> merged(pixel_idx_[color]);
             auto lower = color_bounds_[color].lower;
             auto upper = color_bounds_[color].upper;
-            int n = image_bgr_.rows * image_bgr_.cols;
+            int n = image_hsv_.rows * image_hsv_.cols;
             cv::inRange(image_hsv_,
                         cv::Scalar(lower[0], lower[1], lower[2]),
                         cv::Scalar(upper[0], upper[1], upper[2]),
@@ -218,7 +218,7 @@ void Image::clean_mask(FaceColor color)
             std::vector<int> merged(pixel_idx_[color]);
             auto lower = color_bounds_[color].lower;
             auto upper = color_bounds_[color].upper;
-            int n = image_bgr_.rows * image_bgr_.cols;
+            int n = image_hsv_.rows * image_hsv_.cols;
             cv::inRange(
                 image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
             mask = mask.reshape(1, n);
@@ -249,7 +249,7 @@ void Image::clean_mask(FaceColor color)
             std::vector<int> merged(pixel_idx_[color]);
             auto lower = color_bounds_[color].lower;
             auto upper = color_bounds_[color].upper;
-            int n = image_bgr_.rows * image_bgr_.cols;
+            int n = image_hsv_.rows * image_hsv_.cols;
             cv::inRange(
                 image_hsv_, cv::Scalar(0, 0, 0), cv::Scalar(73, 255, 95), mask);
             mask = mask.reshape(1, n);
