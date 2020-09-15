@@ -584,8 +584,6 @@ cv::Mat Image::get_segmented_image()
     {
         auto rgb = cube_model_.get_hsv(m.first);
         cv::Scalar color(rgb[0], rgb[1], rgb[2]);
-        std::cout << m.first << ": " << color << std::endl;
-
         segmentation.setTo(color, masks_[m.first]);
     }
     cv::cvtColor(segmentation, segmentation, cv::COLOR_HSV2RGB);
