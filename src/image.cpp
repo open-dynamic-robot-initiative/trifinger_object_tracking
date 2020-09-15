@@ -525,11 +525,11 @@ cv::Mat Image::get_segmented_image()
 
     for (auto &m : dominant_colors_)
     {
-        auto rgb = cube_model_.get_hsv(m.first);
-        cv::Scalar color(rgb[0], rgb[1], rgb[2]);
+        auto rgb = cube_model_.get_rgb(m.first);
+        // image is BGR, so swap R and B
+        cv::Scalar color(rgb[2], rgb[1], rgb[0]);
         segmentation.setTo(color, masks_[m.first]);
     }
-    cv::cvtColor(segmentation, segmentation, cv::COLOR_HSV2BGR);
     return segmentation.clone();
 }
 
@@ -540,15 +540,15 @@ cv::Mat Image::get_segmented_image_wout_outliers()
 
     for (auto &m : dominant_colors_)
     {
-        auto rgb = cube_model_.get_hsv(m.first);
-        cv::Vec3b color(rgb[0], rgb[1], rgb[2]);
+        auto rgb = cube_model_.get_rgb(m.first);
+        // image is BGR, so swap R and B
+        cv::Vec3b color(rgb[2], rgb[1], rgb[0]);
 
         for (auto &d : pixel_dataset_[m.first])
         {
             segmentation.at<cv::Vec3b>(d.y, d.x) = color;
         }
     }
-    cv::cvtColor(segmentation, segmentation, cv::COLOR_HSV2BGR);
     return segmentation.clone();
 }
 
@@ -559,14 +559,14 @@ cv::Mat Image::get_image()
 
 cv::Mat Image::get_image_lines()
 {
-    // FIXME Do not use HSV image as base
     cv::Mat segmentation(
         image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
 
     for (auto &m : dominant_colors_)
     {
-        auto rgb = cube_model_.get_hsv(m.first);
-        cv::Vec3b color(rgb[0], rgb[1], rgb[2]);
+        auto rgb = cube_model_.get_rgb(m.first);
+        // image is BGR, so swap R and B
+        cv::Vec3b color(rgb[2], rgb[1], rgb[0]);
         for (auto &d : pixel_dataset_[m.first])
         {
             segmentation.at<cv::Vec3b>(d.y, d.x) = color;
@@ -583,7 +583,6 @@ cv::Mat Image::get_image_lines()
         cv::Point p2((a * xmax) + b, xmax);
         cv::line(segmentation, p1, p2, cv::Scalar(20, 100, 100), 10);
     }
-    cv::cvtColor(segmentation, segmentation, cv::COLOR_HSV2BGR);
     return segmentation.clone();
 }
 
