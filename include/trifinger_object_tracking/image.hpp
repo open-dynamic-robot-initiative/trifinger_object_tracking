@@ -8,6 +8,8 @@
 #include <opencv2/ml/ml.hpp>
 #include <opencv2/opencv.hpp>
 
+#include <trifinger_object_tracking/cube_model.hpp>
+
 namespace trifinger_object_tracking
 {
 struct ColorBounds
@@ -23,26 +25,26 @@ private:
     // private variables
     cv::Mat image_, image_hsv_, image_bgr_;
     std::string model_directory_;
-    std::map<std::string, ColorBounds> colors_;
+    std::map<FaceColor, ColorBounds> colors_;
     //! individual color segment mask
-    std::map<std::string, cv::Mat> masks_;
-    std::map<std::string, std::vector<int>> pixel_idx_;
+    std::map<FaceColor, cv::Mat> masks_;
+    std::map<FaceColor, std::vector<int>> pixel_idx_;
     //! pixel coordinates of the region of interest
-    std::map<std::string, std::vector<cv::Point>> pixel_dataset_;
+    std::map<FaceColor, std::vector<cv::Point>> pixel_dataset_;
     //! total pixels with a particular color
-    std::map<std::string, int> color_count_;
+    std::map<FaceColor, int> color_count_;
 
     struct cmp
     {  // Declaring a set that will store the std::pairs using the comparator
        // logic
-        bool operator()(std::pair<std::string, int> elem1,
-                        std::pair<std::string, int> elem2)
+        bool operator()(std::pair<FaceColor, int> elem1,
+                        std::pair<FaceColor, int> elem2)
         {
             return elem1.second > elem2.second;
         }
     };
 
-    std::set<std::pair<std::string, int>, cmp> dominant_colors_;
+    std::set<std::pair<FaceColor, int>, cmp> dominant_colors_;
 
     struct cmp2
     {  // Declaring a set that will store the std::pairs using the comparator
@@ -62,19 +64,11 @@ public:
     // member functions
     void set_color_bounds();
 
-    void initialise_object_model();
+    cv::Mat get_mask(FaceColor color);
 
-    void create_mask(const std::string &);
+    void run_line_detection();
 
-    cv::Mat get_mask(const std::string &color_name);
-
-    void start();
-
-    void startSingleThread();
-
-    void create_pixel_dataset(const std::string &);
-
-    void pipeline(const std::string &);
+    void create_pixel_dataset(FaceColor color);
 
     void find_dominant_colors(const int);
 
@@ -84,9 +78,9 @@ public:
 
     void remove_outliers();
 
-    std::vector<std::pair<std::string, std::string>> make_valid_combinations();
+    std::vector<std::pair<FaceColor, FaceColor>> make_valid_combinations();
 
-    void get_line_between_colors(const std::string &, const std::string &);
+    void get_line_between_colors(FaceColor color1, FaceColor color2);
 
     cv::Mat get_segmented_image();
 
@@ -100,15 +94,15 @@ public:
 
     bool denoise();
 
-    void clean_mask(const std::string &color);
+    void clean_mask(FaceColor color);
 
     int getNthElement(int n);
 
-    void gmm_lop_p(const std::string &color, const int);
+    void gmm_lop_p(FaceColor color, const int);
 
     void arg_max(const int idx);
 
-    void create_final_mask(const std::string &color);
+    void create_final_mask(FaceColor color);
 
     void cuda_gmm();
 
@@ -123,15 +117,14 @@ public:
     void gmm_isolated();
 
     // member variables
-    std::map<std::string, float> threshold_;
-    std::map<std::pair<std::string, std::string>, std::pair<float, float>>
-        lines_;
-    std::map<std::pair<std::string, std::string>, std::pair<int, int>>
-        object_model_;
-    std::map<int, std::string> idx2color_;
+    std::map<FaceColor, float> threshold_;
+    std::map<std::pair<FaceColor, FaceColor>, std::pair<float, float>> lines_;
+    std::map<int, FaceColor> idx2color_;
     arma::mat gmm_result_ = arma::mat(6, 388800, arma::fill::zeros);
     arma::mat input_data;
     std::chrono::high_resolution_clock::time_point start_, finish_;
+
+    CubeModel cube_model_;
 };
 
 }  // namespace trifinger_object_tracking

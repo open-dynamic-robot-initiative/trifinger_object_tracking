@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     int i = 0;
     for (auto image : frames)
     {
-        // TODO: move this processing to somewhere else!
+        // FIXME: move this processing to somewhere else!
         cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
         cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
         cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
@@ -79,9 +79,7 @@ int main(int argc, char **argv)
         trifinger_object_tracking::Image line_detector(image.clone(),
                                                        model_directory);
 
-        // FIXME name: "start" thread? This suggests that it does not wait until
-        // it is finished, but I think it is doing this.
-        line_detector.startSingleThread();
+        line_detector.run_line_detection();
 
         images.push_back(line_detector);
 
@@ -106,7 +104,7 @@ int main(int argc, char **argv)
         std::vector<cv::Point2f> imgpoints = pose.projected_points_[i];
         cv::Mat poseimg = images[i].get_image().clone();
         // draw the cube edges in the image
-        for (auto &it : images[i].object_model_)
+        for (auto &it : images[i].cube_model_.object_model_)
         {
             cv::Point p1, p2;
             p1.x = imgpoints[it.second.first].x;

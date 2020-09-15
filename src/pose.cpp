@@ -8,7 +8,7 @@
 
 namespace trifinger_object_tracking
 {
-Pose::Pose(std::vector<Image> obj)
+Pose::Pose(const std::vector<Image> &obj)
 {
     image_objects_ = obj;
     float camera_matrix[3][3] = {{589.607902244274, 0.0, 366.49661815699994},
@@ -51,12 +51,12 @@ Pose::Pose(std::vector<Image> obj)
     reference_center_Point_3d_ = cv::Mat(8, 4, CV_32F, &reference_center_Point_3d).clone();
     reference_vector_normals_ = cv::Mat(3, 6, CV_32F, &reference_vector_normals).clone();
 
-    face_normals_v_["yellow"] = {0};
-    face_normals_v_["red"] = {1};
-    face_normals_v_["magenta"] = {2};
-    face_normals_v_["green"] = {3};
-    face_normals_v_["blue"] = {4};
-    face_normals_v_["cyan"] = {5};
+    face_normals_v_[FaceColor::YELLOW] = {0};
+    face_normals_v_[FaceColor::RED] = {1};
+    face_normals_v_[FaceColor::MAGENTA] = {2};
+    face_normals_v_[FaceColor::GREEN] = {3};
+    face_normals_v_[FaceColor::BLUE] = {4};
+    face_normals_v_[FaceColor::CYAN] = {5};
 
     // Setting the bounds for pose estimation
     position_.lower_bound = cv::Point3f(-0.25, -0.25, 0);
@@ -256,7 +256,7 @@ cv::Mat Pose::_get_face_normals_cost(std::vector<cv::Mat> proposed_orientation_m
             v_cam_to_cube.push_back(c);
         }
         auto lines = image_objects_[i].lines_;
-        std::set<std::string> color_set;
+        std::set<FaceColor> color_set;
         for (auto& it : lines)
         {
             color_set.insert(it.first.first);
@@ -386,7 +386,7 @@ std::vector<float> Pose::cost_function(
         auto lines = image_objects_[i].lines_;
         for (auto &it : lines)
         {
-            auto points_lying = image_objects_[i].object_model_[it.first];
+            auto points_lying = image_objects_[i].cube_model_.object_model_.at(it.first);
             std::pair<float, float> a_b = it.second;
             cv::Mat points_on_edge(
                 number_of_particles, 2, CV_32FC2, cv::Scalar(0, 0));

@@ -56,7 +56,9 @@ include_directories(
 add_library(lib_object_pose
     src/image.cpp
     src/pose.cpp
-    src/utils.cpp)
+    src/utils.cpp
+    src/cube_model.cpp
+)
 target_link_libraries(lib_object_pose
     ${catkin_LIBRARIES} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 

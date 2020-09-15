@@ -12,6 +12,9 @@ int debug = 1;
 int cols_plot = 5;
 
 
+using trifinger_object_tracking::FaceColor;
+
+
 int main(int argc, char **argv)
 {
     std::string data_dir = "../data/cube_dataset_real_cube";
@@ -85,7 +88,7 @@ int main(int argc, char **argv)
                 for (auto &image : frames)
                 {
                     trifinger_object_tracking::Image obj(image.clone(), "../data");
-                    obj.startSingleThread();
+                    obj.run_line_detection();
                     images.push_back(obj);
 
                     if (debug == 1)
@@ -110,7 +113,7 @@ int main(int argc, char **argv)
                     trifinger_object_tracking::Image obj(image, "../data");
                     images.push_back(obj);
                     std::thread th(
-                        &trifinger_object_tracking::Image::startSingleThread,
+                        &trifinger_object_tracking::Image::run_line_detection,
                         images.back());
                     thread_vector.push_back(move(th));
                 }
@@ -165,9 +168,18 @@ int main(int argc, char **argv)
                 file.open(filename.c_str());
                 std::cout << filename << std::endl;
                 int iii = -1;
-                std::string c1,c2;
+                FaceColor c1,c2;
                 float f1,f2;
                 int counter;
+
+                std::map<std::string, FaceColor> color_from_string;
+                color_from_string["red"] = FaceColor::RED;
+                color_from_string["green"] = FaceColor::GREEN;
+                color_from_string["blue"] = FaceColor::BLUE;
+                color_from_string["yellow"] = FaceColor::YELLOW;
+                color_from_string["cyan"] = FaceColor::CYAN;
+                color_from_string["magenta"] = FaceColor::MAGENTA;
+
                 while(file >> word) { //take word and print
                     std::cout << word << std::endl;
                     if (word == "new")
@@ -184,10 +196,10 @@ int main(int argc, char **argv)
                         switch(counter)
                         {
                             case 0:
-                                c1 = word;
+                                c1 = color_from_string.at(word);
                                 break;
                             case 1:
-                                c2 = word;
+                                c2 = color_from_string.at(word);
                                 break;
                             case 2:
                                 f1 = std::atof(word.c_str());
@@ -221,7 +233,7 @@ int main(int argc, char **argv)
                         pose.projected_points_[i];
                     cv::Mat poseimg = images[i].get_image().clone();
                     // draw the cube edges in the image
-                    for (auto &it : images[i].object_model_)
+                    for (auto &it : images[i].cube_model_.object_model_)
                     {
                         cv::Point p1, p2;
                         p1.x = imgpoints[it.second.first].x;
