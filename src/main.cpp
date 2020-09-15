@@ -2,6 +2,8 @@
 #include <fstream>
 #include <ostream>
 #include <thread>
+
+#include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
 #include <trifinger_object_tracking/image.hpp>
 #include <trifinger_object_tracking/pose.hpp>
@@ -90,8 +92,10 @@ int main(int argc, char **argv)
     std::vector<std::string> camera_data =
         trifinger_object_tracking::get_directories(data_dir);
 
-    bool generate_gmm_dataset =
-        false;  // set true if you want to train gmm models for each color
+    // set true if you want to train gmm models for each color
+    bool generate_gmm_dataset = false;
+
+    trifinger_object_tracking::CubeModel cube_model;
 
     // Generate dataset for GMM model for each color and train it
     if (generate_gmm_dataset)
@@ -147,7 +151,6 @@ int main(int argc, char **argv)
 
             // sending frames color segmentation
             auto start = std::chrono::high_resolution_clock::now();
-            std::vector<trifinger_object_tracking::Image> images;
 
             std::array<std::map<trifinger_object_tracking::ColorPair,
                                 trifinger_object_tracking::Line>,
@@ -157,17 +160,16 @@ int main(int argc, char **argv)
             int i = 0;
             for (auto &image : frames)
             {
-                trifinger_object_tracking::Image obj(image.clone(), "../data");
-                lines[i] = obj.run_line_detection();
-                images.push_back(obj);
+                trifinger_object_tracking::Image obj(cube_model, "../data");
+                lines[i] = obj.detect_lines(image.clone());
 
                 if (debug == 1)
                 {
-                    subplot.set_subimg(images[i].get_image(), i, 0);
-                    subplot.set_subimg(images[i].get_segmented_image(), i, 1);
+                    subplot.set_subimg(obj.get_image(), i, 0);
+                    subplot.set_subimg(obj.get_segmented_image(), i, 1);
                     subplot.set_subimg(
-                        images[i].get_segmented_image_wout_outliers(), i, 2);
-                    subplot.set_subimg(images[i].get_image_lines(), i, 3);
+                        obj.get_segmented_image_wout_outliers(), i, 2);
+                    subplot.set_subimg(obj.get_image_lines(), i, 3);
                 }
                 i++;
             }
@@ -180,14 +182,6 @@ int main(int argc, char **argv)
                       << " milliseconds\n";
             std::cout << "Segmentation complete"
                       << "\n";
-            int display = 0;  // 0 = False
-            if (display == 1)
-            {
-                for (auto t : images)
-                {
-                    t.show();
-                }
-            }
 
             std::cout << "\n@#$@#$@#$@#$@#$@#$\n\n";
             int print_lines = 1;  // 0 = False
@@ -268,20 +262,20 @@ int main(int argc, char **argv)
             }
 
             // Pose Detection from below
-            trifinger_object_tracking::Pose pose(images[0].cube_model_, lines);
+            trifinger_object_tracking::Pose pose(cube_model, lines);
             pose.find_pose();
 
             std::cout << "Pose detected\n";
 
             if (debug == 1)
             {
-                for (int i = 0; i < images.size(); i++)
+                for (int i = 0; i < frames.size(); i++)
                 {
                     std::vector<cv::Point2f> imgpoints =
                         pose.projected_points_[i];
-                    cv::Mat poseimg = images[i].get_image().clone();
+                    cv::Mat poseimg = frames[i].clone();
                     // draw the cube edges in the image
-                    for (auto &it : images[i].cube_model_.object_model_)
+                    for (auto &it : cube_model.object_model_)
                     {
                         cv::Point p1, p2;
                         p1.x = imgpoints[it.second.first].x;
@@ -306,7 +300,7 @@ int main(int argc, char **argv)
             // write the video frame to the file
             oVideoWriter.write(rescaled_debug_img);
 
-            int show = 0;
+            int show = 1;
             if (show == 1)
             {
                 cv::imshow("debug", rescaled_debug_img);

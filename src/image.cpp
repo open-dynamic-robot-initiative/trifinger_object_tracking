@@ -15,13 +15,11 @@ static float calculateAccuracyPercent(const cv::Mat &original,
     return 100 * (float)countNonZero(original == predicted) / predicted.rows;
 }
 
-Image::Image(cv::Mat img_bgr, const std::string &model_directory)
-    : image_bgr_(img_bgr)
+Image::Image(const CubeModel &cube_model, const std::string &model_directory):
+    cube_model_(cube_model)
 {
     set_color_bounds();
     load_segmentation_models(model_directory);
-
-    cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
 }
 
 void Image::set_color_bounds()
@@ -54,12 +52,14 @@ void Image::load_segmentation_models(const std::string &model_directory)
     }
 }
 
-std::map<ColorPair, Line> Image::run_line_detection()
+std::map<ColorPair, Line> Image::detect_lines(const cv::Mat &image_bgr)
 {
+    // TODO better solution than class members
+    image_bgr_ = image_bgr;
+    cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
+
     gmm_mask();
-
     find_dominant_colors(3);
-
     denoise();
 
     for (auto &i : dominant_colors_)
@@ -497,7 +497,7 @@ void Image::show()
     cv::waitKey(0);
 }
 
-cv::Mat Image::get_segmented_image()
+cv::Mat Image::get_segmented_image() const
 {
     cv::Mat segmentation(
         image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -512,7 +512,7 @@ cv::Mat Image::get_segmented_image()
     return segmentation.clone();
 }
 
-cv::Mat Image::get_segmented_image_wout_outliers()
+cv::Mat Image::get_segmented_image_wout_outliers() const
 {
     cv::Mat segmentation(
         image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -523,7 +523,7 @@ cv::Mat Image::get_segmented_image_wout_outliers()
         // image is BGR, so swap R and B
         cv::Vec3b color(rgb[2], rgb[1], rgb[0]);
 
-        for (auto &d : pixel_dataset_[m.first])
+        for (auto &d : pixel_dataset_.at(m.first))
         {
             segmentation.at<cv::Vec3b>(d.y, d.x) = color;
         }
@@ -531,12 +531,12 @@ cv::Mat Image::get_segmented_image_wout_outliers()
     return segmentation.clone();
 }
 
-cv::Mat Image::get_image()
+cv::Mat Image::get_image() const
 {
     return image_bgr_.clone();
 }
 
-cv::Mat Image::get_image_lines()
+cv::Mat Image::get_image_lines() const
 {
     cv::Mat segmentation(
         image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -546,7 +546,7 @@ cv::Mat Image::get_image_lines()
         auto rgb = cube_model_.get_rgb(m.first);
         // image is BGR, so swap R and B
         cv::Vec3b color(rgb[2], rgb[1], rgb[0]);
-        for (auto &d : pixel_dataset_[m.first])
+        for (auto &d : pixel_dataset_.at(m.first))
         {
             segmentation.at<cv::Vec3b>(d.y, d.x) = color;
         }
@@ -565,7 +565,7 @@ cv::Mat Image::get_image_lines()
     return segmentation.clone();
 }
 
-void Image::print_pixels()
+void Image::print_pixels() const
 {
     for (auto &i : pixel_dataset_)
     {

@@ -16,7 +16,7 @@ namespace trifinger_object_tracking
 class Image
 {
 private:
-    // private variables
+    CubeModel cube_model_;
     cv::Mat image_hsv_, image_bgr_;
 
     std::array<ColorBounds, FaceColor::N_COLORS> color_bounds_;
@@ -54,13 +54,13 @@ private:
 
 public:
     // constructor
-    Image(cv::Mat, const std::string &model_directory);
+    Image(const CubeModel &cube_model, const std::string &model_directory);
 
     // member functions
 
     cv::Mat get_mask(FaceColor color);
 
-    std::map<ColorPair, Line> run_line_detection();
+    std::map<ColorPair, Line> detect_lines(const cv::Mat &image_bgr);
 
     void create_pixel_dataset(FaceColor color);
 
@@ -68,19 +68,19 @@ public:
 
     void show();
 
-    void print_pixels();
+    void print_pixels() const;
 
     std::vector<std::pair<FaceColor, FaceColor>> make_valid_combinations();
 
     void get_line_between_colors(FaceColor color1, FaceColor color2);
 
-    cv::Mat get_segmented_image();
+    cv::Mat get_segmented_image() const;
 
-    cv::Mat get_segmented_image_wout_outliers();
+    cv::Mat get_segmented_image_wout_outliers() const;
 
-    cv::Mat get_image_lines();
+    cv::Mat get_image_lines() const;
 
-    cv::Mat get_image();
+    cv::Mat get_image() const;
 
     void gmm_mask();
 
@@ -92,10 +92,6 @@ public:
 
     void print_time_taken(const std::string &message);
 
-
-    // member variables
-
-    CubeModel cube_model_;
 };
 
 }  // namespace trifinger_object_tracking
