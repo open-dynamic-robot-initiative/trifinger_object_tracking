@@ -15,10 +15,13 @@ static float calculateAccuracyPercent(const cv::Mat &original,
     return 100 * (float)countNonZero(original == predicted) / predicted.rows;
 }
 
-Image::Image(cv::Mat img, std::string model_directory)
-    : image_(img), model_directory_(model_directory)
+Image::Image(cv::Mat img, const std::string &model_directory) : image_(img)
 {
     set_color_bounds();
+    load_segmentation_models(model_directory);
+
+    // FIXME we should not use both RGB and BGR, get rid of one of them
+    // (probably RGB)
     cv::cvtColor(image_, image_hsv_, cv::COLOR_RGB2HSV);
     cv::cvtColor(image_, image_bgr_, cv::COLOR_RGB2BGR);
 }
@@ -34,6 +37,23 @@ void Image::set_color_bounds()
     color_bounds_[FaceColor::GREEN] = {{57, 185, 60}, {70, 255, 225}};
     color_bounds_[FaceColor::CYAN] = {{75, 50, 40}, {97, 255, 180}};
     color_bounds_[FaceColor::YELLOW] = {{27, 130, 160}, {37, 255, 255}};
+}
+
+void Image::load_segmentation_models(const std::string &model_directory)
+{
+    for (FaceColor color : cube_model_.get_colors())
+    {
+        std::string saved_model_path = model_directory + "/" +
+                                       cube_model_.get_color_name(color) +
+                                       "_diag_hsv.gmm";
+
+        bool status = segmentation_models_[color].load(saved_model_path);
+        if (status == false)
+        {
+            throw std::runtime_error("Failed to load GMM from " +
+                                     saved_model_path);
+        }
+    }
 }
 
 void Image::initialize_variables()
@@ -117,27 +137,31 @@ void Image::run_line_detection()
 
 void Image::gmm_mask()
 {
-    start_timer();
     cv::Mat concatenated_data;
     cv::Mat data = image_hsv_.reshape(1, image_hsv_.rows * image_hsv_.cols);
     data.convertTo(data, CV_64FC1);
     concatenated_data = data;
-    finish_timer(true, "concatenation");
 
-    start_timer();
-    input_data = arma::mat(reinterpret_cast<double *>(concatenated_data.data),
-                           concatenated_data.cols,
-                           concatenated_data.rows);
-    finish_timer(true, "cv::Mat -> arma:mat ");
+    arma::mat gmm_result = arma::mat(6, 388800, arma::fill::zeros);
+
+    arma::mat input_data =
+        arma::mat(reinterpret_cast<double *>(concatenated_data.data),
+                  concatenated_data.cols,
+                  concatenated_data.rows);
 
     // GMM
-    start_timer();
     int color_idx = 0;
     std::vector<std::thread> thread_vector;
     for (FaceColor color : cube_model_.get_colors())
     {
         // getting GMM score for each color
-        std::thread th(&Image::gmm_lop_p, this, color, color_idx);
+        std::thread th(
+            [this, &input_data, &gmm_result](FaceColor color, const int row_idx) {
+                gmm_result.row(row_idx) =
+                    segmentation_models_[color].log_p(input_data);
+            },
+            color,
+            color_idx);
         thread_vector.push_back(move(th));
 
         // used for getting argmax -> color
@@ -150,15 +174,12 @@ void Image::gmm_mask()
         if (th.joinable()) th.join();
     }
 
-    finish_timer(true, "masking took ");
-
     // ARGMAX
-    start_timer();
     thread_vector.clear();
     for (int row_idx = 0; row_idx < data.rows; row_idx += 2)
     {
-        auto max_idx = gmm_result_.col(row_idx).index_max();
-        auto max_val = gmm_result_.col(row_idx).max();
+        auto max_idx = gmm_result.col(row_idx).index_max();
+        auto max_val = gmm_result.col(row_idx).max();
         FaceColor color = idx2color_[max_idx];
         if (max_val > -18.0)
         {
@@ -167,10 +188,7 @@ void Image::gmm_mask()
         }
     }
 
-    finish_timer(true, "Arg Max ");
-
     // Background cleaning and reshaping
-    start_timer();
     thread_vector.clear();
     for (FaceColor color : cube_model_.get_colors())
     {
@@ -181,7 +199,6 @@ void Image::gmm_mask()
     {
         if (th.joinable()) th.join();
     }
-    finish_timer(true, "final cleaning and reshaping ");
 }
 
 void Image::create_final_mask(FaceColor color)
@@ -196,43 +213,6 @@ void Image::create_final_mask(FaceColor color)
     create_pixel_dataset(color);
 }
 
-void Image::arg_max(const int idx)
-{
-    for (int row_idx = idx; row_idx < idx + 1000; row_idx++)
-    {
-        auto max_idx = gmm_result_.col(row_idx).index_max();
-        auto max_val = gmm_result_.col(row_idx).max();
-        FaceColor color = idx2color_[max_idx];
-        if (max_val > threshold_[color])
-        {
-            pixel_idx_[color].push_back(row_idx);
-        }
-    }
-}
-
-void Image::gmm_lop_p(FaceColor color, const int row_idx)
-{
-    arma::gmm_diag model;
-    std::string saved_model_path = model_directory_ + "/" +
-                                   cube_model_.get_color_name(color) +
-                                   "_diag_hsv.gmm";
-    bool status = model.load(saved_model_path);
-    if (status == false)
-    {
-        throw std::runtime_error("Failed to load GMM from " + saved_model_path);
-    }
-
-    auto start = std::chrono::high_resolution_clock::now();
-    arma::rowvec result = model.log_p(input_data);
-    auto finish = std::chrono::high_resolution_clock::now();
-    //    std::cout << color << " "
-    //              <<
-    //              std::chrono::duration_cast<std::chrono::milliseconds>(finish
-    //              - start).count()
-    //              << " milliseconds\n";
-
-    gmm_result_.row(row_idx) = result;
-}
 
 // TODO what exactly is this doing?
 void Image::clean_mask(FaceColor color)
@@ -422,14 +402,11 @@ bool Image::denoise()
     }
     int erosion_size = 4;
 
-    start_timer();
     cv::Mat kernel = cv::getStructuringElement(
         cv::MORPH_RECT,
         cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
         cv::Point(erosion_size, erosion_size));
-    finish_timer(true, "dilation kernel ");
 
-    start_timer();
     std::cout << "Denoising\n";
     cv::Mat merged_mask(
         cv::Size(1, image_.rows * image_.cols), CV_8U, cv::Scalar(0));
@@ -454,13 +431,9 @@ bool Image::denoise()
 
     cv::Mat dilated_mask, labels_im;
     cv::dilate(merged_mask, dilated_mask, kernel, cv::Point(-1, -1), 4);
-    finish_timer(true, "creating merged mask ");
 
-    start_timer();
     int num_labels = cv::connectedComponents(dilated_mask, labels_im);
-    finish_timer(true, "connected components ");
 
-    start_timer();
     labels_im = labels_im.reshape(1, image_.rows * image_.cols);
     std::vector<int> unique_;
     for (int i = 0; i < labels_im.rows; i++)
@@ -476,9 +449,7 @@ bool Image::denoise()
         label_count_.insert(
             std::make_pair(i, std::count(unique_.begin(), unique_.end(), i)));
     }
-    finish_timer(true, "unique label with count ");
 
-    start_timer();
     int element_number = 1;  // 1 because 0 is for background
     std::vector<int> idx;
     float percentage_overlap = 40.0;
@@ -506,9 +477,7 @@ bool Image::denoise()
         element_number++;
         std::cout << "Here " << percentage_overlap << std::endl;
     } while (percentage_overlap < 25.0);
-    finish_timer(true, "finding the right label took ");
 
-    start_timer();
     for (auto &color : dominant_colors_)
     {
         int j = 0;
@@ -532,7 +501,6 @@ bool Image::denoise()
         masks_[color.first] = mask.reshape(1, image_.rows);
         create_pixel_dataset(color.first);
     }
-    finish_timer(true, "getting overlap ");
 
     find_dominant_colors(3);
     return true;

@@ -23,7 +23,6 @@ class Image
 private:
     // private variables
     cv::Mat image_, image_hsv_, image_bgr_;
-    std::string model_directory_;
 
     std::array<ColorBounds, FaceColor::N_COLORS> color_bounds_;
 
@@ -34,6 +33,12 @@ private:
     std::map<FaceColor, std::vector<cv::Point>> pixel_dataset_;
     //! total pixels with a particular color
     std::map<FaceColor, int> color_count_;
+
+    std::array<arma::gmm_diag, FaceColor::N_COLORS> segmentation_models_;
+
+    std::map<FaceColor, float> threshold_;
+    std::map<int, FaceColor> idx2color_;
+    std::chrono::high_resolution_clock::time_point start_, finish_;
 
 
     struct cmp
@@ -59,12 +64,15 @@ private:
 
     std::set<std::pair<int, int>, cmp2> label_count_;
 
+
+    void set_color_bounds();
+    void load_segmentation_models(const std::string &model_directory);
+
 public:
     // constructor
-    Image(cv::Mat, std::string model_directory);
+    Image(cv::Mat, const std::string &model_directory);
 
     // member functions
-    void set_color_bounds();
 
     cv::Mat get_mask(FaceColor color);
 
@@ -100,10 +108,6 @@ public:
 
     int getNthElement(int n);
 
-    void gmm_lop_p(FaceColor color, const int);
-
-    void arg_max(const int idx);
-
     void create_final_mask(FaceColor color);
 
     void cuda_gmm();
@@ -119,12 +123,7 @@ public:
     void gmm_isolated();
 
     // member variables
-    std::map<FaceColor, float> threshold_;
     std::map<std::pair<FaceColor, FaceColor>, std::pair<float, float>> lines_;
-    std::map<int, FaceColor> idx2color_;
-    arma::mat gmm_result_ = arma::mat(6, 388800, arma::fill::zeros);
-    arma::mat input_data;
-    std::chrono::high_resolution_clock::time_point start_, finish_;
 
     CubeModel cube_model_;
 };
