@@ -29,9 +29,34 @@ public:
     std::map<std::pair<FaceColor, FaceColor>, std::pair<int, int>>
         object_model_;
 
+    //! Cube corner positions in world frame if pose is zero.
+    const float corners_at_origin_in_world_frame[8][4] = {
+        {0.0326, -0.0326, 0.0652, 1},
+        {-0.0326, -0.0326, 0.0652, 1},
+        {0.0326, 0.0326, 0.0652, 1},
+        {-0.0326, 0.0326, 0.0652, 1},
+        {0.0326, -0.0326, 0, 1},
+        {-0.0326, -0.0326, 0, 1},
+        {0.0326, 0.0326, 0, 1},
+        {-0.0326, 0.0326, 0, 1}};
+
+    //! Column-wise face normal vectors
+    const float face_normal_vectors[3][6] = {
+        {0, 0, 1, -1, 0, 0}, {0, 0, 0, 0, 1, -1}, {1, -1, 0, 0, 0, 0}};
+
+    // TODO: find a good way to make this const
+    std::array<int, FaceColor::N_COLORS> map_color_to_normal_index;
+
     CubeModel()
     {
         initialise_object_model();
+
+        map_color_to_normal_index[FaceColor::YELLOW] = 0;
+        map_color_to_normal_index[FaceColor::RED] = 1;
+        map_color_to_normal_index[FaceColor::MAGENTA] = 2;
+        map_color_to_normal_index[FaceColor::GREEN] = 3;
+        map_color_to_normal_index[FaceColor::BLUE] = 4;
+        map_color_to_normal_index[FaceColor::CYAN] = 5;
     }
 
     static std::array<FaceColor, 6> get_colors()

@@ -5,6 +5,8 @@
  */
 #pragma once
 
+#include <opencv2/opencv.hpp>
+
 #include <trifinger_object_tracking/cube_model.hpp>
 
 namespace trifinger_object_tracking
@@ -25,6 +27,20 @@ struct Line
     }
 
     Line(float a, float b) : a(a), b(b)
+    {
+    }
+};
+
+struct Pose
+{
+    // TODO use non-cv types?
+
+    cv::Point3f translation;
+    //! rotation vector
+    cv::Point3f rotation;
+
+    Pose(const cv::Point3f &translation, const cv::Point3f &rotation)
+        : translation(translation), rotation(rotation)
     {
     }
 };
