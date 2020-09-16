@@ -4,6 +4,7 @@
  * Load images of the three cameras from files "camera{60,180,300}.png", run the
  * pose detection on them and visualize the result.
  */
+#include <chrono>
 #include <iostream>
 
 #include <ros/package.h>
@@ -14,6 +15,8 @@
 #include <trifinger_object_tracking/cv_sub_images.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
 #include <trifinger_object_tracking/pose_detector.hpp>
+
+#define VISUALIZE
 
 /**
  * @brief Load images camera{60,180,300}.png from the given directory.
@@ -61,6 +64,7 @@ int main(int argc, char **argv)
         model_directory = argv[2];
     }
 
+#ifdef VISUALIZE
     auto frames = load_images(data_dir);
 
     trifinger_object_tracking::CvSubImages subplot(
@@ -68,6 +72,7 @@ int main(int argc, char **argv)
     cv::namedWindow("debug", cv::WINDOW_NORMAL);
     cv::resizeWindow(
         "debug", subplot.get_image().cols, subplot.get_image().rows);
+#endif
 
     trifinger_object_tracking::CubeModel cube_model;
     trifinger_object_tracking::LineDetector line_detector(cube_model,
@@ -95,6 +100,9 @@ int main(int argc, char **argv)
                3>
         lines;
 
+    // This is where actual processing starts
+    auto start = std::chrono::high_resolution_clock::now();
+
     int i = 0;
     for (const cv::Mat &image : frames)
     {
@@ -105,17 +113,26 @@ int main(int argc, char **argv)
         // TODO clone needed?
         lines[i] = line_detector.detect_lines(image.clone());
 
+#ifdef VISUALIZE
         subplot.set_subimg(line_detector.get_image(), i, 0);
         subplot.set_subimg(line_detector.get_segmented_image(), i, 1);
         subplot.set_subimg(
             line_detector.get_segmented_image_wout_outliers(), i, 2);
         subplot.set_subimg(line_detector.get_image_lines(), i, 3);
+#endif
 
         i++;
     }
 
     pose.find_pose(lines);
 
+    // This is where actual processing ends
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cout << "Total time: " << duration.count() << " ms" << std::endl;
+
+#ifdef VISUALIZE
     // visualize the detected pose
     auto projected_cube_corners = pose.get_projected_points();
     for (int i = 0; i < frames.size(); i++)
@@ -146,6 +163,7 @@ int main(int argc, char **argv)
 
     cv::imshow("debug", rescaled_debug_img);
     cv::waitKey(0);
+#endif
 
     return 0;
 }
