@@ -329,7 +329,7 @@ void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
         }
         else
         {
-            std::cout << "Erasing " << i.first << std::endl;
+            //std::cout << "Erasing " << i.first << std::endl;
             color_count_.erase(i.first);
         }
     }
@@ -356,14 +356,14 @@ bool LineDetector::denoise()
         cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
         cv::Point(erosion_size, erosion_size));
 
-    std::cout << "Denoising\n";
+    //std::cout << "Denoising\n";
     cv::Mat merged_mask(
         cv::Size(1, image_bgr_.rows * image_bgr_.cols), CV_8U, cv::Scalar(0));
     std::vector<int> merged_idx;
 
     for (auto &color : dominant_colors_)
     {
-        std::cout << color.first << std::endl;
+        //std::cout << color.first << std::endl;
         cv::Mat mask = masks_[color.first];
         mask = mask.reshape(1, image_bgr_.rows * image_bgr_.cols);
         for (int i = 0; i < mask.rows; i++)
@@ -420,7 +420,7 @@ bool LineDetector::denoise()
         int max_count_label;
         if (element_number >= label_count.size())
         {
-            std::cout << "Not enough elements\n";
+            //std::cout << "Not enough elements\n";
             max_count_label = -1;
         }
         std::pair<int, int> elem =
@@ -446,7 +446,7 @@ bool LineDetector::denoise()
         percentage_overlap =
             final_idx.size() / (merged_idx.size() + 1e-9) * 100;
         element_number++;
-        std::cout << "Here " << percentage_overlap << std::endl;
+        //std::cout << "Here " << percentage_overlap << std::endl;
     } while (percentage_overlap < 25.0);
 
     for (auto &color : dominant_colors_)
@@ -484,17 +484,17 @@ void LineDetector::show()
     cv::Mat segmentation(
         image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
 
-    std::cout << "Dominant colours: ";
+    //std::cout << "Dominant colours: ";
     for (auto &m : dominant_colors_)
     {
-        std::cout << m.first << ", ";
+        //std::cout << m.first << ", ";
 
         auto rgb = cube_model_.get_hsv(m.first);
         cv::Scalar color(rgb[0], rgb[1], rgb[2]);
 
         segmentation.setTo(color, masks_[m.first]);
     }
-    std::cout << std::endl;
+    //std::cout << std::endl;
     cv::Mat bgr_image;
     cv::cvtColor(segmentation, bgr_image, cv::COLOR_HSV2BGR);
     cv::imshow("Segmentation", bgr_image);
@@ -668,9 +668,9 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
                 cv::Mat responses;
                 svm->predict(ip, responses);
                 responses.convertTo(responses, CV_32S);
-                std::cout << "accuracy: "
-                          << calculateAccuracyPercent(op, responses) << "%"
-                          << std::endl;
+                //std::cout << "accuracy: "
+                //          << calculateAccuracyPercent(op, responses) << "%"
+                //          << std::endl;
 
                 accuracy_ = calculateAccuracyPercent(op, responses);
             }
@@ -680,10 +680,10 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
             a = -sv.at<float>(0, 0) / sv.at<float>(0, 1);
             b = rho / sv.at<float>(0, 1);
 
-            std::cout << "\n*************\n";
-            std::cout << "Rho " << rho << " first " << -sv.at<float>(0, 0)
-                      << " divide_by " << sv.at<float>(0, 1) << std::endl;
-            std::cout << a << " " << b << std::endl;
+            //std::cout << "\n*************\n";
+            //std::cout << "Rho " << rho << " first " << -sv.at<float>(0, 0)
+            //          << " divide_by " << sv.at<float>(0, 1) << std::endl;
+            //std::cout << a << " " << b << std::endl;
         }
         else if (classifier == "logistic")
         {
