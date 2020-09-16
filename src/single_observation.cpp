@@ -11,7 +11,7 @@
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
-#include <trifinger_object_tracking/pose.hpp>
+#include <trifinger_object_tracking/pose_detector.hpp>
 
 /**
  * @brief Load images camera{60,180,300}.png from the given directory.
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     trifinger_object_tracking::CubeModel cube_model;
     trifinger_object_tracking::LineDetector line_detector(cube_model,
                                                           model_directory);
-    trifinger_object_tracking::Pose pose(cube_model);
+    trifinger_object_tracking::PoseDetector pose(cube_model);
 
     std::array<std::map<trifinger_object_tracking::ColorPair,
                         trifinger_object_tracking::Line>,

@@ -6,7 +6,7 @@
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
-#include <trifinger_object_tracking/pose.hpp>
+#include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/utils.hpp>
 
 int debug = 1;
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
         trifinger_object_tracking::CubeModel cube_model;
         trifinger_object_tracking::LineDetector line_detector(cube_model,
                                                               "../data");
-        trifinger_object_tracking::Pose pose(cube_model);
+        trifinger_object_tracking::PoseDetector pose(cube_model);
 
         trifinger_object_tracking::CvSubImages subplot(
             cv::Size(720, 540), 3, 5);

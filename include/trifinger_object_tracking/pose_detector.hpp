@@ -18,11 +18,11 @@ struct Stats
     cv::Point3f prev;
 };
 
-class Pose
+class PoseDetector
 {
 
 public:
-    Pose(const CubeModel &cube_model);
+    PoseDetector(const CubeModel &cube_model);
 
     void find_pose(const std::array<std::map<ColorPair, Line>, 3> &lines);
 
