@@ -59,12 +59,12 @@ int main(int argc, char **argv)
         model_directory = argv[2];
     }
 
-    trifinger_object_tracking::CvSubImages subplot(cv::Size(720, 540), 3, 5);
+    auto frames = load_images(data_dir);
+
+    trifinger_object_tracking::CvSubImages subplot(cv::Size(frames[0].cols, frames[0].rows), 3, 5);
     cv::namedWindow("debug", cv::WINDOW_NORMAL);
     cv::resizeWindow(
         "debug", subplot.get_image().cols, subplot.get_image().rows);
-
-    auto frames = load_images(data_dir);
 
     trifinger_object_tracking::CubeModel cube_model;
     trifinger_object_tracking::LineDetector line_detector(cube_model,

@@ -83,9 +83,10 @@ std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
 
 void LineDetector::gmm_mask()
 {
-    // FIXME magic numbers
+    const size_t n_pixels = image_bgr_.total();
+
     arma::mat gmm_result =
-        arma::mat(FaceColor::N_COLORS, 388800, arma::fill::zeros);
+        arma::mat(FaceColor::N_COLORS, n_pixels, arma::fill::zeros);
 
     std::map<int, FaceColor> idx2color;
     std::array<std::vector<int>, FaceColor::N_COLORS> pixel_idx;
@@ -93,14 +94,12 @@ void LineDetector::gmm_mask()
     // initialize masks
     for (FaceColor color : cube_model_.get_colors())
     {
-        masks_[color] = cv::Mat(cv::Size(1, image_bgr_.rows * image_bgr_.cols),
-                                CV_64FC1,
-                                cv::Scalar(0));
+        masks_[color] = cv::Mat(cv::Size(1, n_pixels), CV_64FC1, cv::Scalar(0));
     }
 
     // convert cv::Mat to arma::mat
     cv::Mat concatenated_data;
-    cv::Mat data = image_hsv_.reshape(1, image_hsv_.rows * image_hsv_.cols);
+    cv::Mat data = image_hsv_.reshape(1, n_pixels);
     data.convertTo(data, CV_64FC1);
     concatenated_data = data;
     arma::mat input_data =
