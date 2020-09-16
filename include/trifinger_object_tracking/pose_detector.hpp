@@ -40,7 +40,7 @@ private:
     cv::Mat distortion_coeffs_;   // distortion coeffs
     cv::Mat rotation_matrix_;     // rotation matrix
     cv::Mat translation_matrix_;  // traslation matrixtranslation matrix
-    cv::Mat reference_center_Point_3d_;
+    cv::Mat corners_at_origin_in_world_frame_;
     std::map<FaceColor, int> face_normals_v_;
     cv::Mat reference_vector_normals_;
     Stats position_;

@@ -49,26 +49,22 @@ PoseDetector::PoseDetector(const CubeModel &cube_model)
         {-0.02269247299737612, -0.015886005467183863, -0.022204248661934205},
         {0.5454465438837742, 0.5365514015146118, 0.5282896793079157}};
 
-    float reference_center_Point_3d[8][4] = {{0.0326, -0.0326, 0.0652, 1},
-                                             {-0.0326, -0.0326, 0.0652, 1},
-                                             {0.0326, 0.0326, 0.0652, 1},
-                                             {-0.0326, 0.0326, 0.0652, 1},
-                                             {0.0326, -0.0326, 0, 1},
-                                             {-0.0326, -0.0326, 0, 1},
-                                             {0.0326, 0.0326, 0, 1},
-                                             {-0.0326, 0.0326, 0, 1}};
-
-    float reference_vector_normals[3][6] = {
-        {0, 0, 1, -1, 0, 0}, {0, 0, 0, 0, 1, -1}, {1, -1, 0, 0, 0, 0}};
-
     camera_matrix_ = cv::Mat(3, 3, CV_32F, &camera_matrix).clone();
     distortion_coeffs_ = cv::Mat(5, 1, CV_32F, &distortion_coeffs).clone();
     rotation_matrix_ = cv::Mat(3, 3, CV_32F, &rotation_matrix).clone();
     translation_matrix_ = cv::Mat(3, 3, CV_32F, &translation_matrix).clone();
-    reference_center_Point_3d_ =
-        cv::Mat(8, 4, CV_32F, &reference_center_Point_3d).clone();
-    reference_vector_normals_ =
-        cv::Mat(3, 6, CV_32F, &reference_vector_normals).clone();
+
+    // unfortunately, there is no real const cv::Mat, so we cannot wrap it
+    // around the const array but need to copy the data
+    corners_at_origin_in_world_frame_ = cv::Mat(8, 4, CV_32F);
+    std::memcpy(corners_at_origin_in_world_frame_.data,
+                cube_model_.corners_at_origin_in_world_frame,
+                corners_at_origin_in_world_frame_.total() * sizeof(float));
+
+    reference_vector_normals_ = cv::Mat(3, 6, CV_32F);
+    std::memcpy(reference_vector_normals_.data,
+                cube_model_.face_normal_vectors,
+                reference_vector_normals_.total() * sizeof(float));
 
     face_normals_v_[FaceColor::YELLOW] = {0};
     face_normals_v_[FaceColor::RED] = {1};
@@ -145,9 +141,9 @@ std::vector<cv::Point3f> PoseDetector::random_normal(
 }
 
 std::vector<cv::Point3f> PoseDetector::random_uniform(cv::Point3f lower_bound,
-                                              cv::Point3f upper_bound,
-                                              int rows,
-                                              int cols)
+                                                      cv::Point3f upper_bound,
+                                                      int rows,
+                                                      int cols)
 {
     std::vector<cv::Point3f> data;
     std::random_device rd;
@@ -334,7 +330,8 @@ std::vector<float> PoseDetector::cost_function(
         cv::Mat rotation_matrix =
             getPoseMatrix(proposed_orientation[i], proposed_translation[i]);
         pose.push_back(rotation_matrix);
-        cv::Mat new_pt = rotation_matrix * reference_center_Point_3d_.t();
+        cv::Mat new_pt =
+            rotation_matrix * corners_at_origin_in_world_frame_.t();
         new_pt = new_pt.t();  // 8x4
         for (int j = 0; j < new_pt.rows; j++)
         {  // 8x3
@@ -578,7 +575,8 @@ cv::Point3f PoseDetector::var(std::vector<cv::Point3f> points)
     return p;
 }
 
-Pose PoseDetector::find_pose(const std::array<std::map<ColorPair, Line>, 3> &lines)
+Pose PoseDetector::find_pose(
+    const std::array<std::map<ColorPair, Line>, 3> &lines)
 {
     // FIXME this is bad design
     lines_ = lines;
@@ -605,14 +603,14 @@ Pose PoseDetector::find_pose(const std::array<std::map<ColorPair, Line>, 3> &lin
     return Pose(position_.mean, orientation_.mean);
 }
 
-
 std::vector<std::vector<cv::Point2f>> PoseDetector::get_projected_points() const
 {
     std::vector<std::vector<cv::Point2f>> projected_points;
 
     cv::Mat pose = getPoseMatrix(orientation_.mean, position_.mean);
 
-    cv::Mat proposed_new_cube_pts_w = pose * reference_center_Point_3d_.t();
+    cv::Mat proposed_new_cube_pts_w =
+        pose * corners_at_origin_in_world_frame_.t();
     proposed_new_cube_pts_w = proposed_new_cube_pts_w.t();  // 8x4
     proposed_new_cube_pts_w = proposed_new_cube_pts_w.colRange(
         0, proposed_new_cube_pts_w.cols - 1);  // 8x3
