@@ -67,6 +67,10 @@ int main(int argc, char **argv)
     auto frames = load_images(data_dir);
 
     trifinger_object_tracking::CubeModel cube_model;
+    trifinger_object_tracking::LineDetector line_detector(cube_model,
+                                                          model_directory);
+    trifinger_object_tracking::Pose pose(cube_model);
+
     std::array<std::map<trifinger_object_tracking::ColorPair,
                         trifinger_object_tracking::Line>,
                3>
@@ -78,10 +82,6 @@ int main(int argc, char **argv)
         // FIXME: move this processing to somewhere else!
         cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
         cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
-
-        // TODO: line detector class should not take a fixed image in c'tor
-        trifinger_object_tracking::LineDetector line_detector(cube_model,
-                                                       model_directory);
 
         // TODO clone needed?
         lines[i] = line_detector.detect_lines(image.clone());
@@ -95,9 +95,6 @@ int main(int argc, char **argv)
         i++;
     }
 
-    // TODO: do not pass the full line detection class but only what is really
-    // needed
-    trifinger_object_tracking::Pose pose(cube_model);
     pose.find_pose(lines);
 
     // visualize the detected pose
