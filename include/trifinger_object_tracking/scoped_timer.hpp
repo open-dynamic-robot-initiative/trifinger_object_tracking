@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 
+#define DISABLE_SCOPED_TIMER
+
 class ScopedTimer
 {
 public:
@@ -14,12 +16,14 @@ public:
 
     ~ScopedTimer()
     {
+#ifndef DISABLE_SCOPED_TIMER
         auto end_time = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
             end_time - start_time_);
 
         std::cout << "Duration " << name_ << ": " << duration.count() << " ms."
                   << std::endl;
+#endif
     }
 
 private:

@@ -1,8 +1,11 @@
+#include <trifinger_object_tracking/line_detector.hpp>
+
 #include <chrono>
 #include <iostream>
 #include <thread>
-#include <trifinger_object_tracking/line_detector.hpp>
 #include <typeinfo>
+
+#include <trifinger_object_tracking/scoped_timer.hpp>
 
 namespace trifinger_object_tracking
 {
@@ -55,6 +58,8 @@ void LineDetector::load_segmentation_models(const std::string &model_directory)
 
 std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
 {
+    ScopedTimer timer("LineDetector/detect_lines");
+
     // TODO better solution than class members
     image_bgr_ = image_bgr;
     cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
@@ -83,6 +88,8 @@ std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
 
 void LineDetector::gmm_mask()
 {
+    ScopedTimer timer("LineDetector/gmm_mask");
+
     const size_t n_pixels = image_bgr_.total();
 
     arma::mat gmm_result =
@@ -287,7 +294,10 @@ void LineDetector::create_pixel_dataset(FaceColor color)
 }
 
 void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
-{  // N dominant colors
+{
+    ScopedTimer timer("LineDetector/find_dominant_colors");
+
+    // N dominant colors
     dominant_colors_.clear();
     std::map<FaceColor, int> color_count_copy(color_count_);
 
@@ -345,6 +355,8 @@ void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
 
 bool LineDetector::denoise()
 {
+    ScopedTimer timer("LineDetector/denoise");
+
     if (dominant_colors_.size() == 0)
     {
         return true;
@@ -453,6 +465,7 @@ bool LineDetector::denoise()
     {
         int j = 0;
         cv::Mat mask = masks_[color.first];
+        // TODO is this reshape needed?
         mask = mask.reshape(1, image_bgr_.rows * image_bgr_.cols);
         for (int i = 0; i < mask.rows; i++)
         {
@@ -584,6 +597,8 @@ void LineDetector::print_pixels() const
 std::vector<std::pair<FaceColor, FaceColor>>
 LineDetector::make_valid_combinations()
 {
+    ScopedTimer timer("LineDetector/make_valid_combinations");
+
     std::vector<FaceColor> color_keys;
     std::vector<std::pair<FaceColor, FaceColor>> color_pairs;
     transform(dominant_colors_.begin(),
@@ -607,6 +622,8 @@ LineDetector::make_valid_combinations()
 
 void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
 {
+    ScopedTimer timer("LineDetector/get_line_between_colors");
+
     std::vector<cv::Point2f> classifier_input_data;
     std::vector<int> classifier_output_data;
 

@@ -16,7 +16,9 @@
 #include <trifinger_object_tracking/line_detector.hpp>
 #include <trifinger_object_tracking/pose_detector.hpp>
 
-#define VISUALIZE
+#include <trifinger_object_tracking/scoped_timer.hpp>
+
+//#define VISUALIZE
 
 /**
  * @brief Load images camera{60,180,300}.png from the given directory.
@@ -103,25 +105,30 @@ int main(int argc, char **argv)
     // This is where actual processing starts
     auto start = std::chrono::high_resolution_clock::now();
 
-    int i = 0;
-    for (const cv::Mat &image : frames)
     {
-        // FIXME: move this processing to somewhere else!
-        cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
-        cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
+        ScopedTimer timer("all images line detection");
+        int i = 0;
+        for (const cv::Mat &image : frames)
+        {
+            {
+                ScopedTimer timer("image preprocessing");
+                // FIXME: move this processing to somewhere else!
+                cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
+                cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
+            }
 
-        // TODO clone needed?
-        lines[i] = line_detector.detect_lines(image.clone());
+            lines[i] = line_detector.detect_lines(image);
 
 #ifdef VISUALIZE
-        subplot.set_subimg(line_detector.get_image(), i, 0);
-        subplot.set_subimg(line_detector.get_segmented_image(), i, 1);
-        subplot.set_subimg(
-            line_detector.get_segmented_image_wout_outliers(), i, 2);
-        subplot.set_subimg(line_detector.get_image_lines(), i, 3);
+            subplot.set_subimg(line_detector.get_image(), i, 0);
+            subplot.set_subimg(line_detector.get_segmented_image(), i, 1);
+            subplot.set_subimg(
+                line_detector.get_segmented_image_wout_outliers(), i, 2);
+            subplot.set_subimg(line_detector.get_image_lines(), i, 3);
 #endif
 
-        i++;
+            i++;
+        }
     }
 
     pose.find_pose(lines);
