@@ -98,10 +98,10 @@ int main(int argc, char **argv)
     pose.find_pose(lines);
 
     // visualize the detected pose
-    // TODO: make this a method of pose detector?
+    auto projected_cube_corners = pose.get_projected_points();
     for (int i = 0; i < frames.size(); i++)
     {
-        std::vector<cv::Point2f> imgpoints = pose.get_projected_points()[i];
+        std::vector<cv::Point2f> imgpoints = projected_cube_corners[i];
         cv::Mat poseimg = frames[i].clone();
         // draw the cube edges in the image
         for (auto &it : cube_model.object_model_)

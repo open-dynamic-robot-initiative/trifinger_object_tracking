@@ -8,6 +8,18 @@
 
 namespace trifinger_object_tracking
 {
+cv::Mat getPoseMatrix(cv::Point3f orientation, cv::Point3f position)
+{
+    cv::Mat rotation_matrix;
+    cv::Rodrigues(cv::Mat(orientation), rotation_matrix);
+    cv::Mat translation =
+        (cv::Mat_<float>(3, 1) << position.x, position.y, position.z);
+    cv::hconcat(rotation_matrix, translation, rotation_matrix);
+    float temp[4] = {0, 0, 0, 1.0};
+    rotation_matrix.push_back(cv::Mat(1, 4, CV_32F, &temp));
+    return rotation_matrix;  // 4x4
+}
+
 PoseDetector::PoseDetector(const CubeModel &cube_model)
     : cube_model_(cube_model)
 {
@@ -154,18 +166,6 @@ std::vector<cv::Point3f> PoseDetector::random_uniform(cv::Point3f lower_bound,
         data.push_back(cv::Point3f(x, y, z));
     }
     return data;
-}
-
-cv::Mat PoseDetector::getPoseMatrix(cv::Point3f orientation, cv::Point3f position)
-{
-    cv::Mat rotation_matrix;
-    cv::Rodrigues(cv::Mat(orientation), rotation_matrix);
-    cv::Mat translation =
-        (cv::Mat_<float>(3, 1) << position.x, position.y, position.z);
-    cv::hconcat(rotation_matrix, translation, rotation_matrix);
-    float temp[4] = {0, 0, 0, 1.0};
-    rotation_matrix.push_back(cv::Mat(1, 4, CV_32F, &temp));
-    return rotation_matrix;  // 4x4
 }
 
 std::vector<cv::Point3f> PoseDetector::sample_random_so3_rotvecs(
@@ -578,7 +578,7 @@ cv::Point3f PoseDetector::var(std::vector<cv::Point3f> points)
     return p;
 }
 
-void PoseDetector::find_pose(const std::array<std::map<ColorPair, Line>, 3> &lines)
+Pose PoseDetector::find_pose(const std::array<std::map<ColorPair, Line>, 3> &lines)
 {
     // FIXME this is bad design
     lines_ = lines;
@@ -602,9 +602,15 @@ void PoseDetector::find_pose(const std::array<std::map<ColorPair, Line>, 3> &lin
         }
     }
 
+    return Pose(position_.mean, orientation_.mean);
+}
+
+
+std::vector<std::vector<cv::Point2f>> PoseDetector::get_projected_points() const
+{
+    std::vector<std::vector<cv::Point2f>> projected_points;
+
     cv::Mat pose = getPoseMatrix(orientation_.mean, position_.mean);
-    //    cv::Mat pose = getPoseMatrix(cv::Point3f(0, 0, 0),
-    //    cv::Point3f(-0.0216118, -0.12, 0));
 
     cv::Mat proposed_new_cube_pts_w = pose * reference_center_Point_3d_.t();
     proposed_new_cube_pts_w = proposed_new_cube_pts_w.t();  // 8x4
@@ -629,9 +635,10 @@ void PoseDetector::find_pose(const std::array<std::map<ColorPair, Line>, 3> &lin
                           camera_matrix_,
                           distortion_coeffs_,
                           imgpoints);
-        projected_points_.push_back(
-            imgpoints);  // ? projected_points.append(imgpoints[:, 0, :])
+        projected_points.push_back(imgpoints);
     }
+
+    return projected_points;
 }
 
 }  // namespace trifinger_object_tracking
