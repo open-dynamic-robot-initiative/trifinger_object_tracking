@@ -6,7 +6,7 @@
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
-#include <trifinger_object_tracking/pose.hpp>
+#include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/utils.hpp>
 
 int debug = 1;
@@ -95,8 +95,6 @@ int main(int argc, char **argv)
     // set true if you want to train gmm models for each color
     bool generate_gmm_dataset = false;
 
-    trifinger_object_tracking::CubeModel cube_model;
-
     // Generate dataset for GMM model for each color and train it
     if (generate_gmm_dataset)
     {
@@ -109,10 +107,13 @@ int main(int argc, char **argv)
         }
         trifinger_object_tracking::train_gmm(training_dataset_for_gmm);
     }
-
-    // Use the trained GMM model to make predictions
-    if (!generate_gmm_dataset)
+    else  // Use the trained GMM model to make predictions
     {
+        trifinger_object_tracking::CubeModel cube_model;
+        trifinger_object_tracking::LineDetector line_detector(cube_model,
+                                                              "../data");
+        trifinger_object_tracking::PoseDetector pose(cube_model);
+
         trifinger_object_tracking::CvSubImages subplot(
             cv::Size(720, 540), 3, 5);
         cv::namedWindow("debug", cv::WINDOW_NORMAL);
@@ -139,9 +140,6 @@ int main(int argc, char **argv)
             std::cin.get();  // wait for any key press
             return -1;
         }
-
-        trifinger_object_tracking::LineDetector line_detector(cube_model,
-                                                              "../data");
 
         int until = 0;
         for (std::string folder_path : camera_data)
@@ -266,9 +264,7 @@ int main(int argc, char **argv)
                 }
             }
 
-            // Pose Detection from below
-            trifinger_object_tracking::Pose pose(cube_model, lines);
-            pose.find_pose();
+            pose.find_pose(lines);
 
             std::cout << "Pose detected\n";
 
@@ -277,7 +273,7 @@ int main(int argc, char **argv)
                 for (int i = 0; i < frames.size(); i++)
                 {
                     std::vector<cv::Point2f> imgpoints =
-                        pose.projected_points_[i];
+                        pose.get_projected_points()[i];
                     cv::Mat poseimg = frames[i].clone();
                     // draw the cube edges in the image
                     for (auto &it : cube_model.object_model_)

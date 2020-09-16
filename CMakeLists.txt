@@ -55,7 +55,7 @@ include_directories(
 
 add_library(lib_object_pose
     src/line_detector.cpp
-    src/pose.cpp
+    src/pose_detector.cpp
     src/utils.cpp
     src/cube_model.cpp
 )

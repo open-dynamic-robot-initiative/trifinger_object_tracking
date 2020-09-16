@@ -18,8 +18,22 @@ struct Stats
     cv::Point3f prev;
 };
 
-class Pose
+class PoseDetector
 {
+
+public:
+    PoseDetector(const CubeModel &cube_model);
+
+    void find_pose(const std::array<std::map<ColorPair, Line>, 3> &lines);
+
+    // TODO which points are projected?
+    const std::vector<std::vector<cv::Point2f>>& get_projected_points() const
+    {
+        return projected_points_;
+    }
+
+
+private:
     CubeModel cube_model_;
     std::array<std::map<ColorPair, Line>, 3> lines_;
 
@@ -37,16 +51,14 @@ class Pose
     cv::Point3f best_position_, best_orientation_;
     float best_cost_;
     std::vector<cv::Mat> pos_cams_w_frame_;
+    std::vector<std::vector<cv::Point2f>> projected_points_;
 
-public:
-    Pose(const CubeModel &cube_model, const std::array<std::map<ColorPair, Line>, 3> &lines);
 
     void cross_entropy_method();
 
     std::vector<float> cost_function(std::vector<cv::Point3f>,
                                      std::vector<cv::Point3f>);
 
-    void find_pose();
 
     std::vector<cv::Point3f> random_normal(cv::Point3f,
                                            cv::Point3f,
@@ -68,8 +80,6 @@ public:
     cv::Point3f var(std::vector<cv::Point3f>);
 
     cv::Mat getPoseMatrix(cv::Point3f, cv::Point3f);
-
-    std::vector<std::vector<cv::Point2f>> projected_points_;
 
     cv::Mat _get_face_normals_cost(std::vector<cv::Mat> proposed_orientation_matrices);
 

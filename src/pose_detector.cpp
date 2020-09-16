@@ -4,14 +4,14 @@
 #include <iostream>
 #include <random>
 #include <thread>
-#include <trifinger_object_tracking/pose.hpp>
+#include <trifinger_object_tracking/pose_detector.hpp>
 
 namespace trifinger_object_tracking
 {
-Pose::Pose(const CubeModel &cube_model,
-           const std::array<std::map<ColorPair, Line>, 3> &lines)
-    : cube_model_(cube_model), lines_(lines)
+PoseDetector::PoseDetector(const CubeModel &cube_model)
+    : cube_model_(cube_model)
 {
+    // FIXME load camera parameters from file
     float camera_matrix[3][3] = {{589.607902244274, 0.0, 366.49661815699994},
                                  {0.0, 590.1790734214388, 297.98736394590526},
                                  {0.0, 0.0, 1.0}};
@@ -82,7 +82,7 @@ Pose::Pose(const CubeModel &cube_model,
         power((orientation_.lower_bound - orientation_.upper_bound) / 4.0, 2);
 }
 
-cv::Point3f Pose::power(cv::Point3f p, float n)
+cv::Point3f PoseDetector::power(cv::Point3f p, float n)
 {
     p.x = pow(p.x, n);
     p.y = pow(p.y, n);
@@ -90,7 +90,7 @@ cv::Point3f Pose::power(cv::Point3f p, float n)
     return p;
 }
 
-std::vector<cv::Point3f> Pose::random_normal(
+std::vector<cv::Point3f> PoseDetector::random_normal(
     cv::Point3f mean, cv::Point3f var, int rows, int cols, std::string clip_for)
 {
     std::vector<cv::Point3f> data;
@@ -132,7 +132,7 @@ std::vector<cv::Point3f> Pose::random_normal(
     return data;
 }
 
-std::vector<cv::Point3f> Pose::random_uniform(cv::Point3f lower_bound,
+std::vector<cv::Point3f> PoseDetector::random_uniform(cv::Point3f lower_bound,
                                               cv::Point3f upper_bound,
                                               int rows,
                                               int cols)
@@ -156,7 +156,7 @@ std::vector<cv::Point3f> Pose::random_uniform(cv::Point3f lower_bound,
     return data;
 }
 
-cv::Mat Pose::getPoseMatrix(cv::Point3f orientation, cv::Point3f position)
+cv::Mat PoseDetector::getPoseMatrix(cv::Point3f orientation, cv::Point3f position)
 {
     cv::Mat rotation_matrix;
     cv::Rodrigues(cv::Mat(orientation), rotation_matrix);
@@ -168,7 +168,7 @@ cv::Mat Pose::getPoseMatrix(cv::Point3f orientation, cv::Point3f position)
     return rotation_matrix;  // 4x4
 }
 
-std::vector<cv::Point3f> Pose::sample_random_so3_rotvecs(
+std::vector<cv::Point3f> PoseDetector::sample_random_so3_rotvecs(
     int number_of_particles)
 { /* https://stackoverflow.com/questions/38844493/transforming-quaternion-to-camera-rotation-matrix-opencv
    * 1. convert quat to axis-angle vectors
@@ -189,7 +189,7 @@ std::vector<cv::Point3f> Pose::sample_random_so3_rotvecs(
     return data;
 }
 
-cv::Mat Pose::_cost_of_out_of_bounds_projection(
+cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
     std::vector<cv::Mat> projected_points)
 {
     auto s = projected_points[0].size();
@@ -242,7 +242,7 @@ cv::Mat Pose::_cost_of_out_of_bounds_projection(
     return error;
 }
 
-cv::Mat Pose::_get_face_normals_cost(
+cv::Mat PoseDetector::_get_face_normals_cost(
     std::vector<cv::Mat> proposed_orientation_matrices)
 {
     std::vector<cv::Mat> v_faces;  // number_of_particles x 3 x 6
@@ -319,7 +319,7 @@ cv::Mat Pose::_get_face_normals_cost(
     return error;
 }
 
-std::vector<float> Pose::cost_function(
+std::vector<float> PoseDetector::cost_function(
     std::vector<cv::Point3f> proposed_translation,
     std::vector<cv::Point3f> proposed_orientation)
 {
@@ -431,7 +431,7 @@ std::vector<float> Pose::cost_function(
     return error;
 }
 
-void Pose::initialise_pos_cams_w_frame()
+void PoseDetector::initialise_pos_cams_w_frame()
 {
     for (int i = 0; i < 3; i++)
     {
@@ -443,7 +443,7 @@ void Pose::initialise_pos_cams_w_frame()
     }
 }
 
-void Pose::cross_entropy_method()
+void PoseDetector::cross_entropy_method()
 {
     int max_iterations = 50;
     int number_of_particles = 1000;
@@ -553,7 +553,7 @@ void Pose::cross_entropy_method()
     }
 }
 
-cv::Point3f Pose::mean(std::vector<cv::Point3f> points)
+cv::Point3f PoseDetector::mean(std::vector<cv::Point3f> points)
 {
     cv::Point3f p(0., 0., 0.);
     for (auto &it : points)
@@ -565,7 +565,7 @@ cv::Point3f Pose::mean(std::vector<cv::Point3f> points)
     return p;
 }
 
-cv::Point3f Pose::var(std::vector<cv::Point3f> points)
+cv::Point3f PoseDetector::var(std::vector<cv::Point3f> points)
 {
     cv::Point3f m = mean(points);
     cv::Point3f p(0., 0., 0.);
@@ -578,8 +578,11 @@ cv::Point3f Pose::var(std::vector<cv::Point3f> points)
     return p;
 }
 
-void Pose::find_pose()
+void PoseDetector::find_pose(const std::array<std::map<ColorPair, Line>, 3> &lines)
 {
+    // FIXME this is bad design
+    lines_ = lines;
+
     auto start = std::chrono::high_resolution_clock::now();
     cross_entropy_method();  // calculates mean_position and mean_orientation
     auto finish = std::chrono::high_resolution_clock::now();
