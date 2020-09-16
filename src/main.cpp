@@ -267,8 +267,8 @@ int main(int argc, char **argv)
             }
 
             // Pose Detection from below
-            trifinger_object_tracking::Pose pose(cube_model, lines);
-            pose.find_pose();
+            trifinger_object_tracking::Pose pose(cube_model);
+            pose.find_pose(lines);
 
             std::cout << "Pose detected\n";
 

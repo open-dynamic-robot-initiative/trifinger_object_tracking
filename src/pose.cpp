@@ -8,10 +8,10 @@
 
 namespace trifinger_object_tracking
 {
-Pose::Pose(const CubeModel &cube_model,
-           const std::array<std::map<ColorPair, Line>, 3> &lines)
-    : cube_model_(cube_model), lines_(lines)
+Pose::Pose(const CubeModel &cube_model)
+    : cube_model_(cube_model)
 {
+    // FIXME load camera parameters from file
     float camera_matrix[3][3] = {{589.607902244274, 0.0, 366.49661815699994},
                                  {0.0, 590.1790734214388, 297.98736394590526},
                                  {0.0, 0.0, 1.0}};
@@ -578,8 +578,11 @@ cv::Point3f Pose::var(std::vector<cv::Point3f> points)
     return p;
 }
 
-void Pose::find_pose()
+void Pose::find_pose(const std::array<std::map<ColorPair, Line>, 3> &lines)
 {
+    // FIXME this is bad design
+    lines_ = lines;
+
     auto start = std::chrono::high_resolution_clock::now();
     cross_entropy_method();  // calculates mean_position and mean_orientation
     auto finish = std::chrono::high_resolution_clock::now();

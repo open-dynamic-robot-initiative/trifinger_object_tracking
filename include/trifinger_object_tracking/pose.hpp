@@ -39,14 +39,15 @@ class Pose
     std::vector<cv::Mat> pos_cams_w_frame_;
 
 public:
-    Pose(const CubeModel &cube_model, const std::array<std::map<ColorPair, Line>, 3> &lines);
+    Pose(const CubeModel &cube_model);
+
+    void find_pose(const std::array<std::map<ColorPair, Line>, 3> &lines);
 
     void cross_entropy_method();
 
     std::vector<float> cost_function(std::vector<cv::Point3f>,
                                      std::vector<cv::Point3f>);
 
-    void find_pose();
 
     std::vector<cv::Point3f> random_normal(cv::Point3f,
                                            cv::Point3f,

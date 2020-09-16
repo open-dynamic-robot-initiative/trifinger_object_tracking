@@ -97,8 +97,8 @@ int main(int argc, char **argv)
 
     // TODO: do not pass the full line detection class but only what is really
     // needed
-    trifinger_object_tracking::Pose pose(cube_model, lines);
-    pose.find_pose();
+    trifinger_object_tracking::Pose pose(cube_model);
+    pose.find_pose(lines);
 
     // visualize the detected pose
     // TODO: make this a method of pose detector?
