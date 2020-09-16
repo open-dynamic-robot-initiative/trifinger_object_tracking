@@ -66,13 +66,6 @@ PoseDetector::PoseDetector(const CubeModel &cube_model)
                 cube_model_.face_normal_vectors,
                 reference_vector_normals_.total() * sizeof(float));
 
-    face_normals_v_[FaceColor::YELLOW] = {0};
-    face_normals_v_[FaceColor::RED] = {1};
-    face_normals_v_[FaceColor::MAGENTA] = {2};
-    face_normals_v_[FaceColor::GREEN] = {3};
-    face_normals_v_[FaceColor::BLUE] = {4};
-    face_normals_v_[FaceColor::CYAN] = {5};
-
     // Setting the bounds for pose estimation
     position_.lower_bound = cv::Point3f(-0.25, -0.25, 0);
     position_.upper_bound = cv::Point3f(0.25, 0.25, 0.25);
@@ -281,7 +274,8 @@ cv::Mat PoseDetector::_get_face_normals_cost(
             for (int j = 0; j < number_of_particles; j++)
             {
                 float angle = 0;
-                cv::Mat mat_a = v_faces[j].col(face_normals_v_[color]);
+                cv::Mat mat_a = v_faces[j].col(
+                    cube_model_.map_color_to_normal_index[color]);
                 cv::Mat mat_b(v_cam_to_cube[j]);
                 cv::Mat product = mat_a.mul(mat_b);
                 cv::Mat summed;

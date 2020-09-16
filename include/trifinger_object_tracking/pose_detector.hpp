@@ -41,7 +41,6 @@ private:
     cv::Mat rotation_matrix_;     // rotation matrix
     cv::Mat translation_matrix_;  // traslation matrixtranslation matrix
     cv::Mat corners_at_origin_in_world_frame_;
-    std::map<FaceColor, int> face_normals_v_;
     cv::Mat reference_vector_normals_;
     Stats position_;
     Stats orientation_;
