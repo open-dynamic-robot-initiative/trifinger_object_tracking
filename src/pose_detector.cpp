@@ -8,16 +8,14 @@
 
 namespace trifinger_object_tracking
 {
+// TODO: use quaternion instead of matrix (more efficient).
 cv::Mat getPoseMatrix(cv::Point3f orientation, cv::Point3f position)
 {
-    cv::Mat rotation_matrix;
-    cv::Rodrigues(cv::Mat(orientation), rotation_matrix);
-    cv::Mat translation =
-        (cv::Mat_<float>(3, 1) << position.x, position.y, position.z);
-    cv::hconcat(rotation_matrix, translation, rotation_matrix);
-    float temp[4] = {0, 0, 0, 1.0};
-    rotation_matrix.push_back(cv::Mat(1, 4, CV_32F, &temp));
-    return rotation_matrix;  // 4x4
+    cv::Vec3f rvec(orientation.x, orientation.y, orientation.z);
+    cv::Vec3f tvec(position.x, position.y, position.z);
+
+    // TODO keep fixed-size Mat4
+    return cv::Mat(cv::Affine3f(rvec, tvec).matrix);
 }
 
 PoseDetector::PoseDetector(const CubeModel &cube_model)
@@ -159,12 +157,7 @@ std::vector<cv::Point3f> PoseDetector::random_uniform(cv::Point3f lower_bound,
 
 std::vector<cv::Point3f> PoseDetector::sample_random_so3_rotvecs(
     int number_of_particles)
-{ /* https://stackoverflow.com/questions/38844493/transforming-quaternion-to-camera-rotation-matrix-opencv
-   * 1. convert quat to axis-angle vectors
-   * 2. multiply angle by axis to get Rodrigues angels
-   * 3. use cv::Rodrigues(rod_angles) to get rotation_matrix
-   */
-
+{
     std::vector<cv::Point3f> data;
     for (int r = 0; r < number_of_particles; r++)
     {
@@ -323,6 +316,7 @@ std::vector<float> PoseDetector::cost_function(
     {  // initialization of pose
         cv::Mat rotation_matrix =
             getPoseMatrix(proposed_orientation[i], proposed_translation[i]);
+
         pose.push_back(rotation_matrix);
         cv::Mat new_pt =
             rotation_matrix * corners_at_origin_in_world_frame_.t();
