@@ -25,25 +25,27 @@ cv::Mat getPoseMatrix(cv::Point3f, cv::Point3f);
 class PoseDetector
 {
 public:
+    //! Number of cameras
     static constexpr unsigned int N_CAMERAS = 3;
 
     PoseDetector(const CubeModel &cube_model,
-                 const std::array<trifinger_cameras::CameraParameters, 3>
-                     &camera_parameters);
+                 const std::array<trifinger_cameras::CameraParameters,
+                                  N_CAMERAS> &camera_parameters);
 
-    Pose find_pose(const std::array<std::map<ColorPair, Line>, 3> &lines);
+    Pose find_pose(
+        const std::array<std::map<ColorPair, Line>, N_CAMERAS> &lines);
 
     // TODO which points are projected?
     std::vector<std::vector<cv::Point2f>> get_projected_points() const;
 
 private:
     CubeModel cube_model_;
-    std::array<std::map<ColorPair, Line>, 3> lines_;
+    std::array<std::map<ColorPair, Line>, N_CAMERAS> lines_;
 
-    std::array<cv::Mat, 3> camera_matrices_;
-    std::array<cv::Mat, 3> distortion_coeffs_;
-    std::array<cv::Vec3d, 3> camera_orientations_;
-    std::array<cv::Vec3d, 3> camera_translations_;
+    std::array<cv::Mat, N_CAMERAS> camera_matrices_;
+    std::array<cv::Mat, N_CAMERAS> distortion_coeffs_;
+    std::array<cv::Vec3d, N_CAMERAS> camera_orientations_;
+    std::array<cv::Vec3d, N_CAMERAS> camera_translations_;
 
     cv::Mat corners_at_origin_in_world_frame_;
     cv::Mat reference_vector_normals_;

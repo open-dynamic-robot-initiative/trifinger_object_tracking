@@ -18,13 +18,11 @@ cv::Mat getPoseMatrix(cv::Point3f orientation, cv::Point3f position)
     return cv::Mat(cv::Affine3f(rvec, tvec).matrix);
 }
 
-PoseDetector::PoseDetector(
-    const CubeModel &cube_model,
-    const std::array<trifinger_cameras::CameraParameters, 3> &camera_parameters)
+PoseDetector::PoseDetector(const CubeModel &cube_model,
+                           const std::array<trifinger_cameras::CameraParameters,
+                                            N_CAMERAS> &camera_parameters)
     : cube_model_(cube_model)
 {
-    // FIXME no magic number for number of cameras
-
     // convert camera parameters to cv types
     for (int i = 0; i < N_CAMERAS; i++)
     {
@@ -398,7 +396,7 @@ std::vector<float> PoseDetector::cost_function(
 
 void PoseDetector::initialise_pos_cams_w_frame()
 {
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < N_CAMERAS; i++)
     {
         cv::Mat pos_cam = getPoseMatrix(cv::Point3f(camera_orientations_[i]),
                                         cv::Point3f(camera_translations_[i]));
@@ -543,7 +541,7 @@ cv::Point3f PoseDetector::var(std::vector<cv::Point3f> points)
 }
 
 Pose PoseDetector::find_pose(
-    const std::array<std::map<ColorPair, Line>, 3> &lines)
+    const std::array<std::map<ColorPair, Line>, N_CAMERAS> &lines)
 {
     // FIXME this is bad design
     lines_ = lines;
