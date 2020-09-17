@@ -8,6 +8,8 @@
 
 #include <ros/package.h>
 
+#include <trifinger_cameras/parse_yml.h>
+
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
@@ -61,7 +63,8 @@ int main(int argc, char **argv)
 
     auto frames = load_images(data_dir);
 
-    trifinger_object_tracking::CvSubImages subplot(cv::Size(frames[0].cols, frames[0].rows), 3, 5);
+    trifinger_object_tracking::CvSubImages subplot(
+        cv::Size(frames[0].cols, frames[0].rows), 3, 5);
     cv::namedWindow("debug", cv::WINDOW_NORMAL);
     cv::resizeWindow(
         "debug", subplot.get_image().cols, subplot.get_image().rows);
@@ -69,7 +72,23 @@ int main(int argc, char **argv)
     trifinger_object_tracking::CubeModel cube_model;
     trifinger_object_tracking::LineDetector line_detector(cube_model,
                                                           model_directory);
-    trifinger_object_tracking::PoseDetector pose(cube_model);
+
+    std::array<trifinger_cameras::CameraParameters, 3> camera_params;
+    // FIXME: This is a bit of a hack but for now just expect calibration files
+    // with fixed names on level above data_dir
+    std::string camera_name;
+    bool success;
+    success = trifinger_cameras::readCalibrationYml(
+        data_dir + "/../camera_calib_60.yml", camera_name, camera_params[0]);
+    assert(success && camera_name == "camera60");
+    success = trifinger_cameras::readCalibrationYml(
+        data_dir + "/../camera_calib_180.yml", camera_name, camera_params[1]);
+    assert(success && camera_name == "camera180");
+    success = trifinger_cameras::readCalibrationYml(
+        data_dir + "/../camera_calib_300.yml", camera_name, camera_params[2]);
+    assert(success && camera_name == "camera300");
+
+    trifinger_object_tracking::PoseDetector pose(cube_model, camera_params);
 
     std::array<std::map<trifinger_object_tracking::ColorPair,
                         trifinger_object_tracking::Line>,
