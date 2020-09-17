@@ -107,8 +107,7 @@ int main(int argc, char **argv)
 
         subplot.set_subimg(line_detector.get_image(), i, 0);
         subplot.set_subimg(line_detector.get_segmented_image(), i, 1);
-        subplot.set_subimg(
-            line_detector.get_segmented_image_wout_outliers(), i, 2);
+        subplot.set_subimg(line_detector.get_front_line_image(), i, 2);
         subplot.set_subimg(line_detector.get_image_lines(), i, 3);
 
         i++;

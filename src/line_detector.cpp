@@ -68,7 +68,8 @@ std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
 
     gmm_mask();
     find_dominant_colors(3);
-    denoise();
+    deflate_masks_of_dominant_colors();
+    // denoise();
 
     std::vector<std::pair<FaceColor, FaceColor>> color_pairs =
         make_valid_combinations();
@@ -366,6 +367,23 @@ void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
               [](std::pair<FaceColor, int> elem) { return elem.first; });
 }
 
+void LineDetector::deflate_masks_of_dominant_colors()
+{
+    ScopedTimer timer("LineDetector/deflate_masks_of_dominant_colors");
+
+    // TODO: what is a good value?
+    constexpr unsigned DEFLATION_RADIUS = 7;
+
+    static const cv::Mat kernel = cv::getStructuringElement(
+        cv::MORPH_ELLIPSE,
+        cv::Size(2 * DEFLATION_RADIUS + 1, 2 * DEFLATION_RADIUS + 1));
+
+    for (FaceColor color : dominant_colors_)
+    {
+        cv::dilate(masks_[color], deflated_masks_[color], kernel);
+    }
+}
+
 bool LineDetector::denoise()
 {
     ScopedTimer timer("LineDetector/denoise");
@@ -561,6 +579,34 @@ cv::Mat LineDetector::get_segmented_image_wout_outliers() const
     return segmentation.clone();
 }
 
+cv::Mat LineDetector::get_front_line_image() const
+{
+    cv::Mat image(
+        image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+
+    for (auto [c1, c2]: make_valid_combinations())
+    {
+        auto [pixels_c1, pixels_c2] = get_front_line_pixels(c1, c2);
+
+        auto rgb1 = cube_model_.get_rgb(c1);
+        auto rgb2 = cube_model_.get_rgb(c2);
+        // image is BGR, so swap R and B
+        cv::Vec3b color_bgr1(rgb1[2], rgb1[1], rgb1[0]);
+        cv::Vec3b color_bgr2(rgb2[2], rgb2[1], rgb2[0]);
+
+        for (auto &p: pixels_c1)
+        {
+            image.at<cv::Vec3b>(p.y, p.x) = color_bgr1;
+        }
+        for (auto &p: pixels_c2)
+        {
+            image.at<cv::Vec3b>(p.y, p.x) = color_bgr2;
+        }
+    }
+
+    return image;
+}
+
 cv::Mat LineDetector::get_image() const
 {
     return image_bgr_.clone();
@@ -608,7 +654,7 @@ void LineDetector::print_pixels() const
 }
 
 std::vector<std::pair<FaceColor, FaceColor>>
-LineDetector::make_valid_combinations()
+LineDetector::make_valid_combinations() const
 {
     ScopedTimer timer("LineDetector/make_valid_combinations");
 
@@ -628,25 +674,71 @@ LineDetector::make_valid_combinations()
     return color_pairs;
 }
 
+std::array<std::vector<cv::Point>, 2> LineDetector::get_front_line_pixels(
+    FaceColor color1, FaceColor color2) const
+{
+    std::array<std::vector<cv::Point>, 2> front_line_pixels;
+
+    ScopedTimer timer("LineDetector/get_line_between_colors/front_line_pixels");
+
+    // std::map<FaceColor, std::vector<cv::Point>> pixel_dataset_;
+
+    cv::Mat front_line;
+
+    cv::bitwise_and(masks_[color1], deflated_masks_[color2], front_line);
+    cv::findNonZero(front_line, front_line_pixels[0]);
+
+    // cv::imshow("mask", masks_[color1]);
+    // cv::imshow("defmask", deflated_masks_[color2]);
+    // cv::imshow("front line", front_line);
+    // cv::waitKey();
+
+    cv::bitwise_and(masks_[color2], deflated_masks_[color1], front_line);
+    cv::findNonZero(front_line, front_line_pixels[1]);
+
+    // cv::imshow("mask", masks_[color1]);
+    // cv::imshow("defmask", deflated_masks_[color2]);
+    // cv::imshow("front line", front_line);
+    // cv::waitKey();
+
+    return front_line_pixels;
+}
+
 void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
 {
     ScopedTimer timer("LineDetector/get_line_between_colors");
 
+    auto [pixels_c1, pixels_c2] = get_front_line_pixels(c1, c2);
+
+    //pixel_dataset_[c1] = pixels_c1;
+    //pixel_dataset_[c2] = pixels_c2;
+    //cv::imshow("foo", get_segmented_image_wout_outliers());
+    //cv::waitKey(0);
+
+    // TODO should this be changed after the filtering done above?
+    constexpr size_t MIN_PIXELS_PER_COLOR = 55;
+    constexpr float MIN_COLOR_RATIO = 0.01;
+
     std::vector<cv::Point2f> classifier_input_data;
     std::vector<int> classifier_output_data;
 
-    if (pixel_dataset_[c1].size() > 55 && pixel_dataset_[c2].size() > 55 &&
-        (pixel_dataset_[c1].size() /
-         float(pixel_dataset_[c2].size() + pixel_dataset_[c1].size())) > 0.01 &&
-        (pixel_dataset_[c2].size() /
-         float(pixel_dataset_[c2].size() + pixel_dataset_[c1].size())) > 0.01)
+    const float color_ratio_c1 =
+        pixels_c1.size() /
+        float(pixels_c2.size() + pixels_c1.size());
+    const float color_ratio_c2 =
+        pixels_c2.size() /
+        float(pixels_c2.size() + pixels_c1.size());
+
+    if (pixels_c1.size() > MIN_PIXELS_PER_COLOR &&
+        pixels_c2.size() > MIN_PIXELS_PER_COLOR &&
+        color_ratio_c1 > MIN_COLOR_RATIO && color_ratio_c2 > MIN_COLOR_RATIO)
     {
-        for (auto &i : pixel_dataset_[c1])
+        for (auto &i : pixels_c1)
         {
             classifier_input_data.push_back(cv::Point2f(i.y, i.x));
             classifier_output_data.push_back(-1);
         }
-        for (auto &i : pixel_dataset_[c2])
+        for (auto &i : pixels_c2)
         {
             classifier_input_data.push_back(cv::Point2f(i.y, i.x));
             classifier_output_data.push_back(1);

@@ -23,6 +23,10 @@ private:
 
     //! individual color segment mask
     std::array<cv::Mat, FaceColor::N_COLORS> masks_;
+
+    //! deflated masks. only defined for dominant colours
+    std::array<cv::Mat, FaceColor::N_COLORS> deflated_masks_;
+
     //! pixel coordinates of the region of interest
     std::map<FaceColor, std::vector<cv::Point>> pixel_dataset_;
     //! total pixels with a particular color
@@ -41,7 +45,9 @@ private:
 
     void clean_mask(FaceColor color, std::array<std::vector<int>, FaceColor::N_COLORS> &pixel_idx);
 
-    void deflate_masks_of_dominant_colours();
+    void deflate_masks_of_dominant_colors();
+
+    std::array<std::vector<cv::Point>, 2> get_front_line_pixels(FaceColor color1, FaceColor color2) const;
 
 public:
     // constructor
@@ -61,13 +67,14 @@ public:
 
     void print_pixels() const;
 
-    std::vector<std::pair<FaceColor, FaceColor>> make_valid_combinations();
+    std::vector<std::pair<FaceColor, FaceColor>> make_valid_combinations() const;
 
     void get_line_between_colors(FaceColor color1, FaceColor color2);
 
     cv::Mat get_segmented_image() const;
 
     cv::Mat get_segmented_image_wout_outliers() const;
+    cv::Mat get_front_line_image() const;
 
     cv::Mat get_image_lines() const;
 
