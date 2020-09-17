@@ -418,7 +418,7 @@ cv::Mat LineDetector::get_front_line_image() const
     cv::Mat image(
         image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
 
-    for (auto [c1, c2]: make_valid_combinations())
+    for (auto [c1, c2] : make_valid_combinations())
     {
         auto [pixels_c1, pixels_c2] = get_front_line_pixels(c1, c2);
 
@@ -428,11 +428,11 @@ cv::Mat LineDetector::get_front_line_image() const
         cv::Vec3b color_bgr1(rgb1[2], rgb1[1], rgb1[0]);
         cv::Vec3b color_bgr2(rgb2[2], rgb2[1], rgb2[0]);
 
-        for (auto &p: pixels_c1)
+        for (auto &p : pixels_c1)
         {
             image.at<cv::Vec3b>(p.y, p.x) = color_bgr1;
         }
-        for (auto &p: pixels_c2)
+        for (auto &p : pixels_c2)
         {
             image.at<cv::Vec3b>(p.y, p.x) = color_bgr2;
         }
@@ -487,7 +487,7 @@ LineDetector::make_valid_combinations() const
 std::array<std::vector<cv::Point>, 2> LineDetector::get_front_line_pixels(
     FaceColor color1, FaceColor color2) const
 {
-    ScopedTimer timer("LineDetector/get_line_between_colors/front_line_pixels");
+    ScopedTimer timer("LineDetector/get_front_line_pixels");
 
     std::array<std::vector<cv::Point>, 2> front_line_pixels;
     cv::Mat front_line;
@@ -505,6 +505,9 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
 {
     ScopedTimer timer("LineDetector/get_line_between_colors");
 
+    constexpr float LINE_ACCURACY_THRESHOLD = 90.0;
+    //constexpr float LINE_ACCURACY_THRESHOLD = 20.0;
+
     auto [pixels_c1, pixels_c2] = get_front_line_pixels(c1, c2);
 
     // TODO should this be changed after the filtering done above?
@@ -515,16 +518,18 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
     std::vector<int> classifier_output_data;
 
     const float color_ratio_c1 =
-        pixels_c1.size() /
-        float(pixels_c2.size() + pixels_c1.size());
+        pixels_c1.size() / float(pixels_c2.size() + pixels_c1.size());
     const float color_ratio_c2 =
-        pixels_c2.size() /
-        float(pixels_c2.size() + pixels_c1.size());
+        pixels_c2.size() / float(pixels_c2.size() + pixels_c1.size());
+
+    std::cout << "\n*************\n";
 
     if (pixels_c1.size() > MIN_PIXELS_PER_COLOR &&
         pixels_c2.size() > MIN_PIXELS_PER_COLOR &&
         color_ratio_c1 > MIN_COLOR_RATIO && color_ratio_c2 > MIN_COLOR_RATIO)
     {
+        std::cout << "Find line between " << c1 << " and " << c2 << std::endl;
+
         for (auto &i : pixels_c1)
         {
             classifier_input_data.push_back(cv::Point2f(i.y, i.x));
@@ -540,14 +545,12 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
                              2,
                              CV_32FC1,
                              classifier_input_data.data());
-        //        cv::Mat op = cv::Mat(classifier_output_data.size(), 1, CV_32F,
-        //        classifier_output_data.data());
 
         std::string classifier = "svm";  //"sklearn_logistic";
         float a, b;
-        float accuracy_;
-        // Train the SVM
+        float accuracy;
 
+        // Train the SVM
         if (classifier == "svm")
         {
             cv::Mat op = cv::Mat(classifier_output_data.size(),
@@ -578,11 +581,10 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
                 cv::Mat responses;
                 svm->predict(ip, responses);
                 responses.convertTo(responses, CV_32S);
-                // std::cout << "accuracy: "
-                //          << calculateAccuracyPercent(op, responses) << "%"
-                //          << std::endl;
-
-                accuracy_ = calculateAccuracyPercent(op, responses);
+                accuracy = calculateAccuracyPercent(op, responses);
+                std::cout << "accuracy: "
+                          << accuracy << "%"
+                          << std::endl;
             }
             cv::Mat alpha, svidx;
             cv::Mat sv = svm->getSupportVectors();
@@ -590,10 +592,9 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
             a = -sv.at<float>(0, 0) / sv.at<float>(0, 1);
             b = rho / sv.at<float>(0, 1);
 
-            // std::cout << "\n*************\n";
-            // std::cout << "Rho " << rho << " first " << -sv.at<float>(0, 0)
-            //          << " divide_by " << sv.at<float>(0, 1) << std::endl;
-            // std::cout << a << " " << b << std::endl;
+            std::cout << "Rho " << rho << " first " << -sv.at<float>(0, 0)
+                      << " divide_by " << sv.at<float>(0, 1) << std::endl;
+            std::cout << a << " " << b << std::endl;
         }
         else if (classifier == "logistic")
         {
@@ -610,20 +611,25 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
             lr->train(ip, cv::ml::ROW_SAMPLE, op);
 
             auto thetas = lr->get_learnt_thetas();
-            //    std::cout << "\nPrinting Thetas for " << c1 << " and " << c2
-            //    <<std::endl; std::cout << thetas << " " <<
-            //    thetas.at<float>(0,0) << " "
-            //    << thetas.at<float>(0,1) << " " << thetas.at<float>(0,2) <<
-            //    std::endl;
+            std::cout << "\nPrinting Thetas for " << c1 << " and " << c2
+                      << std::endl;
+            std::cout << thetas << " " << thetas.at<float>(0, 0) << " "
+                      << thetas.at<float>(0, 1) << " " << thetas.at<float>(0, 2)
+                      << std::endl;
 
             a = -thetas.at<float>(0, 0) / thetas.at<float>(0, 1);
             b = thetas.at<float>(0, 2) / thetas.at<float>(0, 1);
         }
 
-        if (accuracy_ > 90.0)
+        if (accuracy > LINE_ACCURACY_THRESHOLD)
         {
             lines_[std::make_pair(c1, c2)] = Line(a, b);
         }
+    }
+    else
+    {
+        std::cout << "Not enough pixels to get line between " << c1 << " and "
+                  << c2 << std::endl;
     }
 }
 
