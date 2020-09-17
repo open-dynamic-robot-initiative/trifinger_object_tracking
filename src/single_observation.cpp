@@ -124,9 +124,9 @@ int main(int argc, char **argv)
     cv::resize(debug_img,
                rescaled_debug_img,
                cv::Size(debug_img.cols / 2, debug_img.rows / 2));
-
-    cv::imshow("debug", rescaled_debug_img);
-    cv::waitKey(0);
+    cv::imwrite(data_dir.substr(data_dir.find_last_of("/\\")+1, 4)+".jpg", rescaled_debug_img);
+//    cv::imshow("debug", rescaled_debug_img);
+//    cv::waitKey(0);
 
     return 0;
 }

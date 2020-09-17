@@ -2,7 +2,9 @@
 #include <iostream>
 #include <thread>
 #include <trifinger_object_tracking/line_detector.hpp>
+#include <trifinger_object_tracking/gmm_params.hpp>
 #include <typeinfo>
+#include <math.h>
 
 namespace trifinger_object_tracking
 {
@@ -34,17 +36,46 @@ void LineDetector::set_color_bounds()
     color_bounds_[FaceColor::GREEN] = {{57, 185, 60}, {70, 255, 225}};
     color_bounds_[FaceColor::CYAN] = {{75, 50, 40}, {97, 255, 180}};
     color_bounds_[FaceColor::YELLOW] = {{27, 130, 160}, {37, 255, 255}};
+//    threshold_[FaceColor::YELLOW] = 1e-8;
+//    threshold_[FaceColor::RED] = 1e-7;
+//    threshold_[FaceColor::GREEN] = 1e-6;
+//    threshold_[FaceColor::BLUE] = 1e-7;
+//    threshold_[FaceColor::MAGENTA] = 1e-6;
+//    threshold_[FaceColor::CYAN] = 1e-8;
+
+    threshold_[FaceColor::YELLOW] = exp(-6e09);
+    threshold_[FaceColor::RED] = -18;
+    threshold_[FaceColor::GREEN] = -18;
+    threshold_[FaceColor::BLUE] = -18;
+    threshold_[FaceColor::MAGENTA] = -18;
+    threshold_[FaceColor::CYAN] = -18;
+
+//    threshold_[FaceColor::YELLOW] = -18;
+//    threshold_[FaceColor::RED] = -18;
+//    threshold_[FaceColor::GREEN] = -18;
+//    threshold_[FaceColor::BLUE] = -18;
+//    threshold_[FaceColor::MAGENTA] = -18;
+//    threshold_[FaceColor::CYAN] = -18;
 }
 
 void LineDetector::load_segmentation_models(const std::string &model_directory)
 {
     for (FaceColor color : cube_model_.get_colors())
     {
-        std::string saved_model_path = model_directory + "/" +
-                                       cube_model_.get_color_name(color) +
-                                       "_diag_hsv.gmm";
+        std::string color_name = cube_model_.get_color_name(color);
+        std::string saved_model_path = model_directory + "/" + color_name + ".gmm";
+
+//        std::string saved_model_path = model_directory + "/" +
+//                                       cube_model_.get_color_name(color) +
+//                                       "_diag_hsv.gmm";
 
         bool status = segmentation_models_[color].load(saved_model_path);
+        segmentation_models_[color].means.print("Means:");
+        segmentation_models_[color].fcovs.print("Fcovs:");
+
+        segmentation_models_[color] = trifinger_object_tracking::update_model(segmentation_models_[color], color_name);
+
+
         if (status == false)
         {
             throw std::runtime_error("Failed to load GMM from " +
@@ -99,9 +130,12 @@ void LineDetector::gmm_mask()
 
     // convert cv::Mat to arma::mat
     cv::Mat concatenated_data;
-    cv::Mat data = image_hsv_.reshape(1, n_pixels);
+    cv::Mat data = image_hsv_.reshape(1, image_hsv_.rows * image_hsv_.cols);
+    cv::Mat data2 = image_bgr_.reshape(1, image_hsv_.rows * image_hsv_.cols);
     data.convertTo(data, CV_64FC1);
-    concatenated_data = data;
+    data2.convertTo(data2, CV_64FC1);
+//    concatenated_data = data;
+    cv::hconcat(data2, data, concatenated_data); // bgr+hsv
     arma::mat input_data =
         arma::mat(reinterpret_cast<double *>(concatenated_data.data),
                   concatenated_data.cols,
@@ -140,7 +174,7 @@ void LineDetector::gmm_mask()
         auto max_idx = gmm_result.col(row_idx).index_max();
         auto max_val = gmm_result.col(row_idx).max();
         FaceColor color = idx2color[max_idx];
-        if (max_val > -18.0)
+        if (max_val > threshold_[color])
         {
             pixel_idx[color].push_back(row_idx);
             pixel_idx[color].push_back(row_idx + 1);

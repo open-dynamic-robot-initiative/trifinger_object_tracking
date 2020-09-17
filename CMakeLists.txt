@@ -62,7 +62,7 @@ add_library(lib_object_pose
 target_link_libraries(lib_object_pose
     ${catkin_LIBRARIES} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 
-add_library(cv_sub_images src/cv_sub_images.cpp)
+add_library(cv_sub_images src/cv_sub_images.cpp src/gmm_params.cpp include/trifinger_object_tracking/gmm_params.hpp)
 target_link_libraries(cv_sub_images ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 

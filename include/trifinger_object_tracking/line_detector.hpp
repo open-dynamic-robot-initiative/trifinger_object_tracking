@@ -20,6 +20,7 @@ private:
     cv::Mat image_hsv_, image_bgr_;
 
     std::array<ColorBounds, FaceColor::N_COLORS> color_bounds_;
+    std::map<FaceColor, float> threshold_;
 
     //! individual color segment mask
     std::array<cv::Mat, FaceColor::N_COLORS> masks_;
@@ -27,9 +28,7 @@ private:
     std::map<FaceColor, std::vector<cv::Point>> pixel_dataset_;
     //! total pixels with a particular color
     std::map<FaceColor, int> color_count_;
-
-    std::array<arma::gmm_diag, FaceColor::N_COLORS> segmentation_models_;
-
+    std::array<arma::gmm_full, FaceColor::N_COLORS> segmentation_models_;
     std::chrono::high_resolution_clock::time_point start_, finish_;
 
     std::map<ColorPair, Line> lines_;

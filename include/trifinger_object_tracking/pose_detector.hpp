@@ -45,7 +45,7 @@ private:
     Stats position_;
     Stats orientation_;
     bool initialisation_phase_ = true;
-    bool continuous_estimation_ = false;
+    bool continuous_estimation_ = true;
     cv::Point3f best_position_, best_orientation_;
     float best_cost_;
     std::vector<cv::Mat> pos_cams_w_frame_;
