@@ -610,8 +610,11 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
     std::vector<cv::Point2f> classifier_input_data;
     std::vector<int> classifier_output_data;
 
-    if (pixel_dataset_[c1].size() > 65 && pixel_dataset_[c2].size() > 65)
+    if (pixel_dataset_[c1].size() > 55 && pixel_dataset_[c2].size() > 55 &&
+        (pixel_dataset_[c1].size()/ float(pixel_dataset_[c2].size() + pixel_dataset_[c1].size())) > 0.01 &&
+        (pixel_dataset_[c2].size()/ float(pixel_dataset_[c2].size() + pixel_dataset_[c1].size())) > 0.01 )
     {
+
         for (auto &i : pixel_dataset_[c1])
         {
             classifier_input_data.push_back(cv::Point2f(i.y, i.x));
