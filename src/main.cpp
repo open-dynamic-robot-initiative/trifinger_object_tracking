@@ -3,6 +3,8 @@
 #include <ostream>
 #include <thread>
 
+#include <trifinger_cameras/parse_yml.h>
+
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
@@ -84,7 +86,7 @@ using namespace trifinger_object_tracking;
 
 int main(int argc, char **argv)
 {
-    std::string data_dir = "../data/cube_dataset_real_cube";
+    std::string data_dir = "../data/cube_image_set_trifingerone";
     if (argc > 1)
     {
         data_dir = argv[1];
@@ -112,8 +114,21 @@ int main(int argc, char **argv)
         trifinger_object_tracking::CubeModel cube_model;
         trifinger_object_tracking::LineDetector line_detector(cube_model,
                                                               "../data");
-        // FIXME
         std::array<trifinger_cameras::CameraParameters, 3> camera_params;
+        // FIXME: This is a bit of a hack but for now just expect calibration
+        // files with fixed names on level above data_dir
+        std::string camera_name;
+        bool success;
+        success = trifinger_cameras::readCalibrationYml(
+            data_dir + "/camera_calib_60.yml", camera_name, camera_params[0]);
+        assert(success && camera_name == "camera60");
+        success = trifinger_cameras::readCalibrationYml(
+            data_dir + "/camera_calib_180.yml", camera_name, camera_params[1]);
+        assert(success && camera_name == "camera180");
+        success = trifinger_cameras::readCalibrationYml(
+            data_dir + "/camera_calib_300.yml", camera_name, camera_params[2]);
+        assert(success && camera_name == "camera300");
+
         trifinger_object_tracking::PoseDetector pose(cube_model, camera_params);
 
         trifinger_object_tracking::CvSubImages subplot(
