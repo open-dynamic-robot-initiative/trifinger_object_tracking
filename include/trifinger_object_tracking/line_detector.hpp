@@ -34,23 +34,14 @@ private:
 
     std::map<ColorPair, Line> lines_;
 
-
-    struct cmp
-    {  // Declaring a set that will store the std::pairs using the comparator
-       // logic
-        bool operator()(std::pair<FaceColor, int> elem1,
-                        std::pair<FaceColor, int> elem2)
-        {
-            return elem1.second > elem2.second;
-        }
-    };
-
-    std::set<std::pair<FaceColor, int>, cmp> dominant_colors_;
+    std::vector<FaceColor> dominant_colors_;
 
     void set_color_bounds();
     void load_segmentation_models(const std::string &model_directory);
 
     void clean_mask(FaceColor color, std::array<std::vector<int>, FaceColor::N_COLORS> &pixel_idx);
+
+    void deflate_masks_of_dominant_colours();
 
 public:
     // constructor
