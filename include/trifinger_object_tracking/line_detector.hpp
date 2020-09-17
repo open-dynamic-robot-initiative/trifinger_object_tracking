@@ -59,13 +59,9 @@ public:
 
     std::map<ColorPair, Line> detect_lines(const cv::Mat &image_bgr);
 
-    void create_pixel_dataset(FaceColor color);
-
     void find_dominant_colors(const unsigned int);
 
     void show();
-
-    void print_pixels() const;
 
     std::vector<std::pair<FaceColor, FaceColor>> make_valid_combinations() const;
 
@@ -73,7 +69,6 @@ public:
 
     cv::Mat get_segmented_image() const;
 
-    cv::Mat get_segmented_image_wout_outliers() const;
     cv::Mat get_front_line_image() const;
 
     cv::Mat get_image_lines() const;
@@ -81,8 +76,6 @@ public:
     cv::Mat get_image() const;
 
     void gmm_mask();
-
-    bool denoise();
 
     void start_timer();
 

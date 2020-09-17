@@ -69,7 +69,6 @@ std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
     gmm_mask();
     find_dominant_colors(3);
     deflate_masks_of_dominant_colors();
-    // denoise();
 
     std::vector<std::pair<FaceColor, FaceColor>> color_pairs =
         make_valid_combinations();
@@ -163,7 +162,7 @@ void LineDetector::gmm_mask()
                 }
                 masks_[color] = masks_[color].reshape(1, image_bgr_.rows);
                 masks_[color].convertTo(masks_[color], CV_8U);
-                create_pixel_dataset(color);
+                color_count_[color] = cv::countNonZero(masks_[color]);
             },
             color);
         thread_vector.push_back(move(th));
@@ -280,15 +279,6 @@ void LineDetector::clean_mask(
     }
 }
 
-void LineDetector::create_pixel_dataset(FaceColor color)
-{
-    std::vector<cv::Point> poi;
-    cv::findNonZero(masks_[color], poi);
-
-    pixel_dataset_[color] = {poi};
-    color_count_[color] = poi.size();
-}
-
 void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
 {
     ScopedTimer timer("LineDetector/find_dominant_colors");
@@ -384,143 +374,6 @@ void LineDetector::deflate_masks_of_dominant_colors()
     }
 }
 
-bool LineDetector::denoise()
-{
-    ScopedTimer timer("LineDetector/denoise");
-
-    if (dominant_colors_.size() == 0)
-    {
-        return true;
-    }
-    int erosion_size = 4;
-
-    cv::Mat kernel = cv::getStructuringElement(
-        cv::MORPH_RECT,
-        cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
-        cv::Point(erosion_size, erosion_size));
-
-    // std::cout << "Denoising\n";
-    cv::Mat merged_mask(
-        cv::Size(1, image_bgr_.rows * image_bgr_.cols), CV_8U, cv::Scalar(0));
-    std::vector<int> merged_idx;
-
-    for (FaceColor color : dominant_colors_)
-    {
-        // std::cout << color << std::endl;
-        cv::Mat mask = masks_[color];
-        mask = mask.reshape(1, image_bgr_.rows * image_bgr_.cols);
-        for (int i = 0; i < mask.rows; i++)
-        {
-            if (mask.at<uchar>(i, 0) == 255)
-            {
-                merged_idx.push_back(i);
-                merged_mask.at<uchar>(i, 0) = 255;
-            }
-        }
-    }
-
-    merged_mask = merged_mask.reshape(1, image_bgr_.rows);
-
-    cv::Mat dilated_mask, labels_im;
-    cv::dilate(merged_mask, dilated_mask, kernel, cv::Point(-1, -1), 4);
-
-    cv::connectedComponents(dilated_mask, labels_im);
-
-    labels_im = labels_im.reshape(1, image_bgr_.rows * image_bgr_.cols);
-    std::vector<int> unique_;
-    for (int i = 0; i < labels_im.rows; i++)
-    {
-        unique_.push_back(labels_im.at<uchar>(i, 0));
-    }
-    std::sort(unique_.begin(), unique_.end());
-    int uniqueCount =
-        std::unique(unique_.begin(), unique_.end()) - unique_.begin();
-
-    struct compare_label_count
-    {  // Declaring a set that will store the std::pairs using the comparator
-       // logic
-        bool operator()(std::pair<int, int> elem1, std::pair<int, int> elem2)
-        {
-            return elem1.second > elem2.second;
-        }
-    };
-
-    std::set<std::pair<int, int>, compare_label_count> label_count;
-    for (int i = 0; i < uniqueCount; i++)
-    {
-        label_count.insert(
-            std::make_pair(i, std::count(unique_.begin(), unique_.end(), i)));
-    }
-
-    unsigned int element_number = 1;  // 1 because 0 is for background
-    std::vector<int> idx;
-    float percentage_overlap = 40.0;
-    do
-    {
-        // get n-th element from label_count
-        // TODO: accessing a set with an index feels wrong.  use different data
-        // structure?
-        int max_count_label;
-        if (element_number >= label_count.size())
-        {
-            // std::cout << "Not enough elements\n";
-            max_count_label = -1;
-        }
-        std::pair<int, int> elem =
-            *std::next(label_count.begin(), element_number);
-        max_count_label = elem.first;
-
-        idx.clear();
-        for (int i = 0; i < labels_im.rows; i++)
-        {
-            if (labels_im.at<uchar>(i, 0) == max_count_label)
-            {
-                idx.push_back(i);
-            }
-        }
-        std::vector<int> final_idx(merged_idx.size() + idx.size());
-        std::vector<int>::iterator it =
-            std::set_intersection(merged_idx.begin(),
-                                  merged_idx.end(),
-                                  idx.begin(),
-                                  idx.end(),
-                                  final_idx.begin());
-        final_idx.resize(it - final_idx.begin());
-        percentage_overlap =
-            final_idx.size() / (merged_idx.size() + 1e-9) * 100;
-        element_number++;
-        // std::cout << "Here " << percentage_overlap << std::endl;
-    } while (percentage_overlap < 25.0);
-
-    for (FaceColor color : dominant_colors_)
-    {
-        int j = 0;
-        cv::Mat mask = masks_[color];
-        // TODO is this reshape needed?
-        mask = mask.reshape(1, image_bgr_.rows * image_bgr_.cols);
-        for (int i = 0; i < mask.rows; i++)
-        {
-            if (mask.at<uchar>(i, 0) == 255)
-            {
-                auto it = std::find(idx.begin() + j, idx.end(), i);
-                if (it == idx.end())
-                {
-                    mask.at<uchar>(i, 0) = 0;
-                }
-                else
-                {
-                    j = it - idx.begin();
-                }
-            }
-        }
-        masks_[color] = mask.reshape(1, image_bgr_.rows);
-        create_pixel_dataset(color);
-    }
-
-    find_dominant_colors(3);
-    return true;
-}
-
 void LineDetector::show()
 {
     cv::imshow("Image", image_bgr_);
@@ -560,25 +413,6 @@ cv::Mat LineDetector::get_segmented_image() const
     return segmentation.clone();
 }
 
-cv::Mat LineDetector::get_segmented_image_wout_outliers() const
-{
-    cv::Mat segmentation(
-        image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
-
-    for (FaceColor color : dominant_colors_)
-    {
-        auto rgb = cube_model_.get_rgb(color);
-        // image is BGR, so swap R and B
-        cv::Vec3b color_bgr(rgb[2], rgb[1], rgb[0]);
-
-        for (auto &d : pixel_dataset_.at(color))
-        {
-            segmentation.at<cv::Vec3b>(d.y, d.x) = color_bgr;
-        }
-    }
-    return segmentation.clone();
-}
-
 cv::Mat LineDetector::get_front_line_image() const
 {
     cv::Mat image(
@@ -614,19 +448,7 @@ cv::Mat LineDetector::get_image() const
 
 cv::Mat LineDetector::get_image_lines() const
 {
-    cv::Mat segmentation(
-        image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
-
-    for (FaceColor color : dominant_colors_)
-    {
-        auto rgb = cube_model_.get_rgb(color);
-        // image is BGR, so swap R and B
-        cv::Vec3b color_bgr(rgb[2], rgb[1], rgb[0]);
-        for (auto &d : pixel_dataset_.at(color))
-        {
-            segmentation.at<cv::Vec3b>(d.y, d.x) = color_bgr;
-        }
-    }
+    cv::Mat segmentation = get_front_line_image();
     for (auto &line : lines_)
     {
         float a = line.second.a;
@@ -639,18 +461,6 @@ cv::Mat LineDetector::get_image_lines() const
         cv::line(segmentation, p1, p2, cv::Scalar(20, 100, 100), 10);
     }
     return segmentation.clone();
-}
-
-void LineDetector::print_pixels() const
-{
-    for (auto &i : pixel_dataset_)
-    {
-        std::cout << i.first << "\n";
-        for (auto p : i.second)
-        {
-            std::cout << p.x << ", " << p.y << " ";
-        }
-    }
 }
 
 std::vector<std::pair<FaceColor, FaceColor>>
@@ -677,29 +487,16 @@ LineDetector::make_valid_combinations() const
 std::array<std::vector<cv::Point>, 2> LineDetector::get_front_line_pixels(
     FaceColor color1, FaceColor color2) const
 {
-    std::array<std::vector<cv::Point>, 2> front_line_pixels;
-
     ScopedTimer timer("LineDetector/get_line_between_colors/front_line_pixels");
 
-    // std::map<FaceColor, std::vector<cv::Point>> pixel_dataset_;
-
+    std::array<std::vector<cv::Point>, 2> front_line_pixels;
     cv::Mat front_line;
 
     cv::bitwise_and(masks_[color1], deflated_masks_[color2], front_line);
     cv::findNonZero(front_line, front_line_pixels[0]);
 
-    // cv::imshow("mask", masks_[color1]);
-    // cv::imshow("defmask", deflated_masks_[color2]);
-    // cv::imshow("front line", front_line);
-    // cv::waitKey();
-
     cv::bitwise_and(masks_[color2], deflated_masks_[color1], front_line);
     cv::findNonZero(front_line, front_line_pixels[1]);
-
-    // cv::imshow("mask", masks_[color1]);
-    // cv::imshow("defmask", deflated_masks_[color2]);
-    // cv::imshow("front line", front_line);
-    // cv::waitKey();
 
     return front_line_pixels;
 }
@@ -709,11 +506,6 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
     ScopedTimer timer("LineDetector/get_line_between_colors");
 
     auto [pixels_c1, pixels_c2] = get_front_line_pixels(c1, c2);
-
-    //pixel_dataset_[c1] = pixels_c1;
-    //pixel_dataset_[c2] = pixels_c2;
-    //cv::imshow("foo", get_segmented_image_wout_outliers());
-    //cv::waitKey(0);
 
     // TODO should this be changed after the filtering done above?
     constexpr size_t MIN_PIXELS_PER_COLOR = 55;
