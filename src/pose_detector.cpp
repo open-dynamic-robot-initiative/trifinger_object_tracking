@@ -366,20 +366,9 @@ std::vector<float> PoseDetector::cost_function(
 
     // Error matrix initialisation
     cv::Mat error;
-    int use_old_method = 0;
-    if (use_old_method = 1)
-    {
-        error = cv::Mat(number_of_particles, 1, CV_32FC1, cv::Scalar(0));
-    }
-    else
-    {
-        // TODO: _get_face_normals_cost and _cost_of_out_of_bounds_projection
-        float face_normals_scaling_factor = 500;
-        error = _get_face_normals_cost(pose);
-        error = error + _cost_of_out_of_bounds_projection(projected_points);
-        //
-    }
-
+    float face_normals_scaling_factor = 500;
+    error = face_normals_scaling_factor * _get_face_normals_cost(pose);
+    error = error + _cost_of_out_of_bounds_projection(projected_points);
     start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < rotation_matrix_.cols; i++)
     {  // range (r_vecs)
@@ -430,7 +419,7 @@ void PoseDetector::initialise_pos_cams_w_frame()
 
 void PoseDetector::cross_entropy_method()
 {
-    int max_iterations = 50;
+    int max_iterations = 30;
     int number_of_particles = 1000;
     int elites = 100;
     float alpha = 0.3;
@@ -465,13 +454,13 @@ void PoseDetector::cross_entropy_method()
             // TODO: reduce the number_of_particles from 10k to 1k
             sample_p = random_normal(position_.mean,
                                      power(position_.variance, 0.5),
-                                     number_of_particles * 10,
+                                     number_of_particles,
                                      3,
                                      "position");
 
             sample_o = random_normal(orientation_.mean,
                                      power(orientation_.variance, 0.5),
-                                     number_of_particles * 10,
+                                     number_of_particles,
                                      3,
                                      "orientation");
         }
