@@ -1,10 +1,12 @@
+#include <trifinger_object_tracking/pose_detector.hpp>
+
 #include <float.h>
 #include <math.h>
-
 #include <iostream>
 #include <random>
 #include <thread>
-#include <trifinger_object_tracking/pose_detector.hpp>
+
+#include <trifinger_object_tracking/scoped_timer.hpp>
 
 namespace trifinger_object_tracking
 {
@@ -295,6 +297,8 @@ std::vector<float> PoseDetector::cost_function(
     std::vector<cv::Point3f> proposed_translation,
     std::vector<cv::Point3f> proposed_orientation)
 {
+    ScopedTimer timer("PoseDetector/cost_function");
+
     int number_of_particles = proposed_translation.size();
     std::vector<cv::Mat> pose;
     // cv::Mat proposed_new_cube_pts_w;
@@ -396,6 +400,8 @@ std::vector<float> PoseDetector::cost_function(
 
 void PoseDetector::initialise_pos_cams_w_frame()
 {
+    ScopedTimer timer("PoseDetector/initialise_pos_cams_w_frame");
+
     for (int i = 0; i < N_CAMERAS; i++)
     {
         cv::Mat pos_cam = getPoseMatrix(cv::Point3f(camera_orientations_[i]),
@@ -407,6 +413,8 @@ void PoseDetector::initialise_pos_cams_w_frame()
 
 void PoseDetector::cross_entropy_method()
 {
+    ScopedTimer timer("PoseDetector/cross_entropy_method");
+
     int max_iterations = 30;
     int number_of_particles = 1000;
     int elites = 100;
@@ -420,6 +428,7 @@ void PoseDetector::cross_entropy_method()
         initialisation_phase_ = true;
     }
 
+    // FIXME this is probably static and should be done in c'tor
     initialise_pos_cams_w_frame();
 
     for (int i = 0; i < max_iterations && best_cost_ > eps; i++)
@@ -543,17 +552,12 @@ cv::Point3f PoseDetector::var(std::vector<cv::Point3f> points)
 Pose PoseDetector::find_pose(
     const std::array<std::map<ColorPair, Line>, N_CAMERAS> &lines)
 {
+    ScopedTimer timer("PoseDetector/find_pose");
+
     // FIXME this is bad design
     lines_ = lines;
 
-    auto start = std::chrono::high_resolution_clock::now();
     cross_entropy_method();  // calculates mean_position and mean_orientation
-    auto finish = std::chrono::high_resolution_clock::now();
-    std::cout << "CEM took "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(finish -
-                                                                       start)
-                     .count()
-              << " milliseconds\n";
 
     if (best_cost_ > 50)
     {
