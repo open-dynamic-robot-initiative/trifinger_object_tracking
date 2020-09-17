@@ -112,7 +112,9 @@ int main(int argc, char **argv)
         trifinger_object_tracking::CubeModel cube_model;
         trifinger_object_tracking::LineDetector line_detector(cube_model,
                                                               "../data");
-        trifinger_object_tracking::PoseDetector pose(cube_model);
+        // FIXME
+        std::array<trifinger_cameras::CameraParameters, 3> camera_params;
+        trifinger_object_tracking::PoseDetector pose(cube_model, camera_params);
 
         trifinger_object_tracking::CvSubImages subplot(
             cv::Size(720, 540), 3, 5);

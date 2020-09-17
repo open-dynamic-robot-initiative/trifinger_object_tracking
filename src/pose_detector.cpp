@@ -18,39 +18,30 @@ cv::Mat getPoseMatrix(cv::Point3f orientation, cv::Point3f position)
     return cv::Mat(cv::Affine3f(rvec, tvec).matrix);
 }
 
-PoseDetector::PoseDetector(const CubeModel &cube_model)
+PoseDetector::PoseDetector(
+    const CubeModel &cube_model,
+    const std::array<trifinger_cameras::CameraParameters, 3> &camera_parameters)
     : cube_model_(cube_model)
 {
-    // FIXME load camera parameters from file
-    float camera_matrix[3][3] = {{589.607902244274, 0.0, 366.49661815699994},
-                                 {0.0, 590.1790734214388, 297.98736394590526},
-                                 {0.0, 0.0, 1.0}};
+    // FIXME no magic number for number of cameras
 
-    float distortion_coeffs[5][1] = {{-0.2489693848298703},
-                                     {0.13435384837763378},
-                                     {0.0003204379158765275},
-                                     {-0.00036140843150739765},
-                                     {-0.06579839150308762}};
+    // convert camera parameters to cv types
+    for (int i = 0; i < N_CAMERAS; i++)
+    {
+        cv::eigen2cv(camera_parameters[i].camera_matrix, camera_matrices_[i]);
+        cv::eigen2cv(camera_parameters[i].distortion_coefficients,
+                     distortion_coeffs_[i]);
 
-    float rotation_matrix[3][3] = {
-        {1.0890998989916354,
-         2.614833277418142,
-         1.0605210499895859},  // 1st column is r60, 2nd is r180, 3rd is r300
-        {2.5172012639946733, -0.026669213558675804, -2.5351740094307447},
-        {-0.8452495044215251, -0.01769147496035694, 0.9169399036537441}};
+        Eigen::Matrix3d rotmat_eigen =
+            camera_parameters[i].tf_world_to_camera.topLeftCorner<3, 3>();
+        cv::Mat rotmat_cv;
+        cv::eigen2cv(rotmat_eigen, rotmat_cv);
+        cv::Rodrigues(rotmat_cv, camera_orientations_[i]);
 
-    float translation_matrix[3][3] = {
-        {-0.016788995687316167,
-         -0.001077263937284312,
-         -0.0030656937101139854},  // 1st column is t60, 2nd is t180, 3rd is
-                                   // t300
-        {-0.02269247299737612, -0.015886005467183863, -0.022204248661934205},
-        {0.5454465438837742, 0.5365514015146118, 0.5282896793079157}};
-
-    camera_matrix_ = cv::Mat(3, 3, CV_32F, &camera_matrix).clone();
-    distortion_coeffs_ = cv::Mat(5, 1, CV_32F, &distortion_coeffs).clone();
-    rotation_matrix_ = cv::Mat(3, 3, CV_32F, &rotation_matrix).clone();
-    translation_matrix_ = cv::Mat(3, 3, CV_32F, &translation_matrix).clone();
+        Eigen::Vector3d tvec_eigen =
+            camera_parameters[i].tf_world_to_camera.topRightCorner<3, 1>();
+        cv::eigen2cv(tvec_eigen, camera_translations_[i]);
+    }
 
     // unfortunately, there is no real const cv::Mat, so we cannot wrap it
     // around the const array but need to copy the data
@@ -340,14 +331,14 @@ std::vector<float> PoseDetector::cost_function(
         proposed_new_cube_pts_w.reshape(3, number_of_particles * 8);
 
     std::vector<cv::Mat> projected_points;
-    for (int i = 0; i < rotation_matrix_.cols; i++)
+    for (int i = 0; i < N_CAMERAS; i++)
     {  // range (r_vecs)
         cv::Mat imgpoints(number_of_particles * 8, 2, CV_32FC1, cv::Scalar(0));
         cv::projectPoints(proposed_new_cube_pts_w,
-                          rotation_matrix_.col(i),
-                          translation_matrix_.col(i),
-                          camera_matrix_,
-                          distortion_coeffs_,
+                          camera_orientations_[i],
+                          camera_translations_[i],
+                          camera_matrices_[i],
+                          distortion_coeffs_[i],
                           imgpoints);
         // reshape imagepoints here
         cv::Mat imgpoints_reshaped(
@@ -370,7 +361,7 @@ std::vector<float> PoseDetector::cost_function(
     error = face_normals_scaling_factor * _get_face_normals_cost(pose);
     error = error + _cost_of_out_of_bounds_projection(projected_points);
     start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < rotation_matrix_.cols; i++)
+    for (int i = 0; i < N_CAMERAS; i++)
     {  // range (r_vecs)
         cv::Mat imgpoints_reshaped = projected_points[i];
         for (auto &line_it : lines_[i])
@@ -409,9 +400,8 @@ void PoseDetector::initialise_pos_cams_w_frame()
 {
     for (int i = 0; i < 3; i++)
     {
-        cv::Mat pos_cam =
-            getPoseMatrix(cv::Point3f(rotation_matrix_.col(i)),
-                          cv::Point3f(translation_matrix_.col(i)));
+        cv::Mat pos_cam = getPoseMatrix(cv::Point3f(camera_orientations_[i]),
+                                        cv::Point3f(camera_translations_[i]));
         pos_cam = pos_cam.inv();
         pos_cams_w_frame_.push_back(pos_cam);
     }
@@ -601,14 +591,14 @@ std::vector<std::vector<cv::Point2f>> PoseDetector::get_projected_points() const
                         proposed_new_cube_pts_w.at<float>(i, 2)));
     }
 
-    for (int i = 0; i < rotation_matrix_.cols; i++)
+    for (int i = 0; i < N_CAMERAS; i++)
     {  // range (r_vecs)
         std::vector<cv::Point2f> imgpoints;
         cv::projectPoints(_new_pts,
-                          rotation_matrix_.col(i),
-                          translation_matrix_.col(i),
-                          camera_matrix_,
-                          distortion_coeffs_,
+                          camera_orientations_[i],
+                          camera_translations_[i],
+                          camera_matrices_[i],
+                          distortion_coeffs_[i],
                           imgpoints);
         projected_points.push_back(imgpoints);
     }

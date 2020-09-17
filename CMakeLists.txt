@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
     serialization_utils
     time_series
     roslib
+    trifinger_cameras
 )
 
 search_for_eigen()
