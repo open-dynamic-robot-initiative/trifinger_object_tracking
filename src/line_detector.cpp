@@ -359,7 +359,7 @@ void LineDetector::deflate_masks_of_dominant_colors()
     ScopedTimer timer("LineDetector/deflate_masks_of_dominant_colors");
 
     // TODO: what is a good value?
-    constexpr unsigned DEFLATION_RADIUS = 7;
+    constexpr unsigned DEFLATION_RADIUS = 13;
 
     static const cv::Mat kernel = cv::getStructuringElement(
         cv::MORPH_ELLIPSE,
