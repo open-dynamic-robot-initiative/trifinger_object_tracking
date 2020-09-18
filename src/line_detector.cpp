@@ -70,12 +70,6 @@ std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
     find_dominant_colors(3);
     denoise();
 
-    for (FaceColor color : dominant_colors_)
-    {
-        cv::Mat output;
-        cv::bitwise_and(image_bgr_, image_bgr_, output, masks_[color]);
-    }
-
     std::vector<std::pair<FaceColor, FaceColor>> color_pairs =
         make_valid_combinations();
 
