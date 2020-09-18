@@ -503,7 +503,6 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
     ScopedTimer timer("LineDetector/get_line_between_colors");
 
     constexpr float LINE_ACCURACY_THRESHOLD = 90.0;
-    //constexpr float LINE_ACCURACY_THRESHOLD = 20.0;
 
     auto [pixels_c1, pixels_c2] = get_front_line_pixels(c1, c2);
 
@@ -527,17 +526,19 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
     {
         std::cout << "Find line between " << c1 << " and " << c2 << std::endl;
 
-        for (auto &i : pixels_c1)
+        for (auto &pixel : pixels_c1)
         {
-            classifier_input_data.push_back(cv::Point2f(i.y, i.x));
+            classifier_input_data.push_back(cv::Point2f(pixel.y, pixel.x));
             classifier_output_data.push_back(-1);
         }
-        for (auto &i : pixels_c2)
+        for (auto &pixel : pixels_c2)
         {
-            classifier_input_data.push_back(cv::Point2f(i.y, i.x));
+            classifier_input_data.push_back(cv::Point2f(pixel.y, pixel.x));
             classifier_output_data.push_back(1);
         }
 
+        // TODO could the input data be written directly to this mat instead of
+        // creating a std::vector first?
         cv::Mat ip = cv::Mat(classifier_input_data.size(),
                              2,
                              CV_32FC1,
@@ -550,6 +551,8 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
         // Train the SVM
         if (classifier == "svm")
         {
+            // TODO could the output data be written directly to this mat
+            // instead of creating a std::vector first?
             cv::Mat op = cv::Mat(classifier_output_data.size(),
                                  1,
                                  CV_32S,
