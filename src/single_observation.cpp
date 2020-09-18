@@ -99,8 +99,8 @@ int main(int argc, char **argv)
     for (const cv::Mat &image : frames)
     {
         // FIXME: move this processing to somewhere else!
-        cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
-        cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
+        //cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
+        //cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
 
         // TODO clone needed?
         lines[i] = line_detector.detect_lines(image.clone());
@@ -143,6 +143,7 @@ int main(int argc, char **argv)
                rescaled_debug_img,
                cv::Size(debug_img.cols / 2, debug_img.rows / 2));
 
+    //cv::imwrite("/tmp/images/" + data_dir.substr(data_dir.find_last_of("/\\")+1, 4)+".jpg", rescaled_debug_img);
     cv::imshow("debug", rescaled_debug_img);
     cv::waitKey(0);
 
