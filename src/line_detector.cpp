@@ -145,11 +145,15 @@ void LineDetector::gmm_mask()
     }
 
     // Background cleaning and reshaping
+    constexpr unsigned OPEN_RADIUS = 2;
+    static const cv::Mat open_kernel = cv::getStructuringElement(
+        cv::MORPH_ELLIPSE, cv::Size(2 * OPEN_RADIUS + 1, 2 * OPEN_RADIUS + 1));
+
     thread_vector.clear();
     for (FaceColor color : cube_model_.get_colors())
     {
         std::thread th(
-            [this, &pixel_idx](FaceColor color) {
+            [this, &pixel_idx, &open_kernel](FaceColor color) {
                 clean_mask(color, pixel_idx);
                 for (auto &idx : pixel_idx[color])
                 {
@@ -157,6 +161,11 @@ void LineDetector::gmm_mask()
                 }
                 masks_[color] = masks_[color].reshape(1, image_bgr_.rows);
                 masks_[color].convertTo(masks_[color], CV_8U);
+
+                // "open" image to get rid of single-pixel noise
+                cv::morphologyEx(
+                    masks_[color], masks_[color], cv::MORPH_OPEN, open_kernel);
+
                 color_count_[color] = cv::countNonZero(masks_[color]);
             },
             color);
