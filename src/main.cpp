@@ -3,6 +3,8 @@
 #include <ostream>
 #include <thread>
 
+#include <trifinger_cameras/parse_yml.h>
+
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
@@ -31,14 +33,6 @@ std::array<cv::Mat, 3> load_images(const std::string &directory)
 
 int main(int argc, char **argv)
 {
-//    std::string data_dir = "../data/cube_image_set_trifingerone";
-//    if (argc > 1)
-//    {
-//        data_dir = argv[1];
-//    }
-//
-//    std::vector<std::string> camera_data =
-//        trifinger_object_tracking::get_directories(data_dir);
     cv::VideoCapture cap_60(
             "../data/videos_trifingerone/11/video_60.avi");
     cv::VideoCapture cap_180(
@@ -51,8 +45,20 @@ int main(int argc, char **argv)
     trifinger_object_tracking::CubeModel cube_model;
     trifinger_object_tracking::LineDetector line_detector(cube_model,
                                                           "../data");
-    trifinger_object_tracking::PoseDetector pose(cube_model);
+    std::array<trifinger_cameras::CameraParameters, 3> camera_params;
+    std::string camera_name;
+    bool success;
+    success = trifinger_cameras::readCalibrationYml(
+                      "../data/videos_trifingerone/camera_calib_60.yml", camera_name, camera_params[0]);
+    assert(success && camera_name == "camera60");
+    success = trifinger_cameras::readCalibrationYml(
+            "../data/videos_trifingerone/camera_calib_180.yml", camera_name, camera_params[1]);
+    assert(success && camera_name == "camera180");
+    success = trifinger_cameras::readCalibrationYml(
+            "../data/videos_trifingerone/camera_calib_300.yml", camera_name, camera_params[2]);
+    assert(success && camera_name == "camera300");
 
+    trifinger_object_tracking::PoseDetector pose(cube_model, camera_params);
     //start plot
     trifinger_object_tracking::CvSubImages subplot(
         cv::Size(720, 540), 3, 5);
@@ -107,7 +113,6 @@ int main(int argc, char **argv)
             // FIXME: move this processing to somewhere else!
             cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
             cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
-
             // TODO clone needed?
             lines[i] = line_detector.detect_lines(image.clone());
 
