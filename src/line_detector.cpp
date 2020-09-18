@@ -1,11 +1,9 @@
-#include <trifinger_object_tracking/line_detector.hpp>
-
 #include <chrono>
 #include <iostream>
 #include <thread>
-#include <typeinfo>
-
+#include <trifinger_object_tracking/line_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
+#include <typeinfo>
 
 namespace trifinger_object_tracking
 {
@@ -359,7 +357,7 @@ void LineDetector::deflate_masks_of_dominant_colors()
     ScopedTimer timer("LineDetector/deflate_masks_of_dominant_colors");
 
     // TODO: what is a good value?
-    constexpr unsigned DEFLATION_RADIUS = 13;
+    constexpr unsigned DEFLATION_RADIUS = 7;
 
     static const cv::Mat kernel = cv::getStructuringElement(
         cv::MORPH_ELLIPSE,
@@ -508,6 +506,8 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
 
     // TODO should this be changed after the filtering done above?
     constexpr size_t MIN_PIXELS_PER_COLOR = 55;
+
+    // TODO this ratio seems really low
     constexpr float MIN_COLOR_RATIO = 0.01;
 
     std::vector<cv::Point2f> classifier_input_data;
@@ -557,23 +557,62 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
                                  1,
                                  CV_32S,
                                  classifier_output_data.data());
-            cv::Ptr<cv::ml::SVM> svm = cv::ml::SVM::create();
-            svm->setType(cv::ml::SVM::NU_SVC);
-            svm->setKernel(cv::ml::SVM::LINEAR);
-            svm->setC(5);
-            svm->setP(0.9);
-            svm->setNu(0.05);
-            svm->setGamma(0);
-            svm->setTermCriteria(
-                cv::TermCriteria(cv::TermCriteria::EPS, 1000, 1e-6));
 
-            try
+            // // just some printing ----------------------------------------
+            // if ((c1 == FaceColor::MAGENTA && c2 == FaceColor::RED) ||
+            //     (c2 == FaceColor::MAGENTA && c1 == FaceColor::RED))
+            // {
+            //     // std::cout << "input col 0: " << std::endl;
+            //     // std::cout << ip.col(0).t() << std::endl;
+            //     double min_row, max_row;
+            //     cv::minMaxLoc(ip.col(0), &min_row, &max_row);
+            //     std::cout << "min_row: " << min_row << "   max_row: " <<
+            //     max_row
+            //               << std::endl;
+
+            //     double min_col, max_col;
+            //     cv::minMaxLoc(ip.col(1), &min_col, &max_col);
+            //     std::cout << "min_col: " << min_col << "   max_col: " <<
+            //     max_col
+            //               << std::endl;
+
+            //     // std::cout << "input: " << std::endl;
+            //     // std::cout << ip.t() << std::endl;
+            //     // std::cout << "output: " << std::endl;
+            //     // std::cout << op.t() << std::endl;
+            // }
+
+            // cv::Ptr<cv::ml::SVM> svm = cv::ml::SVM::create();
+            // svm->setType(cv::ml::SVM::NU_SVC);
+            // svm->setKernel(cv::ml::SVM::LINEAR);
+            // svm->setNu(0.05);
+            // svm->setTermCriteria(
+            //     cv::TermCriteria(cv::TermCriteria::EPS, 1000, 1e-6));
+
+            // Ptr<SVM> svm = SVM::create();
+            // svm->setType(SVM::C_SVC);
+            // svm->setC(0.1);
+            // svm->setKernel(SVM::LINEAR);
+            // svm->setTermCriteria(TermCriteria(TermCriteria::MAX_ITER,
+            // (int)1e7, 1e-6));
+
+            cv::Ptr<cv::ml::SVM> svm = cv::ml::SVM::create();
             {
-                svm->train(ip, cv::ml::ROW_SAMPLE, op);
-            }
-            catch (int e)
-            {
-                std::cerr << "Exception caught : " << e << std::endl;
+                ScopedTimer timer("SVM");
+                svm->setType(cv::ml::SVM::C_SVC);
+                svm->setC(0.1);
+                svm->setKernel(cv::ml::SVM::LINEAR);
+                svm->setTermCriteria(
+                    cv::TermCriteria(cv::TermCriteria::EPS, (int)1e6, 1e-5));
+
+                try
+                {
+                    svm->train(ip, cv::ml::ROW_SAMPLE, op);
+                }
+                catch (int e)
+                {
+                    std::cerr << "Exception caught : " << e << std::endl;
+                }
             }
 
             if (output_percentage_classification == 1)
@@ -582,9 +621,7 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
                 svm->predict(ip, responses);
                 responses.convertTo(responses, CV_32S);
                 accuracy = calculateAccuracyPercent(op, responses);
-                std::cout << "accuracy: "
-                          << accuracy << "%"
-                          << std::endl;
+                std::cout << "accuracy: " << accuracy << "%" << std::endl;
             }
             cv::Mat alpha, svidx;
             cv::Mat sv = svm->getSupportVectors();
