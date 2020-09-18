@@ -70,12 +70,9 @@ std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
     find_dominant_colors(3);
     deflate_masks_of_dominant_colors();
 
-    std::vector<std::pair<FaceColor, FaceColor>> color_pairs =
-        make_valid_combinations();
-
-    for (auto &i : color_pairs)
+    for (auto [color1, color2] : make_valid_combinations())
     {
-        get_line_between_colors(i.first, i.second);
+        get_line_between_colors(color1, color2);
     }
 
     return lines_;
