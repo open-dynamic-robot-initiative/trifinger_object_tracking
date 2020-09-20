@@ -15,6 +15,8 @@
 #include <trifinger_object_tracking/line_detector.hpp>
 #include <trifinger_object_tracking/pose_detector.hpp>
 
+#define VISUALIZE
+
 /**
  * @brief Load images camera{60,180,300}.png from the given directory.
  *
@@ -63,11 +65,13 @@ int main(int argc, char **argv)
 
     auto frames = load_images(data_dir);
 
+#ifdef VISUALIZE
     trifinger_object_tracking::CvSubImages subplot(
         cv::Size(frames[0].cols, frames[0].rows), 3, 5);
     cv::namedWindow("debug", cv::WINDOW_NORMAL);
     cv::resizeWindow(
         "debug", subplot.get_image().cols, subplot.get_image().rows);
+#endif
 
     trifinger_object_tracking::CubeModel cube_model;
     trifinger_object_tracking::LineDetector line_detector(cube_model,
@@ -95,27 +99,38 @@ int main(int argc, char **argv)
                3>
         lines;
 
+
+    // actual processing starts here
+    auto start = std::chrono::high_resolution_clock::now();
+
     int i = 0;
     for (const cv::Mat &image : frames)
     {
         // FIXME: move this processing to somewhere else!
-        cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
-        cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
+        //cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
+        //cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
 
         // TODO clone needed?
         lines[i] = line_detector.detect_lines(image.clone());
 
+#ifdef VISUALIZE
         subplot.set_subimg(line_detector.get_image(), i, 0);
         subplot.set_subimg(line_detector.get_segmented_image(), i, 1);
-        subplot.set_subimg(
-            line_detector.get_segmented_image_wout_outliers(), i, 2);
+        subplot.set_subimg(line_detector.get_front_line_image(), i, 2);
         subplot.set_subimg(line_detector.get_image_lines(), i, 3);
+#endif
 
         i++;
     }
 
     pose.find_pose(lines);
 
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cout << "Total duration: " << duration.count() << " ms" << std::endl;
+
+
+#ifdef VISUALIZE
     // visualize the detected pose
     auto projected_cube_corners = pose.get_projected_points();
     for (int i = 0; i < frames.size(); i++)
@@ -146,7 +161,7 @@ int main(int argc, char **argv)
     cv::imwrite(data_dir.substr(data_dir.find_last_of("/\\")+1, 4)+".jpg", rescaled_debug_img);
 //    cv::imshow("debug", rescaled_debug_img);
 //    cv::waitKey(0);
-
+#endif
     return 0;
 }
 
