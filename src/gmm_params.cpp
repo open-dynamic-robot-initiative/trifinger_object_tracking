@@ -1,13 +1,11 @@
-//
-// Created by oahmed on 17.09.20.
-//
-
 /**
  * @file
  * @copyright 2020, Max Planck Gesellschaft. All rights reserved.
  * @license BSD 3-clause
  */
 #pragma once
+
+
 
 #include <trifinger_object_tracking/gmm_params.hpp>
 
@@ -559,6 +557,91 @@ namespace trifinger_object_tracking
         return model;
     }
 
+    std::array<arma::gmm_full, FaceColor::N_COLORS> update_model_from_file()
+    {
+        YAML::Node file = read_file("../data/gmm_weights_from_python.yml");
 
+        std::array<arma::gmm_full, FaceColor::N_COLORS> segmentation_models_;
+
+        segmentation_models_[FaceColor::RED] = update_for_color(FaceColor::RED, file, "red");
+        segmentation_models_[FaceColor::GREEN] = update_for_color(FaceColor::GREEN, file, "green");
+        segmentation_models_[FaceColor::BLUE] = update_for_color(FaceColor::BLUE, file, "blue");
+        segmentation_models_[FaceColor::MAGENTA] = update_for_color(FaceColor::MAGENTA, file, "magenta");
+        segmentation_models_[FaceColor::YELLOW] = update_for_color(FaceColor::YELLOW, file, "yellow");
+        segmentation_models_[FaceColor::CYAN] = update_for_color(FaceColor::CYAN, file, "cyan");
+
+        return segmentation_models_;
+    }
+
+
+    YAML::Node read_file(std::string path)
+    {
+        YAML::Node doc = YAML::LoadFile(path);
+        return doc;
+
+    }
+
+    arma::gmm_full update_for_color(FaceColor color, YAML::Node doc, std::string color_name)
+    {
+        std::cout << "\n\nUpdating for color " << color_name << std::endl;
+
+        int n_components = doc[color_name]["weights"].size();
+        int n_dim = doc[color_name]["mu"][0].size();;
+        arma::gmm_full model;
+        model.reset(n_dim, n_components);
+
+        // Updating Weights //
+//        n_components = doc[color_name]["weights"].size();
+        arma::rowvec weights(n_components);
+        for (int i=0; i<n_components; i++)
+        {
+            weights[i] = doc[color_name]["weights"][i].as<double>();
+        }
+
+        model.set_hefts(weights);
+        std::cout << "Weights \n" << weights << std::endl;
+
+        // Updating Means //
+//        n_components = doc[color_name]["mu"].size();
+//        n_dim = doc[color_name]["mu"][0].size();
+        arma::mat means(n_components, n_dim);
+        for (int i=0; i<n_components; i++)
+        {
+            arma::rowvec row(n_dim);
+            for (int j=0; j<n_dim; j++)
+            {
+                row[j] = doc[color_name]["mu"][i][j].as<double>();
+            }
+            means.row(i) = row;
+        }
+        means = means.t();
+        model.set_means(means);
+        std::cout << "Means \n" << means << std::endl;
+
+
+        // Updating Sigmas //
+//        n_components = doc[color_name]["sigma"].size();
+//        n_dim = doc[color_name]["sigma"][0].size();
+        arma::cube fcovs(n_dim, n_dim, n_components);
+
+        for (int i =0; i<n_components; i++)
+        {
+            arma::mat sigma(n_dim, n_dim);
+            for (int j=0; j<n_dim; j++)
+            {
+                arma::rowvec row(n_dim);
+                for (int k=0; k<n_dim; k++)
+                {
+                    row[k] = doc[color_name]["sigma"][i][j][k].as<double>();
+                }
+                sigma.row(j) = row;
+            }
+            fcovs.slice(i) = sigma;
+        }
+        model.set_fcovs(fcovs);
+        std::cout << "Sigmas\n " << fcovs << std::endl;
+
+        return model;
+    }
 
 }  // namespace trifinger_object_tracking

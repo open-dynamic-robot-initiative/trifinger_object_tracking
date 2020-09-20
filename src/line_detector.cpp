@@ -54,37 +54,24 @@ void LineDetector::set_color_bounds()
 //    threshold_[FaceColor::MAGENTA] = -18;
 //    threshold_[FaceColor::CYAN] = -18;
 
-    threshold_[FaceColor::YELLOW] = -18;
-    threshold_[FaceColor::RED] = -18;
-    threshold_[FaceColor::GREEN] = -18;
-    threshold_[FaceColor::BLUE] = -18;
-    threshold_[FaceColor::MAGENTA] = -18;
-    threshold_[FaceColor::CYAN] = -18;
+    threshold_[FaceColor::YELLOW] = -24;
+    threshold_[FaceColor::RED] = -19;
+    threshold_[FaceColor::GREEN] = -19;
+    threshold_[FaceColor::BLUE] = -12;
+    threshold_[FaceColor::MAGENTA] = -19;
+    threshold_[FaceColor::CYAN] = -23;
 }
 
 void LineDetector::load_segmentation_models(const std::string &model_directory)
 {
+
+    segmentation_models_ = trifinger_object_tracking::update_model_from_file();
     for (FaceColor color : cube_model_.get_colors())
     {
         std::string color_name = cube_model_.get_color_name(color);
-        std::string saved_model_path = model_directory + "/" + color_name + ".gmm";
-
-//        std::string saved_model_path = model_directory + "/" +
-//                                       cube_model_.get_color_name(color) +
-//                                       "_diag_hsv.gmm";
-
-        bool status = segmentation_models_[color].load(saved_model_path);
         segmentation_models_[color].means.print("Means:");
         segmentation_models_[color].fcovs.print("Fcovs:");
 
-        segmentation_models_[color] = trifinger_object_tracking::update_model(segmentation_models_[color], color_name);
-
-
-        if (status == false)
-        {
-            throw std::runtime_error("Failed to load GMM from " +
-                                     saved_model_path);
-        }
     }
 }
 

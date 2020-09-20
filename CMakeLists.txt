@@ -59,6 +59,7 @@ add_library(lib_object_pose
     src/pose_detector.cpp
     src/utils.cpp
     src/cube_model.cpp
+    src/gmm_params.cpp
 )
 target_link_libraries(lib_object_pose
     ${catkin_LIBRARIES} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})

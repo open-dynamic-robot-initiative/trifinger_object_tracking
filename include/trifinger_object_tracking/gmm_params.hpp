@@ -7,10 +7,13 @@
 
 #include <armadillo>
 #include <string>
-
+#include <yaml-cpp/yaml.h>
+#include <yaml-cpp/node/node.h>
+#include <trifinger_object_tracking/cube_model.hpp>
 
 namespace trifinger_object_tracking
 {
+
 
     struct GmmParam
     {
@@ -21,5 +24,11 @@ namespace trifinger_object_tracking
     };
 
     arma::gmm_full update_model(arma::gmm_full model, std::string color);
+
+    std::array<arma::gmm_full, FaceColor::N_COLORS> update_model_from_file();
+
+    YAML::Node read_file(std::string path);
+
+    arma::gmm_full update_for_color(FaceColor color, YAML::Node doc, std::string color_name);
 
 }  // namespace trifinger_object_tracking
