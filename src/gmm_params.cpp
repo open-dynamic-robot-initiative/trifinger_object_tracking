@@ -1261,11 +1261,9 @@ arma::gmm_full update_gmm_for_color(FaceColor color,
                                     const YAML::Node &doc,
                                     const std::string &color_name)
 {
-    std::cout << "\n\nUpdating for color " << color_name << std::endl;
-
     int n_components = doc[color_name]["weights"].size();
     int n_dim = doc[color_name]["mu"][0].size();
-    ;
+
     arma::gmm_full model;
     model.reset(n_dim, n_components);
 
@@ -1278,7 +1276,6 @@ arma::gmm_full update_gmm_for_color(FaceColor color,
     }
 
     model.set_hefts(weights);
-    std::cout << "Weights \n" << weights << std::endl;
 
     // Updating Means //
     //        n_components = doc[color_name]["mu"].size();
@@ -1295,7 +1292,6 @@ arma::gmm_full update_gmm_for_color(FaceColor color,
     }
     means = means.t();
     model.set_means(means);
-    std::cout << "Means \n" << means << std::endl;
 
     // Updating Sigmas //
     //        n_components = doc[color_name]["sigma"].size();
@@ -1317,7 +1313,6 @@ arma::gmm_full update_gmm_for_color(FaceColor color,
         fcovs.slice(i) = sigma;
     }
     model.set_fcovs(fcovs);
-    std::cout << "Sigmas\n " << fcovs << std::endl;
 
     return model;
 }
