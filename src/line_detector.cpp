@@ -51,12 +51,6 @@ void LineDetector::load_segmentation_models(const std::string &model_directory)
     std::string model_file = model_directory + "/gmm_weights_from_python.yml";
     segmentation_models_ =
         trifinger_object_tracking::load_gmm_models_from_file(model_file);
-    for (FaceColor color : cube_model_.get_colors())
-    {
-        std::string color_name = cube_model_.get_color_name(color);
-        segmentation_models_[color].means.print("Means:");
-        segmentation_models_[color].fcovs.print("Fcovs:");
-    }
 }
 
 std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
