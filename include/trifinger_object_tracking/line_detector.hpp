@@ -42,15 +42,19 @@ private:
     void set_color_bounds();
     void load_segmentation_models(const std::string &model_directory);
 
-    void clean_mask(FaceColor color, std::array<std::vector<int>, FaceColor::N_COLORS> &pixel_idx);
+    void clean_mask(
+        FaceColor color,
+        std::array<std::vector<int>, FaceColor::N_COLORS> &pixel_idx);
 
     void deflate_masks_of_dominant_colors();
 
-    std::array<std::vector<cv::Point>, 2> get_front_line_pixels(FaceColor color1, FaceColor color2) const;
+    std::array<std::vector<cv::Point>, 2> get_front_line_pixels(
+        FaceColor color1, FaceColor color2) const;
 
 public:
     // constructor
-    LineDetector(const CubeModel &cube_model, const std::string &model_directory);
+    LineDetector(const CubeModel &cube_model,
+                 const std::string &model_directory);
 
     // member functions
 
@@ -62,7 +66,8 @@ public:
 
     void show();
 
-    std::vector<std::pair<FaceColor, FaceColor>> make_valid_combinations() const;
+    std::vector<std::pair<FaceColor, FaceColor>> make_valid_combinations()
+        const;
 
     void get_line_between_colors(FaceColor color1, FaceColor color2);
 
@@ -81,7 +86,6 @@ public:
     void finish_timer(bool verbose, const std::string &message);
 
     void print_time_taken(const std::string &message);
-
 };
 
 }  // namespace trifinger_object_tracking

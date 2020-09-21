@@ -8,11 +8,11 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 
+#include <trifinger_object_tracking/fake_object_tracker_backend.hpp>
 #include <trifinger_object_tracking/object_pose.hpp>
 #include <trifinger_object_tracking/object_tracker_data.hpp>
 #include <trifinger_object_tracking/object_tracker_frontend.hpp>
 #include <trifinger_object_tracking/simulation_object_tracker_backend.hpp>
-#include <trifinger_object_tracking/fake_object_tracker_backend.hpp>
 
 using namespace pybind11::literals;
 using namespace trifinger_object_tracking;

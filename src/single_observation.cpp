@@ -99,7 +99,6 @@ int main(int argc, char **argv)
                3>
         lines;
 
-
     // actual processing starts here
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -107,8 +106,8 @@ int main(int argc, char **argv)
     for (const cv::Mat &image : frames)
     {
         // FIXME: move this processing to somewhere else!
-        //cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
-        //cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
+        // cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
+        // cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
 
         // TODO clone needed?
         lines[i] = line_detector.detect_lines(image.clone());
@@ -126,9 +125,9 @@ int main(int argc, char **argv)
     pose.find_pose(lines);
 
     auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     std::cout << "Total duration: " << duration.count() << " ms" << std::endl;
-
 
 #ifdef VISUALIZE
     // visualize the detected pose
@@ -159,10 +158,10 @@ int main(int argc, char **argv)
                rescaled_debug_img,
                cv::Size(debug_img.cols / 2, debug_img.rows / 2));
 
-    //cv::imwrite(data_dir.substr(data_dir.find_last_of("/\\")+1, 4)+".jpg", rescaled_debug_img);
+    // cv::imwrite(data_dir.substr(data_dir.find_last_of("/\\")+1, 4)+".jpg",
+    // rescaled_debug_img);
     cv::imshow("debug", rescaled_debug_img);
     cv::waitKey(0);
 #endif
     return 0;
 }
-
