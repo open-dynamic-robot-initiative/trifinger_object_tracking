@@ -9,7 +9,7 @@
 
 namespace trifinger_object_tracking
 {
-arma::gmm_full update_model(arma::gmm_full model, const std::string &color)
+arma::gmm_full update_gmm_model(arma::gmm_full model, const std::string &color)
 {
     GmmParam params;
     params.color = color;
@@ -1234,32 +1234,32 @@ arma::gmm_full update_model(arma::gmm_full model, const std::string &color)
     return model;
 }
 
-std::array<arma::gmm_full, FaceColor::N_COLORS> update_model_from_file(
+std::array<arma::gmm_full, FaceColor::N_COLORS> load_gmm_models_from_file(
     const std::string &filename)
 {
     YAML::Node file = YAML::LoadFile(filename);
 
-    std::array<arma::gmm_full, FaceColor::N_COLORS> segmentation_models_;
+    std::array<arma::gmm_full, FaceColor::N_COLORS> segmentation_models;
 
-    segmentation_models_[FaceColor::RED] =
-        update_for_color(FaceColor::RED, file, "red");
-    segmentation_models_[FaceColor::GREEN] =
-        update_for_color(FaceColor::GREEN, file, "green");
-    segmentation_models_[FaceColor::BLUE] =
-        update_for_color(FaceColor::BLUE, file, "blue");
-    segmentation_models_[FaceColor::MAGENTA] =
-        update_for_color(FaceColor::MAGENTA, file, "magenta");
-    segmentation_models_[FaceColor::YELLOW] =
-        update_for_color(FaceColor::YELLOW, file, "yellow");
-    segmentation_models_[FaceColor::CYAN] =
-        update_for_color(FaceColor::CYAN, file, "cyan");
+    segmentation_models[FaceColor::RED] =
+        update_gmm_for_color(FaceColor::RED, file, "red");
+    segmentation_models[FaceColor::GREEN] =
+        update_gmm_for_color(FaceColor::GREEN, file, "green");
+    segmentation_models[FaceColor::BLUE] =
+        update_gmm_for_color(FaceColor::BLUE, file, "blue");
+    segmentation_models[FaceColor::MAGENTA] =
+        update_gmm_for_color(FaceColor::MAGENTA, file, "magenta");
+    segmentation_models[FaceColor::YELLOW] =
+        update_gmm_for_color(FaceColor::YELLOW, file, "yellow");
+    segmentation_models[FaceColor::CYAN] =
+        update_gmm_for_color(FaceColor::CYAN, file, "cyan");
 
-    return segmentation_models_;
+    return segmentation_models;
 }
 
-arma::gmm_full update_for_color(FaceColor color,
-                                const YAML::Node &doc,
-                                const std::string &color_name)
+arma::gmm_full update_gmm_for_color(FaceColor color,
+                                    const YAML::Node &doc,
+                                    const std::string &color_name)
 {
     std::cout << "\n\nUpdating for color " << color_name << std::endl;
 

@@ -22,13 +22,13 @@ struct GmmParam
 };
 
 // TODO unused?
-arma::gmm_full update_model(arma::gmm_full model, const std::string &color);
+arma::gmm_full update_gmm_model(arma::gmm_full model, const std::string &color);
 
-std::array<arma::gmm_full, FaceColor::N_COLORS> update_model_from_file(
+std::array<arma::gmm_full, FaceColor::N_COLORS> load_gmm_models_from_file(
     const std::string &filename);
 
-arma::gmm_full update_for_color(FaceColor color,
-                                const YAML::Node &doc,
-                                const std::string &color_name);
+arma::gmm_full update_gmm_for_color(FaceColor color,
+                                    const YAML::Node &doc,
+                                    const std::string &color_name);
 
 }  // namespace trifinger_object_tracking
