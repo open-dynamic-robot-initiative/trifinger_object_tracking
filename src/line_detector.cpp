@@ -101,12 +101,11 @@ void LineDetector::gmm_mask()
 
     // convert cv::Mat to arma::mat
     cv::Mat concatenated_data;
-    cv::Mat data = image_hsv_.reshape(1, image_hsv_.rows * image_hsv_.cols);
-    cv::Mat data2 = image_bgr_.reshape(1, image_hsv_.rows * image_hsv_.cols);
-    data.convertTo(data, CV_64FC1);
-    data2.convertTo(data2, CV_64FC1);
-    //    concatenated_data = data;
-    cv::hconcat(data2, data, concatenated_data);  // bgr+hsv
+    cv::Mat data_hsv = image_hsv_.reshape(1, image_hsv_.rows * image_hsv_.cols);
+    cv::Mat data_bgr = image_bgr_.reshape(1, image_hsv_.rows * image_hsv_.cols);
+    data_hsv.convertTo(data_hsv, CV_64FC1);
+    data_bgr.convertTo(data_bgr, CV_64FC1);
+    cv::hconcat(data_bgr, data_hsv, concatenated_data);  // bgr+hsv
     arma::mat input_data =
         arma::mat(reinterpret_cast<double *>(concatenated_data.data),
                   concatenated_data.cols,
@@ -140,7 +139,7 @@ void LineDetector::gmm_mask()
 
     // ARGMAX
     thread_vector.clear();
-    for (int row_idx = 0; row_idx < data.rows; row_idx += 2)
+    for (int row_idx = 0; row_idx < data_hsv.rows; row_idx += 2)
     {
         auto max_idx = gmm_result.col(row_idx).index_max();
         auto max_val = gmm_result.col(row_idx).max();
