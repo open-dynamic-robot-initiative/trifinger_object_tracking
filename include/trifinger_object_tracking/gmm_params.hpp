@@ -21,14 +21,14 @@ struct GmmParam
     arma::cube fcovs;
 };
 
-arma::gmm_full update_model(arma::gmm_full model, std::string color);
+// TODO unused?
+arma::gmm_full update_model(arma::gmm_full model, const std::string &color);
 
-std::array<arma::gmm_full, FaceColor::N_COLORS> update_model_from_file();
-
-YAML::Node read_file(std::string path);
+std::array<arma::gmm_full, FaceColor::N_COLORS> update_model_from_file(
+    const std::string &filename);
 
 arma::gmm_full update_for_color(FaceColor color,
-                                YAML::Node doc,
-                                std::string color_name);
+                                const YAML::Node &doc,
+                                const std::string &color_name);
 
 }  // namespace trifinger_object_tracking

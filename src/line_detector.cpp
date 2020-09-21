@@ -61,7 +61,9 @@ void LineDetector::set_color_bounds()
 
 void LineDetector::load_segmentation_models(const std::string &model_directory)
 {
-    segmentation_models_ = trifinger_object_tracking::update_model_from_file();
+    std::string model_file = model_directory + "/gmm_weights_from_python.yml";
+    segmentation_models_ =
+        trifinger_object_tracking::update_model_from_file(model_file);
     for (FaceColor color : cube_model_.get_colors())
     {
         std::string color_name = cube_model_.get_color_name(color);

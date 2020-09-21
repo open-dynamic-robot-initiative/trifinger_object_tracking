@@ -9,7 +9,7 @@
 
 namespace trifinger_object_tracking
 {
-arma::gmm_full update_model(arma::gmm_full model, std::string color)
+arma::gmm_full update_model(arma::gmm_full model, const std::string &color)
 {
     GmmParam params;
     params.color = color;
@@ -1234,9 +1234,10 @@ arma::gmm_full update_model(arma::gmm_full model, std::string color)
     return model;
 }
 
-std::array<arma::gmm_full, FaceColor::N_COLORS> update_model_from_file()
+std::array<arma::gmm_full, FaceColor::N_COLORS> update_model_from_file(
+    const std::string &filename)
 {
-    YAML::Node file = read_file("../data/gmm_weights_from_python.yml");
+    YAML::Node file = YAML::LoadFile(filename);
 
     std::array<arma::gmm_full, FaceColor::N_COLORS> segmentation_models_;
 
@@ -1256,15 +1257,9 @@ std::array<arma::gmm_full, FaceColor::N_COLORS> update_model_from_file()
     return segmentation_models_;
 }
 
-YAML::Node read_file(std::string path)
-{
-    YAML::Node doc = YAML::LoadFile(path);
-    return doc;
-}
-
 arma::gmm_full update_for_color(FaceColor color,
-                                YAML::Node doc,
-                                std::string color_name)
+                                const YAML::Node &doc,
+                                const std::string &color_name)
 {
     std::cout << "\n\nUpdating for color " << color_name << std::endl;
 
