@@ -20,7 +20,7 @@ private:
     cv::Mat image_hsv_, image_bgr_;
 
     std::array<ColorBounds, FaceColor::N_COLORS> color_bounds_;
-    std::map<FaceColor, float> threshold_;
+    std::map<FaceColor, float> gmm_thresholds_;
 
     //! individual color segment mask
     std::array<cv::Mat, FaceColor::N_COLORS> masks_;

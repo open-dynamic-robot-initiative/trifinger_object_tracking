@@ -37,26 +37,13 @@ void LineDetector::set_color_bounds()
     color_bounds_[FaceColor::GREEN] = {{57, 185, 60}, {70, 255, 225}};
     color_bounds_[FaceColor::CYAN] = {{75, 50, 40}, {97, 255, 180}};
     color_bounds_[FaceColor::YELLOW] = {{27, 130, 160}, {37, 255, 255}};
-    //    threshold_[FaceColor::YELLOW] = 1e-8;
-    //    threshold_[FaceColor::RED] = 1e-7;
-    //    threshold_[FaceColor::GREEN] = 1e-6;
-    //    threshold_[FaceColor::BLUE] = 1e-7;
-    //    threshold_[FaceColor::MAGENTA] = 1e-6;
-    //    threshold_[FaceColor::CYAN] = 1e-8;
 
-    //    threshold_[FaceColor::YELLOW] = exp(-6e09);
-    //    threshold_[FaceColor::RED] = -18;
-    //    threshold_[FaceColor::GREEN] = -18;
-    //    threshold_[FaceColor::BLUE] = -18;
-    //    threshold_[FaceColor::MAGENTA] = -18;
-    //    threshold_[FaceColor::CYAN] = -18;
-
-    threshold_[FaceColor::YELLOW] = -24;
-    threshold_[FaceColor::RED] = -19;
-    threshold_[FaceColor::GREEN] = -19;
-    threshold_[FaceColor::BLUE] = -12;
-    threshold_[FaceColor::MAGENTA] = -19;
-    threshold_[FaceColor::CYAN] = -23;
+    gmm_thresholds_[FaceColor::YELLOW] = -24;
+    gmm_thresholds_[FaceColor::RED] = -19;
+    gmm_thresholds_[FaceColor::GREEN] = -19;
+    gmm_thresholds_[FaceColor::BLUE] = -12;
+    gmm_thresholds_[FaceColor::MAGENTA] = -19;
+    gmm_thresholds_[FaceColor::CYAN] = -23;
 }
 
 void LineDetector::load_segmentation_models(const std::string &model_directory)
@@ -158,7 +145,7 @@ void LineDetector::gmm_mask()
         auto max_idx = gmm_result.col(row_idx).index_max();
         auto max_val = gmm_result.col(row_idx).max();
         FaceColor color = idx2color[max_idx];
-        if (max_val > threshold_[color])
+        if (max_val > gmm_thresholds_[color])
         {
             pixel_idx[color].push_back(row_idx);
             pixel_idx[color].push_back(row_idx + 1);
