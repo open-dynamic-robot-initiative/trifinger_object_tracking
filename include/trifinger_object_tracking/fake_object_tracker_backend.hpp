@@ -24,4 +24,3 @@ protected:
 };
 
 }  // namespace trifinger_object_tracking
-

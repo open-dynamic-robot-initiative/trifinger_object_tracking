@@ -48,4 +48,3 @@ private:
     cv::Mat image_;
 };
 }  // namespace trifinger_object_tracking
-

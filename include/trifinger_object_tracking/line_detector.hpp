@@ -20,6 +20,7 @@ private:
     cv::Mat image_hsv_, image_bgr_;
 
     std::array<ColorBounds, FaceColor::N_COLORS> color_bounds_;
+    std::array<float, FaceColor::N_COLORS> gmm_thresholds_;
 
     //! individual color segment mask
     std::array<cv::Mat, FaceColor::N_COLORS> masks_;
@@ -31,9 +32,7 @@ private:
     std::map<FaceColor, std::vector<cv::Point>> pixel_dataset_;
     //! total pixels with a particular color
     std::map<FaceColor, int> color_count_;
-
-    std::array<arma::gmm_diag, FaceColor::N_COLORS> segmentation_models_;
-
+    std::array<arma::gmm_full, FaceColor::N_COLORS> segmentation_models_;
     std::chrono::high_resolution_clock::time_point start_, finish_;
 
     std::map<ColorPair, Line> lines_;
@@ -43,15 +42,19 @@ private:
     void set_color_bounds();
     void load_segmentation_models(const std::string &model_directory);
 
-    void clean_mask(FaceColor color, std::array<std::vector<int>, FaceColor::N_COLORS> &pixel_idx);
+    void clean_mask(
+        FaceColor color,
+        std::array<std::vector<int>, FaceColor::N_COLORS> &pixel_idx);
 
     void deflate_masks_of_dominant_colors();
 
-    std::array<std::vector<cv::Point>, 2> get_front_line_pixels(FaceColor color1, FaceColor color2) const;
+    std::array<std::vector<cv::Point>, 2> get_front_line_pixels(
+        FaceColor color1, FaceColor color2) const;
 
 public:
     // constructor
-    LineDetector(const CubeModel &cube_model, const std::string &model_directory);
+    LineDetector(const CubeModel &cube_model,
+                 const std::string &model_directory);
 
     // member functions
 
@@ -63,7 +66,8 @@ public:
 
     void show();
 
-    std::vector<std::pair<FaceColor, FaceColor>> make_valid_combinations() const;
+    std::vector<std::pair<FaceColor, FaceColor>> make_valid_combinations()
+        const;
 
     void get_line_between_colors(FaceColor color1, FaceColor color2);
 
@@ -82,7 +86,6 @@ public:
     void finish_timer(bool verbose, const std::string &message);
 
     void print_time_taken(const std::string &message);
-
 };
 
 }  // namespace trifinger_object_tracking

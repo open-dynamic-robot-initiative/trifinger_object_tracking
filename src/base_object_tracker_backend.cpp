@@ -67,4 +67,3 @@ void BaseObjectTrackerBackend::loop()
 }
 
 }  // namespace trifinger_object_tracking
-

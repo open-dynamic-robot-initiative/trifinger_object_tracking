@@ -47,5 +47,4 @@ public:
     }
 };
 
-
 }  // namespace trifinger_object_tracking

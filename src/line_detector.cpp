@@ -1,6 +1,8 @@
+#include <math.h>
 #include <chrono>
 #include <iostream>
 #include <thread>
+#include <trifinger_object_tracking/gmm_params.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
 #include <typeinfo>
@@ -35,23 +37,20 @@ void LineDetector::set_color_bounds()
     color_bounds_[FaceColor::GREEN] = {{57, 185, 60}, {70, 255, 225}};
     color_bounds_[FaceColor::CYAN] = {{75, 50, 40}, {97, 255, 180}};
     color_bounds_[FaceColor::YELLOW] = {{27, 130, 160}, {37, 255, 255}};
+
+    gmm_thresholds_[FaceColor::YELLOW] = -24;
+    gmm_thresholds_[FaceColor::RED] = -19;
+    gmm_thresholds_[FaceColor::GREEN] = -19;
+    gmm_thresholds_[FaceColor::BLUE] = -12;
+    gmm_thresholds_[FaceColor::MAGENTA] = -19;
+    gmm_thresholds_[FaceColor::CYAN] = -23;
 }
 
 void LineDetector::load_segmentation_models(const std::string &model_directory)
 {
-    for (FaceColor color : cube_model_.get_colors())
-    {
-        std::string saved_model_path = model_directory + "/" +
-                                       cube_model_.get_color_name(color) +
-                                       "_diag_hsv.gmm";
-
-        bool status = segmentation_models_[color].load(saved_model_path);
-        if (status == false)
-        {
-            throw std::runtime_error("Failed to load GMM from " +
-                                     saved_model_path);
-        }
-    }
+    std::string model_file = model_directory + "/gmm_weights_from_python.yml";
+    segmentation_models_ =
+        trifinger_object_tracking::load_gmm_models_from_file(model_file);
 }
 
 std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
@@ -96,9 +95,11 @@ void LineDetector::gmm_mask()
 
     // convert cv::Mat to arma::mat
     cv::Mat concatenated_data;
-    cv::Mat data = image_hsv_.reshape(1, n_pixels);
-    data.convertTo(data, CV_64FC1);
-    concatenated_data = data;
+    cv::Mat data_hsv = image_hsv_.reshape(1, n_pixels);
+    cv::Mat data_bgr = image_bgr_.reshape(1, n_pixels);
+    data_hsv.convertTo(data_hsv, CV_64FC1);
+    data_bgr.convertTo(data_bgr, CV_64FC1);
+    cv::hconcat(data_bgr, data_hsv, concatenated_data);  // bgr+hsv
     arma::mat input_data =
         arma::mat(reinterpret_cast<double *>(concatenated_data.data),
                   concatenated_data.cols,
@@ -132,12 +133,12 @@ void LineDetector::gmm_mask()
 
     // ARGMAX
     thread_vector.clear();
-    for (int row_idx = 0; row_idx < data.rows; row_idx += 2)
+    for (int row_idx = 0; row_idx < data_hsv.rows; row_idx += 2)
     {
         auto max_idx = gmm_result.col(row_idx).index_max();
         auto max_val = gmm_result.col(row_idx).max();
         FaceColor color = idx2color[max_idx];
-        if (max_val > -18.0)
+        if (max_val > gmm_thresholds_[color])
         {
             pixel_idx[color].push_back(row_idx);
             pixel_idx[color].push_back(row_idx + 1);

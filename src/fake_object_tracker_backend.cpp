@@ -34,5 +34,3 @@ ObjectPose FakeObjectTrackerBackend::update_pose()
 }
 
 }  // namespace trifinger_object_tracking
-
-

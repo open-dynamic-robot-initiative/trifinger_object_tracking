@@ -20,7 +20,7 @@ cv::Mat get_image(const std::string &path, const int idx)
     }
     cv::GaussianBlur(image.clone(), image, cv::Size(5, 5), 0);
     cv::fastNlMeansDenoisingColored(image.clone(), image, 10, 10, 7, 21);
-    cv::cvtColor(image, image, CV_BGR2RGB);
+    cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
     return image;
 }
 
@@ -47,7 +47,6 @@ bool comparator(const std::string &a, const std::string &b)
     std::string::size_type sz;
     return std::stoi(split_a.back(), &sz) < std::stoi(split_b.back(), &sz);
 }
-
 
 std::map<char, std::string> initialize()
 {
@@ -162,7 +161,7 @@ void train_gmm(std::map<std::string, cv::Mat> dataset)
                       color_data.second.cols,
                       color_data.second.rows);
 
-        arma::gmm_diag model;
+        arma::gmm_full model;
         bool status = model.learn(input_data,
                                   modes_[color],
                                   arma::maha_dist,
@@ -176,9 +175,13 @@ void train_gmm(std::map<std::string, cv::Mat> dataset)
             std::cout << "learning failed" << std::endl;
         }
         model.means.print("means:");
-        std::string name = "../data/" + color + "_diag_hsv.gmm";
+        model.hefts.print("hefts:");
+        model.fcovs.print("fcovs:");
+        std::string name = "../data/" + color + "_hsv.gmm";
         model.save(name);
         std::cout << color << " done\n";
+        int test;
+        std::cin >> test;
     }
 }
 }  // namespace trifinger_object_tracking

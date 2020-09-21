@@ -19,7 +19,6 @@ namespace trifinger_object_tracking
 class SimulationObjectTrackerBackend : public BaseObjectTrackerBackend
 {
 public:
-
     /**
      * @brief Initialize.
      *
