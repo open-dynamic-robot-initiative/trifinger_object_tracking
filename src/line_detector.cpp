@@ -101,8 +101,8 @@ void LineDetector::gmm_mask()
 
     // convert cv::Mat to arma::mat
     cv::Mat concatenated_data;
-    cv::Mat data_hsv = image_hsv_.reshape(1, image_hsv_.rows * image_hsv_.cols);
-    cv::Mat data_bgr = image_bgr_.reshape(1, image_hsv_.rows * image_hsv_.cols);
+    cv::Mat data_hsv = image_hsv_.reshape(1, n_pixels);
+    cv::Mat data_bgr = image_bgr_.reshape(1, n_pixels);
     data_hsv.convertTo(data_hsv, CV_64FC1);
     data_bgr.convertTo(data_bgr, CV_64FC1);
     cv::hconcat(data_bgr, data_hsv, concatenated_data);  // bgr+hsv
