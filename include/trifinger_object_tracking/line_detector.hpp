@@ -58,7 +58,7 @@ public:
                  const std::string &model_directory);
 
     // member functions
-    cv::Mat xgboost_mask();
+    void xgboost_mask();
 
     cv::Mat get_mask(FaceColor color);
 

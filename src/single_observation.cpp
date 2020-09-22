@@ -77,8 +77,6 @@ int main(int argc, char **argv)
     trifinger_object_tracking::LineDetector line_detector(cube_model,
                                                           model_directory);
 
-    line_detector.load_xgboost_classifier(model_directory + "/xgb_model.bin");
-
     std::array<trifinger_cameras::CameraParameters, 3> camera_params;
     // FIXME: This is a bit of a hack but for now just expect calibration files
     // with fixed names on level above data_dir
@@ -113,13 +111,11 @@ int main(int argc, char **argv)
 
         // TODO clone needed?
         lines[i] = line_detector.detect_lines(image.clone());
-        cv::Mat xgboost_mask = line_detector.xgboost_mask();
 
 #ifdef VISUALIZE
         subplot.set_subimg(line_detector.get_image(), i, 0);
         subplot.set_subimg(line_detector.get_segmented_image(), i, 1);
-        //subplot.set_subimg(line_detector.get_front_line_image(), i, 2);
-        subplot.set_subimg(xgboost_mask, i, 2);
+        subplot.set_subimg(line_detector.get_front_line_image(), i, 2);
         subplot.set_subimg(line_detector.get_image_lines(), i, 3);
 #endif
 
