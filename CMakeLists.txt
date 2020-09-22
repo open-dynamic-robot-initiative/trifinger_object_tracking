@@ -27,6 +27,13 @@ find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(Armadillo REQUIRED)
 
+#get_cmake_property(_variableNames VARIABLES)
+#list (SORT _variableNames)
+#foreach (_variableName ${_variableNames})
+#    message(WARNING "${_variableName}=${${_variableName}}")
+#endforeach()
+
+
 # TODO can this be removed?
 find_package(OpenMP)
 if (OPENMP_FOUND)
@@ -52,6 +59,7 @@ include_directories(
     ${OpenCV_INCLUDE_DIRS}
     ${ARMADILLO_INCLUDE_DIRS}
     ${BLAS_INCLUDE_DIRS}
+    ${XGBOOST_INCLUDE_DIRS}
 )
 
 add_library(lib_object_pose
@@ -60,9 +68,16 @@ add_library(lib_object_pose
     src/utils.cpp
     src/cube_model.cpp
     src/gmm_params.cpp
+    src/xgboost_classifier.cpp
 )
 target_link_libraries(lib_object_pose
-    ${catkin_LIBRARIES} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${ARMADILLO_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBS}
+    ${Boost_LIBRARIES}
+    ${ARMADILLO_LIBRARIES}
+    ${BLAS_LIBRARIES}
+    ${LAPACK_LIBRARIES}
+)
 
 add_library(cv_sub_images src/cv_sub_images.cpp)
 target_link_libraries(cv_sub_images ${catkin_LIBRARIES} ${OpenCV_LIBS})

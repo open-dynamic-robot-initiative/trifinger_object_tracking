@@ -1,4 +1,5 @@
 #include <math.h>
+#include <trifinger_object_tracking/xgboost_classifier.h>
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -63,7 +64,8 @@ std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
 
     lines_.clear();
 
-    gmm_mask();
+    // gmm_mask();
+    xgboost_mask();
     find_dominant_colors(3);
     deflate_masks_of_dominant_colors();
 
@@ -73,6 +75,77 @@ std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
     }
 
     return lines_;
+}
+
+void LineDetector::xgboost_mask()
+{
+    ScopedTimer timer("LineDetector/xgboost_mask");
+
+    constexpr std::array<FaceColor, FaceColor::N_COLORS> map_label_to_color = {
+        FaceColor::BLUE,
+        FaceColor::CYAN,
+        FaceColor::GREEN,
+        FaceColor::MAGENTA,
+        FaceColor::RED,
+        FaceColor::YELLOW,
+    };
+
+    // Background cleaning and reshaping
+    constexpr unsigned OPEN_RADIUS = 2;
+    static const cv::Mat open_kernel = cv::getStructuringElement(
+        cv::MORPH_ELLIPSE, cv::Size(2 * OPEN_RADIUS + 1, 2 * OPEN_RADIUS + 1));
+
+    // initialize masks
+    for (FaceColor color : cube_model_.get_colors())
+    {
+        masks_[color] =
+            cv::Mat(image_bgr_.rows, image_bgr_.cols, CV_8UC1, cv::Scalar(0));
+    }
+
+    const size_t n_pixels = image_bgr_.total();
+
+    for (int r = 0; r < image_bgr_.rows; r++)
+    {
+        for (int c = 0; c < image_bgr_.cols; c++)
+        {
+            size_t i = r * image_bgr_.rows + c;
+
+            std::array<float, XGB_NUM_FEATURES> features;
+
+            cv::Vec3b bgr = image_bgr_.at<cv::Vec3b>(r, c);
+            cv::Vec3b hsv = image_hsv_.at<cv::Vec3b>(r, c);
+
+            features[0] = static_cast<float>(bgr[0]);
+            features[1] = static_cast<float>(bgr[1]);
+            features[2] = static_cast<float>(bgr[2]);
+            features[3] = static_cast<float>(hsv[0]);
+            features[4] = static_cast<float>(hsv[1]);
+            features[5] = static_cast<float>(hsv[2]);
+
+            std::array<float, XGB_NUM_CLASSES> probabilities = xgb_classify(features);
+
+            auto max_elem =
+                std::max_element(probabilities.begin(), probabilities.end());
+            int label = max_elem - probabilities.begin();
+
+            if (label > 0)
+            {
+                FaceColor color = map_label_to_color[label - 1];
+                masks_[color].at<uint8_t>(r, c) = 255;
+            }
+        }
+    }
+
+    // post-process masks
+    for (FaceColor color : cube_model_.get_colors())
+    {
+        // "open" image to get rid of single-pixel noise
+        cv::morphologyEx(
+            masks_[color], masks_[color], cv::MORPH_OPEN, open_kernel);
+
+        // count number of pixels of each color
+        color_count_[color] = cv::countNonZero(masks_[color]);
+    }
 }
 
 void LineDetector::gmm_mask()
@@ -471,7 +544,7 @@ cv::Mat LineDetector::get_image_lines() const
 std::vector<std::pair<FaceColor, FaceColor>>
 LineDetector::make_valid_combinations() const
 {
-    ScopedTimer timer("LineDetector/make_valid_combinations");
+    //ScopedTimer timer("LineDetector/make_valid_combinations");
 
     std::vector<std::pair<FaceColor, FaceColor>> color_pairs;
     for (auto it = dominant_colors_.begin(); it != dominant_colors_.end(); it++)
@@ -492,7 +565,7 @@ LineDetector::make_valid_combinations() const
 std::array<std::vector<cv::Point>, 2> LineDetector::get_front_line_pixels(
     FaceColor color1, FaceColor color2) const
 {
-    ScopedTimer timer("LineDetector/get_front_line_pixels");
+    //ScopedTimer timer("LineDetector/get_front_line_pixels");
 
     std::array<std::vector<cv::Point>, 2> front_line_pixels;
     cv::Mat front_line;
@@ -709,5 +782,4 @@ void LineDetector::print_time_taken(const std::string &message = "")
                      .count()
               << " milliseconds\n";
 }
-
 }  // namespace trifinger_object_tracking
