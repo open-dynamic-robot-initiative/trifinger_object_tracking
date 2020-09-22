@@ -81,6 +81,7 @@ void LineDetector::xgboost_mask()
 {
     ScopedTimer timer("LineDetector/xgboost_mask");
 
+    // map label index of the xgboost model to color
     constexpr std::array<FaceColor, FaceColor::N_COLORS> map_label_to_color = {
         FaceColor::BLUE,
         FaceColor::CYAN,
@@ -90,7 +91,7 @@ void LineDetector::xgboost_mask()
         FaceColor::YELLOW,
     };
 
-    // Background cleaning and reshaping
+    // structuring element for denoising
     constexpr unsigned OPEN_RADIUS = 2;
     static const cv::Mat open_kernel = cv::getStructuringElement(
         cv::MORPH_ELLIPSE, cv::Size(2 * OPEN_RADIUS + 1, 2 * OPEN_RADIUS + 1));
@@ -102,14 +103,10 @@ void LineDetector::xgboost_mask()
             cv::Mat(image_bgr_.rows, image_bgr_.cols, CV_8UC1, cv::Scalar(0));
     }
 
-    const size_t n_pixels = image_bgr_.total();
-
     for (int r = 0; r < image_bgr_.rows; r++)
     {
         for (int c = 0; c < image_bgr_.cols; c++)
         {
-            size_t i = r * image_bgr_.rows + c;
-
             std::array<float, XGB_NUM_FEATURES> features;
 
             cv::Vec3b bgr = image_bgr_.at<cv::Vec3b>(r, c);
@@ -122,7 +119,8 @@ void LineDetector::xgboost_mask()
             features[4] = static_cast<float>(hsv[1]);
             features[5] = static_cast<float>(hsv[2]);
 
-            std::array<float, XGB_NUM_CLASSES> probabilities = xgb_classify(features);
+            std::array<float, XGB_NUM_CLASSES> probabilities =
+                xgb_classify(features);
 
             auto max_elem =
                 std::max_element(probabilities.begin(), probabilities.end());
@@ -227,7 +225,7 @@ void LineDetector::gmm_mask()
     for (FaceColor color : cube_model_.get_colors())
     {
         std::thread th(
-            [this, &pixel_idx, &open_kernel](FaceColor color) {
+            [this, &pixel_idx](FaceColor color) {
                 clean_mask(color, pixel_idx);
                 for (auto &idx : pixel_idx[color])
                 {
@@ -544,7 +542,7 @@ cv::Mat LineDetector::get_image_lines() const
 std::vector<std::pair<FaceColor, FaceColor>>
 LineDetector::make_valid_combinations() const
 {
-    //ScopedTimer timer("LineDetector/make_valid_combinations");
+    // ScopedTimer timer("LineDetector/make_valid_combinations");
 
     std::vector<std::pair<FaceColor, FaceColor>> color_pairs;
     for (auto it = dominant_colors_.begin(); it != dominant_colors_.end(); it++)
@@ -565,7 +563,7 @@ LineDetector::make_valid_combinations() const
 std::array<std::vector<cv::Point>, 2> LineDetector::get_front_line_pixels(
     FaceColor color1, FaceColor color2) const
 {
-    //ScopedTimer timer("LineDetector/get_front_line_pixels");
+    // ScopedTimer timer("LineDetector/get_front_line_pixels");
 
     std::array<std::vector<cv::Point>, 2> front_line_pixels;
     cv::Mat front_line;
@@ -627,9 +625,9 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
                              CV_32FC1,
                              classifier_input_data.data());
 
-        std::string classifier = "svm";  //"sklearn_logistic";
+        const std::string classifier = "svm";  //"logistic";
         float a, b;
-        float accuracy;
+        float accuracy = 0;
 
         // Train the SVM
         if (classifier == "svm")
@@ -739,6 +737,10 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
 
             a = -thetas.at<float>(0, 0) / thetas.at<float>(0, 1);
             b = thetas.at<float>(0, 2) / thetas.at<float>(0, 1);
+        }
+        else
+        {
+            throw std::runtime_error("Invalid classifier");
         }
 
         if (accuracy > LINE_ACCURACY_THRESHOLD)
