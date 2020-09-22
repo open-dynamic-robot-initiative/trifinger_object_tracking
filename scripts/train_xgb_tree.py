@@ -53,7 +53,7 @@ def show_image_bgr(image):
 def create_channels(image_bgr):
     conversions = {
         "hsv": cv.COLOR_BGR2HSV,
-        "hls": cv.COLOR_BGR2HLS,
+        #"hls": cv.COLOR_BGR2HLS,
         "xyz": cv.COLOR_BGR2XYZ,
         "LAB": cv.COLOR_BGR2Lab,
         "LUV": cv.COLOR_BGR2Luv,
@@ -248,15 +248,9 @@ def load_data_and_fit_model(*, input_filename, output_filename, feature_names):
 def load_model_and_generate_evaluation_images(
     *, model_filename, input_path, output_path, feature_names
 ):
-    # TODO do I need to specify these arguments here when I load a model?
-    model = XGBClassifier(
-        learning_rate=1.0,
-        n_estimators=1,  # only one tree
-        n_jobs=8,
-        max_depth=6,  # maximum tree depth
-    )
+    model = XGBClassifier()
     model.load_model(model_filename)
-    #model = pickle.load(open(model_filename, "rb"))
+    model.get_booster().dump_model("/tmp/model.json", dump_format="json")
 
     frame_folders = sorted(get_frame_folders(input_path))
 
@@ -327,6 +321,8 @@ if __name__ == "__main__":
     feature_names = "rgb" + "hsv"
     # remove duplicates and sort for reproducibility
     feature_names = sorted(list(set(feature_names)))
+
+    feature_names = ["b", "g", "r", "h", "s", "v"]
 
     if args.train:
         load_images_and_create_data(

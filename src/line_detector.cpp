@@ -5,6 +5,7 @@
 #include <trifinger_object_tracking/gmm_params.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
+#include <trifinger_object_tracking/xgboost_classifier.h>
 #include <typeinfo>
 
 namespace trifinger_object_tracking
@@ -73,6 +74,81 @@ std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
     }
 
     return lines_;
+}
+
+cv::Mat LineDetector::xgboost_mask()
+{
+    ScopedTimer timer("LineDetector/xgboost_mask");
+
+    // initialize masks
+    for (FaceColor color : cube_model_.get_colors())
+    {
+        masks_[color] = cv::Mat(image_bgr_.rows, image_bgr_.cols, CV_8UC1, cv::Scalar(0));
+    }
+
+
+    const size_t n_pixels = image_bgr_.total();
+
+    std::vector<uint8_t> labels(n_pixels);
+
+    for (int r = 0; r < image_bgr_.rows; r++)
+    {
+        for (int c = 0; c < image_bgr_.cols; c++)
+        {
+            size_t i = r * image_bgr_.rows + c;
+
+            // TODO use std::array
+            std::vector<float> features(6);
+
+            cv::Vec3b bgr = image_bgr_.at<cv::Vec3b>(r, c);
+            cv::Vec3b hsv = image_hsv_.at<cv::Vec3b>(r, c);
+
+            features[0] = static_cast<float>(bgr[0]);
+            features[1] = static_cast<float>(bgr[1]);
+            features[2] = static_cast<float>(bgr[2]);
+            features[3] = static_cast<float>(hsv[0]);
+            features[4] = static_cast<float>(hsv[1]);
+            features[5] = static_cast<float>(hsv[2]);
+
+            std::vector<float> probabilities = xgb_classify(features);
+
+            auto max_elem = std::max_element(probabilities.begin(), probabilities.end());
+            int argmax = max_elem - probabilities.begin();
+
+            labels[i] = argmax;
+        }
+    }
+
+    std::array<FaceColor, FaceColor::N_COLORS> map_label_to_color = {
+        FaceColor::BLUE,
+        FaceColor::CYAN,
+        FaceColor::GREEN,
+        FaceColor::MAGENTA,
+        FaceColor::RED,
+        FaceColor::YELLOW,
+    };
+
+    cv::Mat colviz(
+        image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+    for (int r = 0; r < image_bgr_.rows; r++)
+    {
+        for (int c = 0; c < image_bgr_.cols; c++)
+        {
+            size_t i = r * image_bgr_.rows + c;
+            uint8_t label = labels[i];
+            if (label > 0)
+            {
+                FaceColor color = map_label_to_color[label - 1];
+                auto rgb = cube_model_.get_rgb(color);
+                cv::Vec3b color_bgr(rgb[2], rgb[1], rgb[0]);
+
+                colviz.at<cv::Vec3b>(r, c) = color_bgr;
+                //masks_[color].at<uint8_t>(r, c) = 255;
+            }
+        }
+    }
+
+    return colviz;
 }
 
 void LineDetector::gmm_mask()
@@ -709,5 +785,4 @@ void LineDetector::print_time_taken(const std::string &message = "")
                      .count()
               << " milliseconds\n";
 }
-
 }  // namespace trifinger_object_tracking

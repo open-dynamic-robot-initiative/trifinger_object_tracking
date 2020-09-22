@@ -51,12 +51,14 @@ private:
     std::array<std::vector<cv::Point>, 2> get_front_line_pixels(
         FaceColor color1, FaceColor color2) const;
 
+
 public:
     // constructor
     LineDetector(const CubeModel &cube_model,
                  const std::string &model_directory);
 
     // member functions
+    cv::Mat xgboost_mask();
 
     cv::Mat get_mask(FaceColor color);
 
