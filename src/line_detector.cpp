@@ -545,7 +545,7 @@ cv::Mat LineDetector::get_image_lines() const
 std::vector<std::pair<FaceColor, FaceColor>>
 LineDetector::make_valid_combinations() const
 {
-    ScopedTimer timer("LineDetector/make_valid_combinations");
+    //ScopedTimer timer("LineDetector/make_valid_combinations");
 
     std::vector<std::pair<FaceColor, FaceColor>> color_pairs;
     for (auto it = dominant_colors_.begin(); it != dominant_colors_.end(); it++)
@@ -566,7 +566,7 @@ LineDetector::make_valid_combinations() const
 std::array<std::vector<cv::Point>, 2> LineDetector::get_front_line_pixels(
     FaceColor color1, FaceColor color2) const
 {
-    ScopedTimer timer("LineDetector/get_front_line_pixels");
+    //ScopedTimer timer("LineDetector/get_front_line_pixels");
 
     std::array<std::vector<cv::Point>, 2> front_line_pixels;
     cv::Mat front_line;
