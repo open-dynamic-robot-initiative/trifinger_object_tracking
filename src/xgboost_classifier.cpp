@@ -4,9 +4,10 @@
 #include <vector>
 using namespace std;
 
-std::vector<float> xgb_classify(std::vector<float> &sample) {
+std::array<float, XGB_NUM_CLASSES> xgb_classify(std::array<float, XGB_NUM_FEATURES> &sample) {
 
-  std::vector<float> sum (7, 0.0);
+  std::array<float, XGB_NUM_CLASSES> sum;
+  sum.fill(0.0);
 
   if (sample[4] <235) {
     if (sample[3] <162) {

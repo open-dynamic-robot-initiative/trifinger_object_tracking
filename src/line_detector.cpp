@@ -110,8 +110,7 @@ void LineDetector::xgboost_mask()
         {
             size_t i = r * image_bgr_.rows + c;
 
-            // TODO use std::array
-            std::vector<float> features(6);
+            std::array<float, XGB_NUM_FEATURES> features;
 
             cv::Vec3b bgr = image_bgr_.at<cv::Vec3b>(r, c);
             cv::Vec3b hsv = image_hsv_.at<cv::Vec3b>(r, c);
@@ -123,7 +122,7 @@ void LineDetector::xgboost_mask()
             features[4] = static_cast<float>(hsv[1]);
             features[5] = static_cast<float>(hsv[2]);
 
-            std::vector<float> probabilities = xgb_classify(features);
+            std::array<float, XGB_NUM_CLASSES> probabilities = xgb_classify(features);
 
             auto max_elem =
                 std::max_element(probabilities.begin(), probabilities.end());
