@@ -2,17 +2,13 @@
 # %%
 import argparse
 import os
-import cv2 as cv
-import pickle
-import numpy as np
 import random
-
-import sys
 import time
 
+import cv2 as cv
+import numpy as np
 import pandas as pd
 from PIL import Image
-import traceback
 from xgboost import XGBClassifier
 
 from matplotlib import colors
@@ -53,7 +49,7 @@ def show_image_bgr(image):
 def create_channels(image_bgr):
     conversions = {
         "hsv": cv.COLOR_BGR2HSV,
-        #"hls": cv.COLOR_BGR2HLS,
+        # "hls": cv.COLOR_BGR2HLS,
         "xyz": cv.COLOR_BGR2XYZ,
         "LAB": cv.COLOR_BGR2Lab,
         "LUV": cv.COLOR_BGR2Luv,
@@ -71,7 +67,7 @@ def create_channels(image_bgr):
 
 def create_features(*, image_bgr, flatten=False):
 
-    #image_bgr = cv.medianBlur(image_bgr, 7)
+    # image_bgr = cv.medianBlur(image_bgr, 7)
     channels = create_channels(image_bgr=image_bgr)
 
     if flatten:
@@ -235,8 +231,8 @@ def load_data_and_fit_model(*, input_filename, output_filename, feature_names):
 
     print("fitting model")
     model = fit_model(X_train, y_train)
-    #pickle.dump(model, open(output_filename, "wb"))
     model.save_model(output_filename)
+    model.get_booster().dump_model(output_filename + "_dump.txt")
     print("done fitting model")
 
     print("test data ------------------------")
@@ -250,7 +246,6 @@ def load_model_and_generate_evaluation_images(
 ):
     model = XGBClassifier()
     model.load_model(model_filename)
-    model.get_booster().dump_model("/tmp/model.json", dump_format="json")
 
     frame_folders = sorted(get_frame_folders(input_path))
 
@@ -317,10 +312,10 @@ if __name__ == "__main__":
 
     # probably we could get rid of some of these features without
     # losing much accuracy
-    #feature_names = "rgb" + "hsv" + "hls" + "xyz" + "LAB" + "LUV"
-    feature_names = "rgb" + "hsv"
+    # feature_names = "rgb" + "hsv" + "hls" + "xyz" + "LAB" + "LUV"
+    # feature_names = "rgb" + "hsv"
     # remove duplicates and sort for reproducibility
-    feature_names = sorted(list(set(feature_names)))
+    # feature_names = sorted(list(set(feature_names)))
 
     feature_names = ["b", "g", "r", "h", "s", "v"]
 
