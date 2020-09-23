@@ -51,43 +51,45 @@ private:
     std::array<std::vector<cv::Point>, 2> get_front_line_pixels(
         FaceColor color1, FaceColor color2) const;
 
-
-public:
-    // constructor
-    LineDetector(const CubeModel &cube_model,
-                 const std::string &model_directory);
-
-    // member functions
     void xgboost_mask();
-
-    cv::Mat get_mask(FaceColor color);
-
-    std::map<ColorPair, Line> detect_lines(const cv::Mat &image_bgr);
+    void gmm_mask();
 
     void find_dominant_colors(const unsigned int);
-
-    void show();
 
     std::vector<std::pair<FaceColor, FaceColor>> make_valid_combinations()
         const;
 
     void get_line_between_colors(FaceColor color1, FaceColor color2);
 
+
+public:
+    // constructor
+    LineDetector(const CubeModel &cube_model,
+                 const std::string &model_directory);
+
+    /**
+     * @brief Detect cube edge lines in the given image.
+     *
+     * @param image_bgr
+     *
+     * @return 
+     */
+    std::map<ColorPair, Line> detect_lines(const cv::Mat &image_bgr);
+
+    //! @brief Get mask of the specified color.
+    cv::Mat get_mask(FaceColor color) const;
+
+    //! @brief Get image visualizing the color segmentation.
     cv::Mat get_segmented_image() const;
 
+    //! @brief Get image visualizing the front line pixels.
     cv::Mat get_front_line_image() const;
 
+    //! @brief Get image visualizing the detected lines.
     cv::Mat get_image_lines() const;
 
+    //! @brief Get the original image.
     cv::Mat get_image() const;
-
-    void gmm_mask();
-
-    void start_timer();
-
-    void finish_timer(bool verbose, const std::string &message);
-
-    void print_time_taken(const std::string &message);
 };
 
 }  // namespace trifinger_object_tracking
