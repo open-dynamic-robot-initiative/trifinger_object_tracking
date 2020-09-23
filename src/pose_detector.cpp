@@ -56,40 +56,39 @@ PoseDetector::PoseDetector(const CubeModel &cube_model,
                 reference_vector_normals_.total() * sizeof(float));
 
     // Setting the bounds for pose estimation
-    position_.lower_bound = cv::Point3f(-0.25, -0.25, 0);
-    position_.upper_bound = cv::Point3f(0.25, 0.25, 0.25);
+    position_.lower_bound = cv::Vec3f(-0.25, -0.25, 0);
+    position_.upper_bound = cv::Vec3f(0.25, 0.25, 0.25);
 
     position_.mean = (position_.upper_bound + position_.lower_bound) / 2.0;
     position_.variance =
         power((position_.lower_bound - position_.upper_bound) / 4.0, 2);
 
-    orientation_.lower_bound =
-        cv::Point3f(-3.14159265, -3.14159265, -3.14159265);
-    orientation_.upper_bound = cv::Point3f(3.14159265, 3.14159265, 3.14159265);
+    orientation_.lower_bound = cv::Vec3f(-3.14159265, -3.14159265, -3.14159265);
+    orientation_.upper_bound = cv::Vec3f(3.14159265, 3.14159265, 3.14159265);
     orientation_.mean =
         (orientation_.upper_bound + orientation_.lower_bound) / 2.0;
     orientation_.variance =
         power((orientation_.lower_bound - orientation_.upper_bound) / 4.0, 2);
 }
 
-cv::Point3f PoseDetector::power(cv::Point3f p, float n)
+cv::Vec3f PoseDetector::power(cv::Vec3f p, float n)
 {
-    p.x = pow(p.x, n);
-    p.y = pow(p.y, n);
-    p.z = pow(p.z, n);
+    p[0] = pow(p[0], n);
+    p[1] = pow(p[1], n);
+    p[2] = pow(p[2], n);
     return p;
 }
 
-std::vector<cv::Point3f> PoseDetector::random_normal(
-    cv::Point3f mean, cv::Point3f var, int rows, int cols, std::string clip_for)
+std::vector<cv::Vec3f> PoseDetector::random_normal(
+    cv::Vec3f mean, cv::Vec3f var, int rows, int cols, std::string clip_for)
 {
-    std::vector<cv::Point3f> data;
+    std::vector<cv::Vec3f> data;
     std::random_device rd;
     std::mt19937 gen(rd());
     //    std::default_random_engine gen;
-    std::normal_distribution<float> d1{mean.x, var.x};
-    std::normal_distribution<float> d2{mean.y, var.y};
-    std::normal_distribution<float> d3{mean.z, var.z};
+    std::normal_distribution<float> d1{mean[0], var[0]};
+    std::normal_distribution<float> d2{mean[1], var[1]};
+    std::normal_distribution<float> d3{mean[2], var[2]};
     float x, y, z;
     for (int r = 0; r < rows; r++)
     {
@@ -100,40 +99,40 @@ std::vector<cv::Point3f> PoseDetector::random_normal(
         // clipping between lower and upper bounds
         if (clip_for == "position")
         {
-            x = std::max(position_.lower_bound.x,
-                         std::min(x, position_.upper_bound.x));
-            y = std::max(position_.lower_bound.y,
-                         std::min(y, position_.upper_bound.y));
-            z = std::max(position_.lower_bound.z,
-                         std::min(z, position_.upper_bound.z));
+            x = std::max(position_.lower_bound[0],
+                         std::min(x, position_.upper_bound[0]));
+            y = std::max(position_.lower_bound[1],
+                         std::min(y, position_.upper_bound[1]));
+            z = std::max(position_.lower_bound[2],
+                         std::min(z, position_.upper_bound[2]));
         }
         if (clip_for == "orientation")
         {
-            x = std::max(orientation_.lower_bound.x,
-                         std::min(x, orientation_.upper_bound.x));
-            y = std::max(orientation_.lower_bound.y,
-                         std::min(y, orientation_.upper_bound.y));
-            z = std::max(orientation_.lower_bound.z,
-                         std::min(z, orientation_.upper_bound.z));
+            x = std::max(orientation_.lower_bound[0],
+                         std::min(x, orientation_.upper_bound[0]));
+            y = std::max(orientation_.lower_bound[1],
+                         std::min(y, orientation_.upper_bound[1]));
+            z = std::max(orientation_.lower_bound[2],
+                         std::min(z, orientation_.upper_bound[2]));
         }
 
-        data.push_back(cv::Point3f(x, y, z));
+        data.push_back(cv::Vec3f(x, y, z));
     }
     return data;
 }
 
-std::vector<cv::Point3f> PoseDetector::random_uniform(cv::Point3f lower_bound,
-                                                      cv::Point3f upper_bound,
-                                                      int rows,
-                                                      int cols)
+std::vector<cv::Vec3f> PoseDetector::random_uniform(cv::Vec3f lower_bound,
+                                                    cv::Vec3f upper_bound,
+                                                    int rows,
+                                                    int cols)
 {
-    std::vector<cv::Point3f> data;
+    std::vector<cv::Vec3f> data;
     std::random_device rd;
     std::mt19937 gen(rd());
     //    std::default_random_engine gen;
-    std::uniform_real_distribution<float> d1{lower_bound.x, upper_bound.x};
-    std::uniform_real_distribution<float> d2{lower_bound.y, upper_bound.y};
-    std::uniform_real_distribution<float> d3{lower_bound.z, upper_bound.z};
+    std::uniform_real_distribution<float> d1{lower_bound[0], upper_bound[0]};
+    std::uniform_real_distribution<float> d2{lower_bound[1], upper_bound[1]};
+    std::uniform_real_distribution<float> d3{lower_bound[2], upper_bound[2]};
     float x, y, z;
     for (int r = 0; r < rows; r++)
     {
@@ -141,15 +140,15 @@ std::vector<cv::Point3f> PoseDetector::random_uniform(cv::Point3f lower_bound,
         y = d2(gen);
         z = d3(gen);
 
-        data.push_back(cv::Point3f(x, y, z));
+        data.push_back(cv::Vec3f(x, y, z));
     }
     return data;
 }
 
-std::vector<cv::Point3f> PoseDetector::sample_random_so3_rotvecs(
+std::vector<cv::Vec3f> PoseDetector::sample_random_so3_rotvecs(
     int number_of_particles)
 {
-    std::vector<cv::Point3f> data;
+    std::vector<cv::Vec3f> data;
     for (int r = 0; r < number_of_particles; r++)
     {
         Eigen::Quaterniond quat = Eigen::Quaterniond::UnitRandom();
@@ -157,7 +156,7 @@ std::vector<cv::Point3f> PoseDetector::sample_random_so3_rotvecs(
         cv::Mat rotation_matrix, rotation_vector;
         cv::eigen2cv(R, rotation_matrix);
         cv::Rodrigues(rotation_matrix, rotation_vector);
-        data.push_back(cv::Point3f(rotation_vector));
+        data.push_back(cv::Vec3f(rotation_vector));
     }
     return data;
 }
@@ -289,8 +288,8 @@ cv::Mat PoseDetector::_get_face_normals_cost(
 }
 
 std::vector<float> PoseDetector::cost_function(
-    std::vector<cv::Point3f> proposed_translation,
-    std::vector<cv::Point3f> proposed_orientation)
+    const std::vector<cv::Vec3f> &proposed_translation,
+    const std::vector<cv::Vec3f> &proposed_orientation)
 {
     ScopedTimer timer("PoseDetector/cost_function");
 
@@ -413,8 +412,8 @@ void PoseDetector::cross_entropy_method()
 
     for (int i = 0; i < max_iterations && best_cost_ > eps; i++)
     {
-        std::vector<cv::Point3f> sample_p;
-        std::vector<cv::Point3f> sample_o;
+        std::vector<cv::Vec3f> sample_p;
+        std::vector<cv::Vec3f> sample_o;
         if (initialisation_phase_ == true)
         {
             // TODO: fix the following for initialisation phase
@@ -455,8 +454,8 @@ void PoseDetector::cross_entropy_method()
             best_orientation_ = sample_o[idx];
         }
 
-        std::vector<cv::Point3f> elites_p;
-        std::vector<cv::Point3f> elites_o;
+        std::vector<cv::Vec3f> elites_p;
+        std::vector<cv::Vec3f> elites_o;
         for (auto &it : sorted_costs)
         {
             int idx = find(costs.begin(), costs.end(), it) - costs.begin();
@@ -464,10 +463,10 @@ void PoseDetector::cross_entropy_method()
             elites_o.push_back(sample_o[idx]);
         }
 
-        cv::Point3f new_mean_position = mean(elites_p);
-        cv::Point3f new_mean_orientation = mean(elites_o);
-        cv::Point3f new_var_position = var(elites_p);
-        cv::Point3f new_var_orientation = var(elites_o);
+        cv::Vec3f new_mean_position = mean(elites_p);
+        cv::Vec3f new_mean_orientation = mean(elites_o);
+        cv::Vec3f new_var_position = var(elites_p);
+        cv::Vec3f new_var_orientation = var(elites_o);
 
         if (initialisation_phase_ == true)
         {
@@ -497,9 +496,9 @@ void PoseDetector::cross_entropy_method()
     }
 }
 
-cv::Point3f PoseDetector::mean(const std::vector<cv::Point3f> &points)
+cv::Vec3f PoseDetector::mean(const std::vector<cv::Vec3f> &points)
 {
-    cv::Point3f p(0., 0., 0.);
+    cv::Vec3f p(0., 0., 0.);
     for (const auto &it : points)
     {
         p += it;
@@ -509,10 +508,10 @@ cv::Point3f PoseDetector::mean(const std::vector<cv::Point3f> &points)
     return p;
 }
 
-cv::Point3f PoseDetector::var(const std::vector<cv::Point3f> &points)
+cv::Vec3f PoseDetector::var(const std::vector<cv::Vec3f> &points)
 {
-    cv::Point3f m = mean(points);
-    cv::Point3f p(0., 0., 0.);
+    cv::Vec3f m = mean(points);
+    cv::Vec3f p(0., 0., 0.);
     for (const auto &it : points)
     {
         p += power((it - m), 2);

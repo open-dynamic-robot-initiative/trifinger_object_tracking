@@ -13,11 +13,11 @@ namespace trifinger_object_tracking
 {
 struct Stats
 {
-    cv::Point3f lower_bound;
-    cv::Point3f upper_bound;
-    cv::Point3f mean;
-    cv::Point3f variance;
-    cv::Point3f prev;
+    cv::Vec3f lower_bound;
+    cv::Vec3f upper_bound;
+    cv::Vec3f mean;
+    cv::Vec3f variance;
+    cv::Vec3f prev;
 };
 
 cv::Mat getPoseMatrix(cv::Point3f, cv::Point3f);
@@ -52,33 +52,30 @@ private:
     Stats orientation_;
     bool initialisation_phase_ = true;
     bool continuous_estimation_ = false;
-    cv::Point3f best_position_, best_orientation_;
+    cv::Vec3f best_position_, best_orientation_;
     float best_cost_;
     std::vector<cv::Mat> pos_cams_w_frame_;
 
     void cross_entropy_method();
 
-    std::vector<float> cost_function(std::vector<cv::Point3f>,
-                                     std::vector<cv::Point3f>);
+    std::vector<float> cost_function(const std::vector<cv::Vec3f> &tvecs,
+                                     const std::vector<cv::Vec3f> &rvecs);
 
-    std::vector<cv::Point3f> random_normal(cv::Point3f,
-                                           cv::Point3f,
-                                           int rows,
-                                           int cols,
-                                           std::string bounds_for = "");
+    std::vector<cv::Vec3f> random_normal(
+        cv::Vec3f, cv::Vec3f, int rows, int cols, std::string bounds_for = "");
 
-    std::vector<cv::Point3f> random_uniform(cv::Point3f lower_bound,
-                                            cv::Point3f upper_bound,
-                                            int rows,
-                                            int cols);
+    std::vector<cv::Vec3f> random_uniform(cv::Vec3f lower_bound,
+                                          cv::Vec3f upper_bound,
+                                          int rows,
+                                          int cols);
 
-    std::vector<cv::Point3f> sample_random_so3_rotvecs(int number_of_particles);
+    std::vector<cv::Vec3f> sample_random_so3_rotvecs(int number_of_particles);
 
-    cv::Point3f power(cv::Point3f, float);
+    cv::Vec3f power(cv::Vec3f, float);
 
-    cv::Point3f mean(const std::vector<cv::Point3f> &);
+    cv::Vec3f mean(const std::vector<cv::Vec3f> &);
 
-    cv::Point3f var(const std::vector<cv::Point3f> &);
+    cv::Vec3f var(const std::vector<cv::Vec3f> &);
 
     cv::Mat _get_face_normals_cost(
         const std::vector<cv::Mat> &object_pose_matrices);
