@@ -163,8 +163,10 @@ std::vector<cv::Point3f> PoseDetector::sample_random_so3_rotvecs(
 }
 
 cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
-    std::vector<cv::Mat> projected_points)
+    const std::array<cv::Mat, N_CAMERAS> &projected_points)
 {
+    ScopedTimer timer("PoseDetector/_cost_of_out_of_bounds_projection");
+
     auto s = projected_points[0].size();
     int number_of_particles = s.height;
     cv::Mat error(number_of_particles, 1, CV_32FC1, cv::Scalar(0));
@@ -172,7 +174,7 @@ cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
     int height = 540;
     int threshold = 30;
 
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < N_CAMERAS; i++)
     {
         for (int j = 0; j < number_of_particles; j++)
         {
@@ -331,7 +333,7 @@ std::vector<float> PoseDetector::cost_function(
         proposed_new_cube_pts_w.reshape(3, number_of_particles * 8);
 
     // project the cube corners of the particles to the images
-    std::vector<cv::Mat> projected_points;
+    std::array<cv::Mat, N_CAMERAS> projected_points;
     for (int i = 0; i < N_CAMERAS; i++)
     {
         // range (r_vecs)
@@ -343,11 +345,9 @@ std::vector<float> PoseDetector::cost_function(
                           distortion_coeffs_[i],
                           imgpoints);
 
-        const cv::Mat imgpoints_reshaped =
-            imgpoints.reshape(2, number_of_particles);
-
-        projected_points.push_back(imgpoints_reshaped);
+        projected_points[i] = imgpoints.reshape(2, number_of_particles);
     }
+
 
     // Error matrix initialisation
     cv::Mat error;

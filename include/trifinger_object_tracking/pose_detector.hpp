@@ -84,7 +84,7 @@ private:
         std::vector<cv::Mat> proposed_orientation_matrices);
 
     cv::Mat _cost_of_out_of_bounds_projection(
-        std::vector<cv::Mat> projected_points);
+        const std::array<cv::Mat, N_CAMERAS> &projected_points);
 
     void initialise_pos_cams_w_frame();
 };
