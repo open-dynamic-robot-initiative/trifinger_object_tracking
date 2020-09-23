@@ -519,7 +519,9 @@ cv::Vec3f PoseDetector::var(const std::vector<cv::Vec3f> &points)
 }
 
 Pose PoseDetector::find_pose(
-    const std::array<ColorEdgeLineList, N_CAMERAS> &lines)
+    const std::array<ColorEdgeLineList, N_CAMERAS> &lines,
+    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+    const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
 {
     ScopedTimer timer("PoseDetector/find_pose");
 

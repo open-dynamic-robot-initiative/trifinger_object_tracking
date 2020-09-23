@@ -90,6 +90,8 @@ public:
 
     //! @brief Get the original image.
     cv::Mat get_image() const;
+
+    std::vector<FaceColor> get_dominant_colors() const;
 };
 
 }  // namespace trifinger_object_tracking

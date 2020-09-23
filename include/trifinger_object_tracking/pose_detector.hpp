@@ -32,7 +32,10 @@ public:
                  const std::array<trifinger_cameras::CameraParameters,
                                   N_CAMERAS> &camera_parameters);
 
-    Pose find_pose(const std::array<ColorEdgeLineList, N_CAMERAS> &lines);
+    Pose find_pose(
+        const std::array<ColorEdgeLineList, N_CAMERAS> &lines,
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
 
     // TODO which points are projected?
     std::vector<std::vector<cv::Point2f>> get_projected_points() const;
