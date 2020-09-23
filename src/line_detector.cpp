@@ -450,30 +450,6 @@ void LineDetector::deflate_masks_of_dominant_colors()
     }
 }
 
-void LineDetector::show()
-{
-    cv::imshow("Image", image_bgr_);
-
-    cv::Mat segmentation(
-        image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
-
-    // std::cout << "Dominant colours: ";
-    for (FaceColor color : dominant_colors_)
-    {
-        // std::cout << color << ", ";
-
-        auto rgb = cube_model_.get_hsv(color);
-        cv::Scalar color_hsv(rgb[0], rgb[1], rgb[2]);
-
-        segmentation.setTo(color_hsv, masks_[color]);
-    }
-    // std::cout << std::endl;
-    cv::Mat bgr_image;
-    cv::cvtColor(segmentation, bgr_image, cv::COLOR_HSV2BGR);
-    cv::imshow("Segmentation", bgr_image);
-    cv::waitKey(0);
-}
-
 cv::Mat LineDetector::get_segmented_image() const
 {
     cv::Mat segmentation(
@@ -755,33 +731,9 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
     }
 }
 
-cv::Mat LineDetector::get_mask(FaceColor color)
+cv::Mat LineDetector::get_mask(FaceColor color) const
 {
     return masks_[color];
 }
 
-void LineDetector::start_timer()
-{
-    start_ = std::chrono::high_resolution_clock::now();
-}
-
-void LineDetector::finish_timer(bool verbose = false,
-                                const std::string &message = "")
-{
-    finish_ = std::chrono::high_resolution_clock::now();
-
-    if (verbose)
-    {
-        print_time_taken(message);
-    }
-}
-
-void LineDetector::print_time_taken(const std::string &message = "")
-{
-    std::cout << message << " "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(finish_ -
-                                                                       start_)
-                     .count()
-              << " milliseconds\n";
-}
 }  // namespace trifinger_object_tracking
