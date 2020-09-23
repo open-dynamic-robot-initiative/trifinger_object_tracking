@@ -11,11 +11,8 @@
 namespace trifinger_object_tracking
 {
 // TODO: use quaternion instead of matrix (more efficient).
-cv::Mat getPoseMatrix(cv::Point3f orientation, cv::Point3f position)
+cv::Mat getPoseMatrix(const cv::Vec3f &rvec, const cv::Vec3f &tvec)
 {
-    cv::Vec3f rvec(orientation.x, orientation.y, orientation.z);
-    cv::Vec3f tvec(position.x, position.y, position.z);
-
     // TODO keep fixed-size Mat4
     return cv::Mat(cv::Affine3f(rvec, tvec).matrix);
 }
@@ -56,40 +53,39 @@ PoseDetector::PoseDetector(const CubeModel &cube_model,
                 reference_vector_normals_.total() * sizeof(float));
 
     // Setting the bounds for pose estimation
-    position_.lower_bound = cv::Point3f(-0.25, -0.25, 0);
-    position_.upper_bound = cv::Point3f(0.25, 0.25, 0.25);
+    position_.lower_bound = cv::Vec3f(-0.25, -0.25, 0);
+    position_.upper_bound = cv::Vec3f(0.25, 0.25, 0.25);
 
     position_.mean = (position_.upper_bound + position_.lower_bound) / 2.0;
     position_.variance =
         power((position_.lower_bound - position_.upper_bound) / 4.0, 2);
 
-    orientation_.lower_bound =
-        cv::Point3f(-3.14159265, -3.14159265, -3.14159265);
-    orientation_.upper_bound = cv::Point3f(3.14159265, 3.14159265, 3.14159265);
+    orientation_.lower_bound = cv::Vec3f(-3.14159265, -3.14159265, -3.14159265);
+    orientation_.upper_bound = cv::Vec3f(3.14159265, 3.14159265, 3.14159265);
     orientation_.mean =
         (orientation_.upper_bound + orientation_.lower_bound) / 2.0;
     orientation_.variance =
         power((orientation_.lower_bound - orientation_.upper_bound) / 4.0, 2);
 }
 
-cv::Point3f PoseDetector::power(cv::Point3f p, float n)
+cv::Vec3f PoseDetector::power(cv::Vec3f p, float n)
 {
-    p.x = pow(p.x, n);
-    p.y = pow(p.y, n);
-    p.z = pow(p.z, n);
+    p[0] = pow(p[0], n);
+    p[1] = pow(p[1], n);
+    p[2] = pow(p[2], n);
     return p;
 }
 
-std::vector<cv::Point3f> PoseDetector::random_normal(
-    cv::Point3f mean, cv::Point3f var, int rows, int cols, std::string clip_for)
+std::vector<cv::Vec3f> PoseDetector::random_normal(
+    cv::Vec3f mean, cv::Vec3f var, int rows, int cols, std::string clip_for)
 {
-    std::vector<cv::Point3f> data;
+    std::vector<cv::Vec3f> data;
     std::random_device rd;
     std::mt19937 gen(rd());
     //    std::default_random_engine gen;
-    std::normal_distribution<float> d1{mean.x, var.x};
-    std::normal_distribution<float> d2{mean.y, var.y};
-    std::normal_distribution<float> d3{mean.z, var.z};
+    std::normal_distribution<float> d1{mean[0], var[0]};
+    std::normal_distribution<float> d2{mean[1], var[1]};
+    std::normal_distribution<float> d3{mean[2], var[2]};
     float x, y, z;
     for (int r = 0; r < rows; r++)
     {
@@ -100,40 +96,40 @@ std::vector<cv::Point3f> PoseDetector::random_normal(
         // clipping between lower and upper bounds
         if (clip_for == "position")
         {
-            x = std::max(position_.lower_bound.x,
-                         std::min(x, position_.upper_bound.x));
-            y = std::max(position_.lower_bound.y,
-                         std::min(y, position_.upper_bound.y));
-            z = std::max(position_.lower_bound.z,
-                         std::min(z, position_.upper_bound.z));
+            x = std::max(position_.lower_bound[0],
+                         std::min(x, position_.upper_bound[0]));
+            y = std::max(position_.lower_bound[1],
+                         std::min(y, position_.upper_bound[1]));
+            z = std::max(position_.lower_bound[2],
+                         std::min(z, position_.upper_bound[2]));
         }
         if (clip_for == "orientation")
         {
-            x = std::max(orientation_.lower_bound.x,
-                         std::min(x, orientation_.upper_bound.x));
-            y = std::max(orientation_.lower_bound.y,
-                         std::min(y, orientation_.upper_bound.y));
-            z = std::max(orientation_.lower_bound.z,
-                         std::min(z, orientation_.upper_bound.z));
+            x = std::max(orientation_.lower_bound[0],
+                         std::min(x, orientation_.upper_bound[0]));
+            y = std::max(orientation_.lower_bound[1],
+                         std::min(y, orientation_.upper_bound[1]));
+            z = std::max(orientation_.lower_bound[2],
+                         std::min(z, orientation_.upper_bound[2]));
         }
 
-        data.push_back(cv::Point3f(x, y, z));
+        data.push_back(cv::Vec3f(x, y, z));
     }
     return data;
 }
 
-std::vector<cv::Point3f> PoseDetector::random_uniform(cv::Point3f lower_bound,
-                                                      cv::Point3f upper_bound,
-                                                      int rows,
-                                                      int cols)
+std::vector<cv::Vec3f> PoseDetector::random_uniform(cv::Vec3f lower_bound,
+                                                    cv::Vec3f upper_bound,
+                                                    int rows,
+                                                    int cols)
 {
-    std::vector<cv::Point3f> data;
+    std::vector<cv::Vec3f> data;
     std::random_device rd;
     std::mt19937 gen(rd());
     //    std::default_random_engine gen;
-    std::uniform_real_distribution<float> d1{lower_bound.x, upper_bound.x};
-    std::uniform_real_distribution<float> d2{lower_bound.y, upper_bound.y};
-    std::uniform_real_distribution<float> d3{lower_bound.z, upper_bound.z};
+    std::uniform_real_distribution<float> d1{lower_bound[0], upper_bound[0]};
+    std::uniform_real_distribution<float> d2{lower_bound[1], upper_bound[1]};
+    std::uniform_real_distribution<float> d3{lower_bound[2], upper_bound[2]};
     float x, y, z;
     for (int r = 0; r < rows; r++)
     {
@@ -141,15 +137,15 @@ std::vector<cv::Point3f> PoseDetector::random_uniform(cv::Point3f lower_bound,
         y = d2(gen);
         z = d3(gen);
 
-        data.push_back(cv::Point3f(x, y, z));
+        data.push_back(cv::Vec3f(x, y, z));
     }
     return data;
 }
 
-std::vector<cv::Point3f> PoseDetector::sample_random_so3_rotvecs(
+std::vector<cv::Vec3f> PoseDetector::sample_random_so3_rotvecs(
     int number_of_particles)
 {
-    std::vector<cv::Point3f> data;
+    std::vector<cv::Vec3f> data;
     for (int r = 0; r < number_of_particles; r++)
     {
         Eigen::Quaterniond quat = Eigen::Quaterniond::UnitRandom();
@@ -157,13 +153,13 @@ std::vector<cv::Point3f> PoseDetector::sample_random_so3_rotvecs(
         cv::Mat rotation_matrix, rotation_vector;
         cv::eigen2cv(R, rotation_matrix);
         cv::Rodrigues(rotation_matrix, rotation_vector);
-        data.push_back(cv::Point3f(rotation_vector));
+        data.push_back(cv::Vec3f(rotation_vector));
     }
     return data;
 }
 
 cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
-    std::vector<cv::Mat> projected_points)
+    const std::array<cv::Mat, N_CAMERAS> &projected_points)
 {
     auto s = projected_points[0].size();
     int number_of_particles = s.height;
@@ -172,7 +168,7 @@ cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
     int height = 540;
     int threshold = 30;
 
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < N_CAMERAS; i++)
     {
         for (int j = 0; j < number_of_particles; j++)
         {
@@ -216,125 +212,120 @@ cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
 }
 
 cv::Mat PoseDetector::_get_face_normals_cost(
-    std::vector<cv::Mat> proposed_orientation_matrices)
+    const std::vector<cv::Affine3f> &object_pose_matrices)
 {
-    std::vector<cv::Mat> v_faces;  // number_of_particles x 3 x 6
-    int number_of_particles = proposed_orientation_matrices.size();
+    ScopedTimer timer("PoseDetector/_get_face_normals_cost");
+
+    int number_of_particles = object_pose_matrices.size();
+    cv::Mat error(number_of_particles, 1, CV_32FC1, cv::Scalar(0));
+
+    // for each particle a 3x6 matrix with column-wise face normal vectors
+    std::vector<cv::Mat> face_normal_vectors;  // number_of_particles x 3 x 6
+    face_normal_vectors.reserve(number_of_particles);
     for (int i = 0; i < number_of_particles; i++)
     {
         cv::Mat v_face;
-        v_face =
-            proposed_orientation_matrices[i].colRange(0, 3).rowRange(0, 3) *
-            reference_vector_normals_;  // 3x6
-        v_faces.push_back(v_face);
+        v_face = cv::Mat(object_pose_matrices[i].rotation()) *
+                 reference_vector_normals_;  // 3x6
+        face_normal_vectors.push_back(v_face);
     }
-    cv::Mat error(number_of_particles, 1, CV_32FC1, cv::Scalar(0));
 
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < N_CAMERAS; i++)
     {
         // v_cam_to_cube --> number_of_particles x 3
-        std::vector<cv::Point3f> v_cam_to_cube;
-        cv::Point3f a(pos_cams_w_frame_[i].rowRange(0, 3).col(3));
+        std::vector<cv::Vec3f> v_cam_to_cube;
+        cv::Vec3f a(pos_cams_w_frame_[i].rowRange(0, 3).col(3));
         for (int j = 0; j < number_of_particles; j++)
         {
-            cv::Point3f b(
-                proposed_orientation_matrices[j].rowRange(0, 3).col(3));
-            cv::Point3f c = a - b;
+            cv::Vec3f b(object_pose_matrices[j].translation());
+            cv::Vec3f c = a - b;
             float norm = cv::norm(c);
             c = c / norm;
             v_cam_to_cube.push_back(c);
         }
-        auto lines = lines_[i];
+
         std::set<FaceColor> color_set;
-        for (auto &it : lines)
+        for (auto &it : lines_[i])
         {
             color_set.insert(it.first.first);
             color_set.insert(it.first.second);
         }
 
+        // for each colour that gave a line, check if the corresponding face of
+        // the cube is pointing towards the camera and add some cost (based on
+        // the angle) if it is not.
+        //
+        // TODO: This should be done for all visible colours, not only the ones
+        // that provided a line.
         for (auto &color : color_set)
         {
-            cv::Mat angle_between_face_and_cam;
             for (int j = 0; j < number_of_particles; j++)
             {
                 float angle = 0;
-                cv::Mat mat_a = v_faces[j].col(
-                    cube_model_.map_color_to_normal_index[color]);
-                cv::Mat mat_b(v_cam_to_cube[j]);
-                cv::Mat product = mat_a.mul(mat_b);
-                cv::Mat summed;
-                cv::reduce(product, summed, 0, CV_REDUCE_SUM);
-                float element_wise_product_and_sum = summed.at<float>(0, 0);
-                angle = std::abs(std::acos(element_wise_product_and_sum));
+                const int normal_vector_index =
+                    cube_model_.map_color_to_normal_index[color];
 
-                int debug = 0;
-                if (debug == 1)
-                {
-                    std::cout << "Mat_a " << mat_a << std::endl;
-                    std::cout << "Mat_b " << mat_b << std::endl;
-                    std::cout << "product " << product << std::endl;
-                    std::cout << "summed " << summed << std::endl;
-                    std::cout << "element_wise_product_and_sum "
-                              << element_wise_product_and_sum << std::endl;
-                    std::cout << "angle " << angle << std::endl;
-                }
+                cv::Vec3f v_a = face_normal_vectors[j].col(normal_vector_index);
+                cv::Vec3f v_b(v_cam_to_cube[j]);
+                float dot_product = v_a.dot(v_b);
+
+                angle = std::abs(std::acos(dot_product));
 
                 angle -= M_PI / 2;
                 if (angle < 0)
                 {
                     angle = 0;
                 }
-                angle_between_face_and_cam.push_back(
-                    cv::Mat(1, 1, CV_32F, &angle));
+
+                error.at<float>(j, 0) += angle;
             }
-            error += angle_between_face_and_cam;
         }
     }
     return error;
 }
 
 std::vector<float> PoseDetector::cost_function(
-    std::vector<cv::Point3f> proposed_translation,
-    std::vector<cv::Point3f> proposed_orientation)
+    const std::vector<cv::Vec3f> &proposed_translation,
+    const std::vector<cv::Vec3f> &proposed_orientation)
 {
     ScopedTimer timer("PoseDetector/cost_function");
 
     int number_of_particles = proposed_translation.size();
-    std::vector<cv::Mat> pose;
-    // cv::Mat proposed_new_cube_pts_w;
+    std::vector<cv::Affine3f> poses;
     cv::Mat proposed_new_cube_pts_w(
         number_of_particles, 8, CV_32FC3, cv::Scalar(0, 0, 0));
-    auto start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < number_of_particles; i++)
-    {  // initialization of pose
-        cv::Mat rotation_matrix =
-            getPoseMatrix(proposed_orientation[i], proposed_translation[i]);
 
-        pose.push_back(rotation_matrix);
-        cv::Mat new_pt =
-            rotation_matrix * corners_at_origin_in_world_frame_.t();
+    // for each particle compute cube corners at the given pose
+    poses.reserve(number_of_particles);
+    for (int i = 0; i < number_of_particles; i++)
+    {
+        // initialization of pose
+        cv::Affine3f pose_transform =
+            cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
+
+        poses.push_back(pose_transform);
+        cv::Mat new_pt = cv::Mat(pose_transform.matrix) *
+                         corners_at_origin_in_world_frame_.t();
+
         new_pt = new_pt.t();  // 8x4
         for (int j = 0; j < new_pt.rows; j++)
-        {  // 8x3
+        {
+            // 8x3
             proposed_new_cube_pts_w.at<cv::Vec3f>(i, j) =
                 cv::Vec3f(new_pt.at<float>(j, 0),
                           new_pt.at<float>(j, 1),
                           new_pt.at<float>(j, 2));
         }
     }
-    auto finish = std::chrono::high_resolution_clock::now();
-    // std::cout << "CEM creating 3d proposed points took "
-    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish
-    //          -
-    //                                                                   start)
-    //                 .count()
-    //          << " milliseconds\n";
+
     proposed_new_cube_pts_w =
         proposed_new_cube_pts_w.reshape(3, number_of_particles * 8);
 
-    std::vector<cv::Mat> projected_points;
+    // project the cube corners of the particles to the images
+    std::array<cv::Mat, N_CAMERAS> projected_points;
     for (int i = 0; i < N_CAMERAS; i++)
-    {  // range (r_vecs)
+    {
+        // range (r_vecs)
         cv::Mat imgpoints(number_of_particles * 8, 2, CV_32FC1, cv::Scalar(0));
         cv::projectPoints(proposed_new_cube_pts_w,
                           camera_orientations_[i],
@@ -342,36 +333,28 @@ std::vector<float> PoseDetector::cost_function(
                           camera_matrices_[i],
                           distortion_coeffs_[i],
                           imgpoints);
-        // reshape imagepoints here
-        cv::Mat imgpoints_reshaped(
-            number_of_particles, 8, CV_32FC2, cv::Scalar(0, 0));
-        for (int j = 0; j < imgpoints_reshaped.rows; j++)
-        {
-            for (int k = 0; k < imgpoints_reshaped.cols; k++)
-            {
-                imgpoints_reshaped.at<cv::Vec2f>(j, k) =
-                    cv::Vec2f(imgpoints.at<float>((j * 8) + k, 0),
-                              imgpoints.at<float>((j * 8) + k, 1));
-            }
-        }
-        projected_points.push_back(imgpoints_reshaped);
+
+        projected_points[i] = imgpoints.reshape(2, number_of_particles);
     }
 
     // Error matrix initialisation
     cv::Mat error;
-    float face_normals_scaling_factor = 500;
-    error = face_normals_scaling_factor * _get_face_normals_cost(pose);
+    constexpr float FACE_NORMALS_SCALING_FACTOR = 500.0;
+    error = FACE_NORMALS_SCALING_FACTOR * _get_face_normals_cost(poses);
     error = error + _cost_of_out_of_bounds_projection(projected_points);
-    start = std::chrono::high_resolution_clock::now();
+
     for (int i = 0; i < N_CAMERAS; i++)
-    {  // range (r_vecs)
+    {
+        // range (r_vecs)
         cv::Mat imgpoints_reshaped = projected_points[i];
         for (auto &line_it : lines_[i])
         {
             auto points_lying = cube_model_.object_model_.at(line_it.first);
             Line line = line_it.second;
+
             cv::Mat points_on_edge(
                 number_of_particles, 2, CV_32FC2, cv::Scalar(0, 0));
+
             imgpoints_reshaped.col(points_lying.first)
                 .copyTo(points_on_edge.col(0));
             imgpoints_reshaped.col(points_lying.second)
@@ -388,13 +371,6 @@ std::vector<float> PoseDetector::cost_function(
             error = error + reduced_error;
         }
     }
-    finish = std::chrono::high_resolution_clock::now();
-    // std::cout << "CEM projecting the points and line error calc took "
-    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish
-    //          -
-    //                                                                   start)
-    //                 .count()
-    //          << " milliseconds\n";
     return error;
 }
 
@@ -404,8 +380,8 @@ void PoseDetector::initialise_pos_cams_w_frame()
 
     for (int i = 0; i < N_CAMERAS; i++)
     {
-        cv::Mat pos_cam = getPoseMatrix(cv::Point3f(camera_orientations_[i]),
-                                        cv::Point3f(camera_translations_[i]));
+        cv::Mat pos_cam =
+            getPoseMatrix(camera_orientations_[i], camera_translations_[i]);
         pos_cam = pos_cam.inv();
         pos_cams_w_frame_.push_back(pos_cam);
     }
@@ -433,9 +409,8 @@ void PoseDetector::cross_entropy_method()
 
     for (int i = 0; i < max_iterations && best_cost_ > eps; i++)
     {
-        auto start = std::chrono::high_resolution_clock::now();
-        std::vector<cv::Point3f> sample_p;
-        std::vector<cv::Point3f> sample_o;
+        std::vector<cv::Vec3f> sample_p;
+        std::vector<cv::Vec3f> sample_o;
         if (initialisation_phase_ == true)
         {
             // TODO: fix the following for initialisation phase
@@ -461,12 +436,6 @@ void PoseDetector::cross_entropy_method()
                                      3,
                                      "orientation");
         }
-        auto finish = std::chrono::high_resolution_clock::now();
-        // std::cout << "CEM sampling part took "
-        //          << std::chrono::duration_cast<std::chrono::milliseconds>(
-        //                 finish - start)
-        //                 .count()
-        //          << " milliseconds\n";
         costs = cost_function(sample_p, sample_o);
 
         std::vector<float> sorted_costs = costs;
@@ -482,8 +451,8 @@ void PoseDetector::cross_entropy_method()
             best_orientation_ = sample_o[idx];
         }
 
-        std::vector<cv::Point3f> elites_p;
-        std::vector<cv::Point3f> elites_o;
+        std::vector<cv::Vec3f> elites_p;
+        std::vector<cv::Vec3f> elites_o;
         for (auto &it : sorted_costs)
         {
             int idx = find(costs.begin(), costs.end(), it) - costs.begin();
@@ -491,10 +460,10 @@ void PoseDetector::cross_entropy_method()
             elites_o.push_back(sample_o[idx]);
         }
 
-        cv::Point3f new_mean_position = mean(elites_p);
-        cv::Point3f new_mean_orientation = mean(elites_o);
-        cv::Point3f new_var_position = var(elites_p);
-        cv::Point3f new_var_orientation = var(elites_o);
+        cv::Vec3f new_mean_position = mean(elites_p);
+        cv::Vec3f new_mean_orientation = mean(elites_o);
+        cv::Vec3f new_var_position = var(elites_p);
+        cv::Vec3f new_var_orientation = var(elites_o);
 
         if (initialisation_phase_ == true)
         {
@@ -524,10 +493,10 @@ void PoseDetector::cross_entropy_method()
     }
 }
 
-cv::Point3f PoseDetector::mean(std::vector<cv::Point3f> points)
+cv::Vec3f PoseDetector::mean(const std::vector<cv::Vec3f> &points)
 {
-    cv::Point3f p(0., 0., 0.);
-    for (auto &it : points)
+    cv::Vec3f p(0., 0., 0.);
+    for (const auto &it : points)
     {
         p += it;
     }
@@ -536,11 +505,11 @@ cv::Point3f PoseDetector::mean(std::vector<cv::Point3f> points)
     return p;
 }
 
-cv::Point3f PoseDetector::var(std::vector<cv::Point3f> points)
+cv::Vec3f PoseDetector::var(const std::vector<cv::Vec3f> &points)
 {
-    cv::Point3f m = mean(points);
-    cv::Point3f p(0., 0., 0.);
-    for (auto &it : points)
+    cv::Vec3f m = mean(points);
+    cv::Vec3f p(0., 0., 0.);
+    for (const auto &it : points)
     {
         p += power((it - m), 2);
     }
@@ -550,7 +519,7 @@ cv::Point3f PoseDetector::var(std::vector<cv::Point3f> points)
 }
 
 Pose PoseDetector::find_pose(
-    const std::array<std::map<ColorPair, Line>, N_CAMERAS> &lines)
+    const std::array<ColorEdgeLineList, N_CAMERAS> &lines)
 {
     ScopedTimer timer("PoseDetector/find_pose");
 

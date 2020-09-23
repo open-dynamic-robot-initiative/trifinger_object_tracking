@@ -54,7 +54,7 @@ void LineDetector::load_segmentation_models(const std::string &model_directory)
         trifinger_object_tracking::load_gmm_models_from_file(model_file);
 }
 
-std::map<ColorPair, Line> LineDetector::detect_lines(const cv::Mat &image_bgr)
+ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
 {
     ScopedTimer timer("LineDetector/detect_lines");
 
@@ -721,7 +721,7 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
 
         if (accuracy > LINE_ACCURACY_THRESHOLD)
         {
-            lines_[std::make_pair(c1, c2)] = Line(a, b);
+            lines_.push_back(std::make_pair(std::make_pair(c1, c2), Line(a, b)));
         }
     }
     else

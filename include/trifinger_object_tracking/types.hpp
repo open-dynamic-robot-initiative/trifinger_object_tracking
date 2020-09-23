@@ -47,4 +47,6 @@ struct Pose
 
 typedef std::pair<FaceColor, FaceColor> ColorPair;
 
+typedef std::vector<std::pair<ColorPair, Line>> ColorEdgeLineList;
+
 }  // namespace trifinger_object_tracking

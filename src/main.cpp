@@ -102,10 +102,7 @@ int main(int argc, char **argv)
         cap_180.read(image180);
         cap_300.read(image300);
         auto frames = {image60, image180, image300};
-        std::array<std::map<trifinger_object_tracking::ColorPair,
-                            trifinger_object_tracking::Line>,
-                   3>
-            lines;
+        std::array<trifinger_object_tracking::ColorEdgeLineList, 3> lines;
         int i = 0;
         for (const cv::Mat &image : frames)
         {

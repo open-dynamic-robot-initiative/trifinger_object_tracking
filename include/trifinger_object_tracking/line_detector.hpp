@@ -35,7 +35,7 @@ private:
     std::array<arma::gmm_full, FaceColor::N_COLORS> segmentation_models_;
     std::chrono::high_resolution_clock::time_point start_, finish_;
 
-    std::map<ColorPair, Line> lines_;
+    ColorEdgeLineList lines_;
 
     std::vector<FaceColor> dominant_colors_;
 
@@ -74,7 +74,7 @@ public:
      *
      * @return 
      */
-    std::map<ColorPair, Line> detect_lines(const cv::Mat &image_bgr);
+    ColorEdgeLineList detect_lines(const cv::Mat &image_bgr);
 
     //! @brief Get mask of the specified color.
     cv::Mat get_mask(FaceColor color) const;
