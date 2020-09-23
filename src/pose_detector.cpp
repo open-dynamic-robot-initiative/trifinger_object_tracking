@@ -11,11 +11,8 @@
 namespace trifinger_object_tracking
 {
 // TODO: use quaternion instead of matrix (more efficient).
-cv::Mat getPoseMatrix(cv::Point3f orientation, cv::Point3f position)
+cv::Mat getPoseMatrix(const cv::Vec3f &rvec, const cv::Vec3f &tvec)
 {
-    cv::Vec3f rvec(orientation.x, orientation.y, orientation.z);
-    cv::Vec3f tvec(position.x, position.y, position.z);
-
     // TODO keep fixed-size Mat4
     return cv::Mat(cv::Affine3f(rvec, tvec).matrix);
 }
@@ -215,7 +212,7 @@ cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
 }
 
 cv::Mat PoseDetector::_get_face_normals_cost(
-    const std::vector<cv::Mat> &object_pose_matrices)
+    const std::vector<cv::Affine3f> &object_pose_matrices)
 {
     ScopedTimer timer("PoseDetector/_get_face_normals_cost");
 
@@ -228,7 +225,7 @@ cv::Mat PoseDetector::_get_face_normals_cost(
     for (int i = 0; i < number_of_particles; i++)
     {
         cv::Mat v_face;
-        v_face = object_pose_matrices[i].colRange(0, 3).rowRange(0, 3) *
+        v_face = cv::Mat(object_pose_matrices[i].rotation()) *
                  reference_vector_normals_;  // 3x6
         face_normal_vectors.push_back(v_face);
     }
@@ -240,7 +237,7 @@ cv::Mat PoseDetector::_get_face_normals_cost(
         cv::Vec3f a(pos_cams_w_frame_[i].rowRange(0, 3).col(3));
         for (int j = 0; j < number_of_particles; j++)
         {
-            cv::Vec3f b(object_pose_matrices[j].rowRange(0, 3).col(3));
+            cv::Vec3f b(object_pose_matrices[j].translation());
             cv::Vec3f c = a - b;
             float norm = cv::norm(c);
             c = c / norm;
@@ -294,21 +291,21 @@ std::vector<float> PoseDetector::cost_function(
     ScopedTimer timer("PoseDetector/cost_function");
 
     int number_of_particles = proposed_translation.size();
-    std::vector<cv::Mat> pose;
+    std::vector<cv::Affine3f> poses;
     cv::Mat proposed_new_cube_pts_w(
         number_of_particles, 8, CV_32FC3, cv::Scalar(0, 0, 0));
 
     // for each particle compute cube corners at the given pose
-    pose.reserve(number_of_particles);
+    poses.reserve(number_of_particles);
     for (int i = 0; i < number_of_particles; i++)
     {
         // initialization of pose
-        cv::Mat rotation_matrix =
-            getPoseMatrix(proposed_orientation[i], proposed_translation[i]);
+        cv::Affine3f pose_transform =
+            cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
 
-        pose.push_back(rotation_matrix);
-        cv::Mat new_pt =
-            rotation_matrix * corners_at_origin_in_world_frame_.t();
+        poses.push_back(pose_transform);
+        cv::Mat new_pt = cv::Mat(pose_transform.matrix) *
+                         corners_at_origin_in_world_frame_.t();
 
         new_pt = new_pt.t();  // 8x4
         for (int j = 0; j < new_pt.rows; j++)
@@ -343,7 +340,7 @@ std::vector<float> PoseDetector::cost_function(
     // Error matrix initialisation
     cv::Mat error;
     constexpr float FACE_NORMALS_SCALING_FACTOR = 500.0;
-    error = FACE_NORMALS_SCALING_FACTOR * _get_face_normals_cost(pose);
+    error = FACE_NORMALS_SCALING_FACTOR * _get_face_normals_cost(poses);
     error = error + _cost_of_out_of_bounds_projection(projected_points);
 
     for (int i = 0; i < N_CAMERAS; i++)
@@ -383,8 +380,8 @@ void PoseDetector::initialise_pos_cams_w_frame()
 
     for (int i = 0; i < N_CAMERAS; i++)
     {
-        cv::Mat pos_cam = getPoseMatrix(cv::Point3f(camera_orientations_[i]),
-                                        cv::Point3f(camera_translations_[i]));
+        cv::Mat pos_cam =
+            getPoseMatrix(camera_orientations_[i], camera_translations_[i]);
         pos_cam = pos_cam.inv();
         pos_cams_w_frame_.push_back(pos_cam);
     }
