@@ -11,7 +11,6 @@
 #include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
 
-#define VISUALIZE
 
 namespace trifinger_object_tracking
 {
