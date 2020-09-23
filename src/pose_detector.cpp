@@ -266,12 +266,9 @@ cv::Mat PoseDetector::_get_face_normals_cost(
                 float angle = 0;
                 const int normal_vector_index = cube_model_.map_color_to_normal_index[color];
 
-                cv::Mat mat_a = face_normal_vectors[j].col(normal_vector_index);
-                cv::Mat mat_b(v_cam_to_cube[j]);
-                cv::Mat product = mat_a.mul(mat_b);
-                cv::Mat summed;
-                cv::reduce(product, summed, 0, CV_REDUCE_SUM);
-                float dot_product = summed.at<float>(0, 0);
+                cv::Vec3f v_a = face_normal_vectors[j].col(normal_vector_index);
+                cv::Vec3f v_b(v_cam_to_cube[j]);
+                float dot_product = v_a.dot(v_b);
 
                 angle = std::abs(std::acos(dot_product));
 
