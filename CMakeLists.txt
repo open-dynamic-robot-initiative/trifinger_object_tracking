@@ -62,7 +62,8 @@ include_directories(
     ${XGBOOST_INCLUDE_DIRS}
 )
 
-add_library(lib_object_pose
+add_library(cube_detector
+    src/cube_detector.cpp
     src/line_detector.cpp
     src/pose_detector.cpp
     src/utils.cpp
@@ -70,7 +71,7 @@ add_library(lib_object_pose
     src/gmm_params.cpp
     src/xgboost_classifier.cpp
 )
-target_link_libraries(lib_object_pose
+target_link_libraries(cube_detector
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
     ${Boost_LIBRARIES}
@@ -85,7 +86,7 @@ target_link_libraries(cv_sub_images ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(object_pose src/main.cpp)
 target_link_libraries(object_pose
-    lib_object_pose
+    cube_detector
     cv_sub_images
     pthread
     ${OpenMP_CXX_LIBRARIES}
@@ -93,7 +94,7 @@ target_link_libraries(object_pose
 
 add_executable(single_observation src/single_observation.cpp)
 target_link_libraries(single_observation
-    lib_object_pose
+    cube_detector
     cv_sub_images
     pthread
 )
@@ -125,5 +126,5 @@ if (CATKIN_ENABLE_TESTING)
     include_directories(${roslib_INCLUDE_DIRS})
 
     #catkin_add_gtest(test_image test/test_image.cpp)
-    #target_link_libraries(test_image lib_object_pose ${roslib_LIBRARIES})
+    #target_link_libraries(test_image cube_detector ${roslib_LIBRARIES})
 endif()
