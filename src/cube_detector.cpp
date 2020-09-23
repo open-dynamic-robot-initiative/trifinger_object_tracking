@@ -1,5 +1,7 @@
 #include <trifinger_object_tracking/cube_detector.hpp>
 
+#include <thread>
+
 namespace trifinger_object_tracking
 {
 CubeDetector::CubeDetector(const std::string &segmentation_model_dir,
@@ -18,10 +20,23 @@ Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
 
     std::array<std::map<ColorPair, Line>, N_CAMERAS> lines;
 
+    // run line detection multi-threaded (one thread per image)
+    std::array<std::thread, N_CAMERAS> threads;
     for (int i = 0; i < N_CAMERAS; i++)
     {
-        // TODO parallelize
-        lines[i] = line_detectors_[i].detect_lines(images[i]);
+        threads[i] = std::thread(
+            [this, &lines](int i, const cv::Mat &image) {
+                lines[i] = line_detectors_[i].detect_lines(image);
+            },
+            i,
+            images[i]);
+    }
+    for (std::thread &thread : threads)
+    {
+        if (thread.joinable())
+        {
+            thread.join();
+        }
     }
 
     return pose_detector_.find_pose(lines);
