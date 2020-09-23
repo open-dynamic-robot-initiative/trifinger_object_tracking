@@ -32,15 +32,14 @@ public:
                  const std::array<trifinger_cameras::CameraParameters,
                                   N_CAMERAS> &camera_parameters);
 
-    Pose find_pose(
-        const std::array<std::map<ColorPair, Line>, N_CAMERAS> &lines);
+    Pose find_pose(const std::array<ColorEdgeLineList, N_CAMERAS> &lines);
 
     // TODO which points are projected?
     std::vector<std::vector<cv::Point2f>> get_projected_points() const;
 
 private:
     CubeModel cube_model_;
-    std::array<std::map<ColorPair, Line>, N_CAMERAS> lines_;
+    std::array<ColorEdgeLineList, N_CAMERAS> lines_;
 
     std::array<cv::Mat, N_CAMERAS> camera_matrices_;
     std::array<cv::Mat, N_CAMERAS> distortion_coeffs_;

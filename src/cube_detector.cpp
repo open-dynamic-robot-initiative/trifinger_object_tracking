@@ -18,7 +18,7 @@ Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
 {
     ScopedTimer timer("CubeDetector/detect_cube");
 
-    std::array<std::map<ColorPair, Line>, N_CAMERAS> lines;
+    std::array<ColorEdgeLineList, N_CAMERAS> lines;
 
     // run line detection multi-threaded (one thread per image)
     std::array<std::thread, N_CAMERAS> threads;

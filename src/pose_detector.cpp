@@ -301,40 +301,40 @@ std::vector<float> PoseDetector::cost_function(
 
     int number_of_particles = proposed_translation.size();
     std::vector<cv::Mat> pose;
-    // cv::Mat proposed_new_cube_pts_w;
     cv::Mat proposed_new_cube_pts_w(
         number_of_particles, 8, CV_32FC3, cv::Scalar(0, 0, 0));
-    auto start = std::chrono::high_resolution_clock::now();
+
+    // for each particle compute cube corners at the given pose
+    pose.reserve(number_of_particles);
     for (int i = 0; i < number_of_particles; i++)
-    {  // initialization of pose
+    {
+        // initialization of pose
         cv::Mat rotation_matrix =
             getPoseMatrix(proposed_orientation[i], proposed_translation[i]);
 
         pose.push_back(rotation_matrix);
         cv::Mat new_pt =
             rotation_matrix * corners_at_origin_in_world_frame_.t();
+
         new_pt = new_pt.t();  // 8x4
         for (int j = 0; j < new_pt.rows; j++)
-        {  // 8x3
+        {
+            // 8x3
             proposed_new_cube_pts_w.at<cv::Vec3f>(i, j) =
                 cv::Vec3f(new_pt.at<float>(j, 0),
                           new_pt.at<float>(j, 1),
                           new_pt.at<float>(j, 2));
         }
     }
-    auto finish = std::chrono::high_resolution_clock::now();
-    // std::cout << "CEM creating 3d proposed points took "
-    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish
-    //          -
-    //                                                                   start)
-    //                 .count()
-    //          << " milliseconds\n";
+
     proposed_new_cube_pts_w =
         proposed_new_cube_pts_w.reshape(3, number_of_particles * 8);
 
+    // project the cube corners of the particles to the images
     std::vector<cv::Mat> projected_points;
     for (int i = 0; i < N_CAMERAS; i++)
-    {  // range (r_vecs)
+    {
+        // range (r_vecs)
         cv::Mat imgpoints(number_of_particles * 8, 2, CV_32FC1, cv::Scalar(0));
         cv::projectPoints(proposed_new_cube_pts_w,
                           camera_orientations_[i],
@@ -342,36 +342,31 @@ std::vector<float> PoseDetector::cost_function(
                           camera_matrices_[i],
                           distortion_coeffs_[i],
                           imgpoints);
-        // reshape imagepoints here
-        cv::Mat imgpoints_reshaped(
-            number_of_particles, 8, CV_32FC2, cv::Scalar(0, 0));
-        for (int j = 0; j < imgpoints_reshaped.rows; j++)
-        {
-            for (int k = 0; k < imgpoints_reshaped.cols; k++)
-            {
-                imgpoints_reshaped.at<cv::Vec2f>(j, k) =
-                    cv::Vec2f(imgpoints.at<float>((j * 8) + k, 0),
-                              imgpoints.at<float>((j * 8) + k, 1));
-            }
-        }
+
+        const cv::Mat imgpoints_reshaped =
+            imgpoints.reshape(2, number_of_particles);
+
         projected_points.push_back(imgpoints_reshaped);
     }
 
     // Error matrix initialisation
     cv::Mat error;
-    float face_normals_scaling_factor = 500;
-    error = face_normals_scaling_factor * _get_face_normals_cost(pose);
+    constexpr float FACE_NORMALS_SCALING_FACTOR = 500.0;
+    error = FACE_NORMALS_SCALING_FACTOR * _get_face_normals_cost(pose);
     error = error + _cost_of_out_of_bounds_projection(projected_points);
-    start = std::chrono::high_resolution_clock::now();
+
     for (int i = 0; i < N_CAMERAS; i++)
-    {  // range (r_vecs)
+    {
+        // range (r_vecs)
         cv::Mat imgpoints_reshaped = projected_points[i];
         for (auto &line_it : lines_[i])
         {
             auto points_lying = cube_model_.object_model_.at(line_it.first);
             Line line = line_it.second;
+
             cv::Mat points_on_edge(
                 number_of_particles, 2, CV_32FC2, cv::Scalar(0, 0));
+
             imgpoints_reshaped.col(points_lying.first)
                 .copyTo(points_on_edge.col(0));
             imgpoints_reshaped.col(points_lying.second)
@@ -388,13 +383,6 @@ std::vector<float> PoseDetector::cost_function(
             error = error + reduced_error;
         }
     }
-    finish = std::chrono::high_resolution_clock::now();
-    // std::cout << "CEM projecting the points and line error calc took "
-    //          << std::chrono::duration_cast<std::chrono::milliseconds>(finish
-    //          -
-    //                                                                   start)
-    //                 .count()
-    //          << " milliseconds\n";
     return error;
 }
 
@@ -433,7 +421,6 @@ void PoseDetector::cross_entropy_method()
 
     for (int i = 0; i < max_iterations && best_cost_ > eps; i++)
     {
-        auto start = std::chrono::high_resolution_clock::now();
         std::vector<cv::Point3f> sample_p;
         std::vector<cv::Point3f> sample_o;
         if (initialisation_phase_ == true)
@@ -461,12 +448,6 @@ void PoseDetector::cross_entropy_method()
                                      3,
                                      "orientation");
         }
-        auto finish = std::chrono::high_resolution_clock::now();
-        // std::cout << "CEM sampling part took "
-        //          << std::chrono::duration_cast<std::chrono::milliseconds>(
-        //                 finish - start)
-        //                 .count()
-        //          << " milliseconds\n";
         costs = cost_function(sample_p, sample_o);
 
         std::vector<float> sorted_costs = costs;
@@ -550,7 +531,7 @@ cv::Point3f PoseDetector::var(std::vector<cv::Point3f> points)
 }
 
 Pose PoseDetector::find_pose(
-    const std::array<std::map<ColorPair, Line>, N_CAMERAS> &lines)
+    const std::array<ColorEdgeLineList, N_CAMERAS> &lines)
 {
     ScopedTimer timer("PoseDetector/find_pose");
 
