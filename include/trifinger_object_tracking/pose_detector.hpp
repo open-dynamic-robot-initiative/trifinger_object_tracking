@@ -76,9 +76,9 @@ private:
 
     cv::Point3f power(cv::Point3f, float);
 
-    cv::Point3f mean(const std::vector<cv::Point3f>&);
+    cv::Point3f mean(const std::vector<cv::Point3f> &);
 
-    cv::Point3f var(const std::vector<cv::Point3f>&);
+    cv::Point3f var(const std::vector<cv::Point3f> &);
 
     cv::Mat _get_face_normals_cost(
         const std::vector<cv::Mat> &object_pose_matrices);

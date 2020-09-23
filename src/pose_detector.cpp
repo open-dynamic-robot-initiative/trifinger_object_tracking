@@ -230,9 +230,8 @@ cv::Mat PoseDetector::_get_face_normals_cost(
     for (int i = 0; i < number_of_particles; i++)
     {
         cv::Mat v_face;
-        v_face =
-            object_pose_matrices[i].colRange(0, 3).rowRange(0, 3) *
-            reference_vector_normals_;  // 3x6
+        v_face = object_pose_matrices[i].colRange(0, 3).rowRange(0, 3) *
+                 reference_vector_normals_;  // 3x6
         face_normal_vectors.push_back(v_face);
     }
 
@@ -264,7 +263,8 @@ cv::Mat PoseDetector::_get_face_normals_cost(
             for (int j = 0; j < number_of_particles; j++)
             {
                 float angle = 0;
-                const int normal_vector_index = cube_model_.map_color_to_normal_index[color];
+                const int normal_vector_index =
+                    cube_model_.map_color_to_normal_index[color];
 
                 cv::Vec3f v_a = face_normal_vectors[j].col(normal_vector_index);
                 cv::Vec3f v_b(v_cam_to_cube[j]);
@@ -337,7 +337,6 @@ std::vector<float> PoseDetector::cost_function(
 
         projected_points[i] = imgpoints.reshape(2, number_of_particles);
     }
-
 
     // Error matrix initialisation
     cv::Mat error;
