@@ -248,9 +248,9 @@ cv::Mat PoseDetector::_get_face_normals_cost(
             c = c / norm;
             v_cam_to_cube.push_back(c);
         }
-        auto lines = lines_[i];
+
         std::set<FaceColor> color_set;
-        for (auto &it : lines)
+        for (auto &it : lines_[i])
         {
             color_set.insert(it.first.first);
             color_set.insert(it.first.second);
@@ -258,7 +258,6 @@ cv::Mat PoseDetector::_get_face_normals_cost(
 
         for (auto &color : color_set)
         {
-            cv::Mat angle_between_face_and_cam;
             for (int j = 0; j < number_of_particles; j++)
             {
                 float angle = 0;
@@ -271,27 +270,26 @@ cv::Mat PoseDetector::_get_face_normals_cost(
                 float element_wise_product_and_sum = summed.at<float>(0, 0);
                 angle = std::abs(std::acos(element_wise_product_and_sum));
 
-                int debug = 0;
-                if (debug == 1)
-                {
-                    std::cout << "Mat_a " << mat_a << std::endl;
-                    std::cout << "Mat_b " << mat_b << std::endl;
-                    std::cout << "product " << product << std::endl;
-                    std::cout << "summed " << summed << std::endl;
-                    std::cout << "element_wise_product_and_sum "
-                              << element_wise_product_and_sum << std::endl;
-                    std::cout << "angle " << angle << std::endl;
-                }
+                //int debug = 0;
+                //if (debug == 1)
+                //{
+                //    std::cout << "Mat_a " << mat_a << std::endl;
+                //    std::cout << "Mat_b " << mat_b << std::endl;
+                //    std::cout << "product " << product << std::endl;
+                //    std::cout << "summed " << summed << std::endl;
+                //    std::cout << "element_wise_product_and_sum "
+                //              << element_wise_product_and_sum << std::endl;
+                //    std::cout << "angle " << angle << std::endl;
+                //}
 
                 angle -= M_PI / 2;
                 if (angle < 0)
                 {
                     angle = 0;
                 }
-                angle_between_face_and_cam.push_back(
-                    cv::Mat(1, 1, CV_32F, &angle));
+
+                error.at<float>(j, 0) += angle;
             }
-            error += angle_between_face_and_cam;
         }
     }
     return error;
