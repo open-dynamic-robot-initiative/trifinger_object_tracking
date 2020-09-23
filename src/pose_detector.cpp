@@ -218,8 +218,10 @@ cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
 }
 
 cv::Mat PoseDetector::_get_face_normals_cost(
-    std::vector<cv::Mat> proposed_orientation_matrices)
+    const std::vector<cv::Mat> &proposed_orientation_matrices)
 {
+    ScopedTimer timer("PoseDetector/_get_face_normals_cost");
+
     std::vector<cv::Mat> v_faces;  // number_of_particles x 3 x 6
     int number_of_particles = proposed_orientation_matrices.size();
     for (int i = 0; i < number_of_particles; i++)
@@ -505,10 +507,10 @@ void PoseDetector::cross_entropy_method()
     }
 }
 
-cv::Point3f PoseDetector::mean(std::vector<cv::Point3f> points)
+cv::Point3f PoseDetector::mean(const std::vector<cv::Point3f> &points)
 {
     cv::Point3f p(0., 0., 0.);
-    for (auto &it : points)
+    for (const auto &it : points)
     {
         p += it;
     }
@@ -517,11 +519,11 @@ cv::Point3f PoseDetector::mean(std::vector<cv::Point3f> points)
     return p;
 }
 
-cv::Point3f PoseDetector::var(std::vector<cv::Point3f> points)
+cv::Point3f PoseDetector::var(const std::vector<cv::Point3f> &points)
 {
     cv::Point3f m = mean(points);
     cv::Point3f p(0., 0., 0.);
-    for (auto &it : points)
+    for (const auto &it : points)
     {
         p += power((it - m), 2);
     }

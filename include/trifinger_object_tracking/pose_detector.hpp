@@ -76,12 +76,12 @@ private:
 
     cv::Point3f power(cv::Point3f, float);
 
-    cv::Point3f mean(std::vector<cv::Point3f>);
+    cv::Point3f mean(const std::vector<cv::Point3f>&);
 
-    cv::Point3f var(std::vector<cv::Point3f>);
+    cv::Point3f var(const std::vector<cv::Point3f>&);
 
     cv::Mat _get_face_normals_cost(
-        std::vector<cv::Mat> proposed_orientation_matrices);
+        const std::vector<cv::Mat> &proposed_orientation_matrices);
 
     cv::Mat _cost_of_out_of_bounds_projection(
         const std::array<cv::Mat, N_CAMERAS> &projected_points);
