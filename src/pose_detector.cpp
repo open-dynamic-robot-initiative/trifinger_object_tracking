@@ -165,8 +165,6 @@ std::vector<cv::Point3f> PoseDetector::sample_random_so3_rotvecs(
 cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
     const std::array<cv::Mat, N_CAMERAS> &projected_points)
 {
-    ScopedTimer timer("PoseDetector/_cost_of_out_of_bounds_projection");
-
     auto s = projected_points[0].size();
     int number_of_particles = s.height;
     cv::Mat error(number_of_particles, 1, CV_32FC1, cv::Scalar(0));
@@ -223,6 +221,7 @@ cv::Mat PoseDetector::_get_face_normals_cost(
     ScopedTimer timer("PoseDetector/_get_face_normals_cost");
 
     int number_of_particles = object_pose_matrices.size();
+    cv::Mat error(number_of_particles, 1, CV_32FC1, cv::Scalar(0));
 
     // for each particle a 3x6 matrix with column-wise face normal vectors
     std::vector<cv::Mat> face_normal_vectors;  // number_of_particles x 3 x 6
@@ -234,8 +233,6 @@ cv::Mat PoseDetector::_get_face_normals_cost(
                  reference_vector_normals_;  // 3x6
         face_normal_vectors.push_back(v_face);
     }
-
-    cv::Mat error(number_of_particles, 1, CV_32FC1, cv::Scalar(0));
 
     for (int i = 0; i < N_CAMERAS; i++)
     {
@@ -258,6 +255,12 @@ cv::Mat PoseDetector::_get_face_normals_cost(
             color_set.insert(it.first.second);
         }
 
+        // for each colour that gave a line, check if the corresponding face of
+        // the cube is pointing towards the camera and add some cost (based on
+        // the angle) if it is not.
+        //
+        // TODO: This should be done for all visible colours, not only the ones
+        // that provided a line.
         for (auto &color : color_set)
         {
             for (int j = 0; j < number_of_particles; j++)
