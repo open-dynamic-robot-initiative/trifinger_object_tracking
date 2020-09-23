@@ -218,32 +218,35 @@ cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
 }
 
 cv::Mat PoseDetector::_get_face_normals_cost(
-    const std::vector<cv::Mat> &proposed_orientation_matrices)
+    const std::vector<cv::Mat> &object_pose_matrices)
 {
     ScopedTimer timer("PoseDetector/_get_face_normals_cost");
 
-    std::vector<cv::Mat> v_faces;  // number_of_particles x 3 x 6
-    int number_of_particles = proposed_orientation_matrices.size();
+    int number_of_particles = object_pose_matrices.size();
+
+    // for each particle a 3x6 matrix with column-wise face normal vectors
+    std::vector<cv::Mat> face_normal_vectors;  // number_of_particles x 3 x 6
+    face_normal_vectors.reserve(number_of_particles);
     for (int i = 0; i < number_of_particles; i++)
     {
         cv::Mat v_face;
         v_face =
-            proposed_orientation_matrices[i].colRange(0, 3).rowRange(0, 3) *
+            object_pose_matrices[i].colRange(0, 3).rowRange(0, 3) *
             reference_vector_normals_;  // 3x6
-        v_faces.push_back(v_face);
+        face_normal_vectors.push_back(v_face);
     }
+
     cv::Mat error(number_of_particles, 1, CV_32FC1, cv::Scalar(0));
 
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < N_CAMERAS; i++)
     {
         // v_cam_to_cube --> number_of_particles x 3
-        std::vector<cv::Point3f> v_cam_to_cube;
-        cv::Point3f a(pos_cams_w_frame_[i].rowRange(0, 3).col(3));
+        std::vector<cv::Vec3f> v_cam_to_cube;
+        cv::Vec3f a(pos_cams_w_frame_[i].rowRange(0, 3).col(3));
         for (int j = 0; j < number_of_particles; j++)
         {
-            cv::Point3f b(
-                proposed_orientation_matrices[j].rowRange(0, 3).col(3));
-            cv::Point3f c = a - b;
+            cv::Vec3f b(object_pose_matrices[j].rowRange(0, 3).col(3));
+            cv::Vec3f c = a - b;
             float norm = cv::norm(c);
             c = c / norm;
             v_cam_to_cube.push_back(c);
@@ -261,26 +264,16 @@ cv::Mat PoseDetector::_get_face_normals_cost(
             for (int j = 0; j < number_of_particles; j++)
             {
                 float angle = 0;
-                cv::Mat mat_a = v_faces[j].col(
-                    cube_model_.map_color_to_normal_index[color]);
+                const int normal_vector_index = cube_model_.map_color_to_normal_index[color];
+
+                cv::Mat mat_a = face_normal_vectors[j].col(normal_vector_index);
                 cv::Mat mat_b(v_cam_to_cube[j]);
                 cv::Mat product = mat_a.mul(mat_b);
                 cv::Mat summed;
                 cv::reduce(product, summed, 0, CV_REDUCE_SUM);
-                float element_wise_product_and_sum = summed.at<float>(0, 0);
-                angle = std::abs(std::acos(element_wise_product_and_sum));
+                float dot_product = summed.at<float>(0, 0);
 
-                //int debug = 0;
-                //if (debug == 1)
-                //{
-                //    std::cout << "Mat_a " << mat_a << std::endl;
-                //    std::cout << "Mat_b " << mat_b << std::endl;
-                //    std::cout << "product " << product << std::endl;
-                //    std::cout << "summed " << summed << std::endl;
-                //    std::cout << "element_wise_product_and_sum "
-                //              << element_wise_product_and_sum << std::endl;
-                //    std::cout << "angle " << angle << std::endl;
-                //}
+                angle = std::abs(std::acos(dot_product));
 
                 angle -= M_PI / 2;
                 if (angle < 0)
