@@ -1,19 +1,11 @@
+#!/usr/bin/env python3
 # %%
+import argparse
 import os
+
 import cv2 as cv
-import pickle
-import matplotlib.pyplot as plt
-import ipdb
 import numpy as np
-import random
-import itertools
-
-import sys
-import pandas as pd
 from PIL import Image
-import traceback
-
-
 from scipy import ndimage
 
 
@@ -38,50 +30,50 @@ def load_images(path):
 # %%
 
 if __name__ == "__main__":
-    try:
-        # %%
-        # load data ----------------------------------------------------
-        path = "./cube_image_set_p4_2020-09-16/"
-        frame_folders = [
-            f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "data_dir",
+        type=str,
+        help="Directory containing the dataset",
+    )
+    args = parser.parse_args()
+
+    # %%
+    # load data ----------------------------------------------------
+    frame_folders = [
+        f
+        for f in os.listdir(args.data_dir)
+        if os.path.isdir(os.path.join(args.data_dir, f))
+    ]
+
+    for frame_folder in frame_folders:
+        frame_path = os.path.join(args.data_dir, frame_folder)
+        segment_names = [
+            name for name in os.listdir(frame_path) if name[1].isdigit()
         ]
 
-        data = []
-        for frame_folder in frame_folders:
-            frame_path = os.path.join(path, frame_folder)
-            segment_names = [
-                name for name in os.listdir(frame_path) if name[1].isdigit()
-            ]
+        if len(segment_names) == 0:
+            continue
 
-            if len(segment_names) == 0:
-                continue
+        images = load_images(frame_path)
 
-            images = load_images(frame_path)
+        for camera_name in ["60", "180", "300"]:
+            image = images["camera" + camera_name + ".png"]
 
-            for camera_name in ["60", "180", "300"]:
-                image = images["camera" + camera_name + ".png"]
+            masks = {
+                key: images[key]
+                for key in images.keys()
+                if camera_name in key and key[1].isdigit() and key[0] != "n"
+            }
 
-                masks = {
-                    key: images[key]
-                    for key in images.keys()
-                    if camera_name in key
-                    and key[1].isdigit()
-                    and key[0] != "n"
-                }
-
-                for key in masks:
-                    binary_mask = np.sum(masks[key], axis=2) == 0
-                    eroded_binary_mask = ndimage.binary_erosion(
-                        binary_mask, structure=np.ones([10, 10])
-                    )
-                    image = eroded_binary_mask[..., None] * image
-
-                cv.imwrite(
-                    os.path.join(frame_path, "n" + camera_name + ".png"), image
+            for key in masks:
+                binary_mask = np.sum(masks[key], axis=2) == 0
+                eroded_binary_mask = ndimage.binary_erosion(
+                    binary_mask, structure=np.ones([10, 10])
                 )
-                print(os.path.join(frame_path, "n" + camera_name + ".png"))
+                image = eroded_binary_mask[..., None] * image
 
-    except:
-        extype, value, tb = sys.exc_info()
-        traceback.print_exc()
-        ipdb.post_mortem(tb)
+            cv.imwrite(
+                os.path.join(frame_path, "n" + camera_name + ".png"), image
+            )
+            print(os.path.join(frame_path, "n" + camera_name + ".png"))
