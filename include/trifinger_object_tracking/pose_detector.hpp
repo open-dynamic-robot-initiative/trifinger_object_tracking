@@ -41,12 +41,26 @@ public:
     std::vector<std::vector<cv::Point2f>> get_projected_points() const;
 
     /**
-     * @brief Get corner indices of the visibles faces.
+     * @brief Get corner indices of the visible faces.
      *
-     * Call find_pose() first, otherwise the result is undefined!
-     *
-     * Determines which faces of the object visible to the camera and returns
+     * Determines which faces of the object is visible to the camera and returns
      * the corner indices of these faces.
+     *
+     * @param camera_idx Index of the camera.
+     * @param cube_pose_world Pose of the cube in the world frame.
+     *
+     * @return For each visible face a pair of the face color and the list of
+     *     the corner indices of the four corners of that face.
+     */
+    std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
+    get_visible_faces(unsigned int camera_idx,
+                      const cv::Affine3f &cube_pose_world) const;
+
+    /**
+     * @brief Get corner indices of the visible faces.
+     *
+     * Overloaded version that used the last detected pose for the cube.
+     * Call find_pose() first, otherwise the result is undefined!
      *
      * @param camera_idx Index of the camera.
      *
@@ -80,6 +94,12 @@ private:
         const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
 
     std::vector<float> cost_function(
+        const std::vector<cv::Vec3f> &tvecs,
+        const std::vector<cv::Vec3f> &rvecs,
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
+
+    std::vector<float> cost_function__(
         const std::vector<cv::Vec3f> &tvecs,
         const std::vector<cv::Vec3f> &rvecs,
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
