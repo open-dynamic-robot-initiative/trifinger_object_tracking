@@ -285,6 +285,7 @@ std::vector<float> PoseDetector::cost_function(
     ScopedTimer timer("PoseDetector/cost_function");
 
     int number_of_particles = proposed_translation.size();
+
     std::vector<cv::Affine3f> poses;
     cv::Mat proposed_new_cube_pts_w(
         number_of_particles, 8, CV_32FC3, cv::Scalar(0, 0, 0));
@@ -331,42 +332,70 @@ std::vector<float> PoseDetector::cost_function(
         projected_points[i] = imgpoints.reshape(2, number_of_particles);
     }
 
-    // Error matrix initialisation
-    cv::Mat error;
-    constexpr float FACE_NORMALS_SCALING_FACTOR = 500.0;
-    error = FACE_NORMALS_SCALING_FACTOR *
-            _get_face_normals_cost(poses, dominant_colors);
-    error = error + _cost_of_out_of_bounds_projection(projected_points);
-
-    for (int i = 0; i < N_CAMERAS; i++)
+    ////////////////////////////////////////////////////////////////////////
+    std::vector<float> foo_error(number_of_particles);
+    for (int i = 0; i < number_of_particles; i++)
     {
-        // range (r_vecs)
-        cv::Mat imgpoints_reshaped = projected_points[i];
-        for (auto &line_it : lines_[i])
+        cv::Affine3f cube_pose_world =
+            cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
+
+        for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
         {
-            auto points_lying = cube_model_.object_model_.at(line_it.first);
-            Line line = line_it.second;
+            // get visible faces
+            auto visible_faces = get_visible_faces(camera_idx, cube_pose_world);
 
-            cv::Mat points_on_edge(
-                number_of_particles, 2, CV_32FC2, cv::Scalar(0, 0));
+            for (size_t col_idx = 0;
+                 col_idx < dominant_colors[camera_idx].size();
+                 col_idx++)
+            {
+                FaceColor color = dominant_colors[camera_idx][col_idx];
+                if (true or is_face_visible(color, camera_idx, cube_pose_world))
+                {
+                    auto corner_indices =
+                        cube_model_.get_face_corner_indices(color);
 
-            imgpoints_reshaped.col(points_lying.first)
-                .copyTo(points_on_edge.col(0));
-            imgpoints_reshaped.col(points_lying.second)
-                .copyTo(points_on_edge.col(1));
-            cv::Mat distance;  // 2Nx1
-            cv::Mat ch1, ch2;
-            std::vector<cv::Mat> channels(2);
-            split(points_on_edge, channels);
-            absdiff(line.a * channels[1], channels[0] - line.b, distance);
-            distance = distance * (1 / (pow(pow(line.a, 2) + 1, 0.5)));
-            cv::Mat reduced_error(
-                number_of_particles, 1, CV_32FC1, cv::Scalar(0));
-            cv::reduce(distance, reduced_error, 1, CV_REDUCE_SUM);
-            error = error + reduced_error;
+                    // get the projected corner point
+
+                    std::vector<cv::Point> corners = {
+                        projected_points[camera_idx].at<cv::Point>(
+                            i, corner_indices[0]),
+                        projected_points[camera_idx].at<cv::Point>(
+                            i, corner_indices[1]),
+                        projected_points[camera_idx].at<cv::Point>(
+                            i, corner_indices[1]),
+                        projected_points[camera_idx].at<cv::Point>(
+                            i, corner_indices[1])};
+
+                    std::vector<cv::Point> mask_pixels;
+                    cv::findNonZero(masks[camera_idx][col_idx], mask_pixels);
+
+                    int counter = 0;
+                    for (const cv::Point &pixel : mask_pixels)
+                    {
+                        double dist = cv::pointPolygonTest(corners, pixel, true);
+
+                        // negative distance means the point is outside
+                        if (dist < 0) {
+                            foo_error[i] += -dist;
+                        }
+                    }
+
+                    foo_error[i] /= mask_pixels.size();
+                }
+                else
+                {
+                    // Face of detected color is not visible with the given
+                    // pose.  Penalise with high cost.
+                    // TODO: do something that directs the algorithm towards the
+                    // solution?
+                    foo_error[i] += 1000;
+                }
+            }
         }
     }
-    return error;
+
+    return foo_error;
+    ////////////////////////////////////////////////////////////////////////
 }
 
 std::vector<float> PoseDetector::cost_function__(
@@ -540,6 +569,7 @@ void PoseDetector::cross_entropy_method(
             best_position_ = sample_p[idx];
             best_orientation_ = sample_o[idx];
         }
+        std::cout << "best cost: " << best_cost_ << std::endl;
 
         std::vector<cv::Vec3f> elites_p;
         std::vector<cv::Vec3f> elites_o;
