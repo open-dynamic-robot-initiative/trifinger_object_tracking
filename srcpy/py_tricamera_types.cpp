@@ -1,0 +1,40 @@
+/**
+ * @file
+ * @brief Create bindings for three pylon dependent camera sensors
+ * @copyright 2020, Max Planck Gesellschaft. All rights reserved.
+ * @license BSD 3-clause
+ */
+#include <pybind11/eigen.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl_bind.h>
+
+#include <trifinger_object_tracking/tricamera_object_tracking_driver.hpp>
+
+#include <robot_interfaces/sensors/pybind_sensors.hpp>
+#include <robot_interfaces/sensors/sensor_driver.hpp>
+
+using namespace robot_interfaces;
+using namespace trifinger_object_tracking;
+
+PYBIND11_MODULE(py_tricamera_types, m)
+{
+    create_sensor_bindings<TriCameraObjectObservation>(m);
+
+    pybind11::class_<TriCameraObjectTrackerDriver,
+                     std::shared_ptr<TriCameraObjectTrackerDriver>,
+                     SensorDriver<TriCameraObjectObservation>>(m, "TriCameraObjectTrackerDriver")
+        .def(pybind11::init<const std::string&,
+                            const std::string&,
+                            const std::string&,
+                            bool>(),
+             pybind11::arg("camera1"),
+             pybind11::arg("camera2"),
+             pybind11::arg("camera3"),
+             pybind11::arg("downsample_images") = true)
+        .def("get_observation", &TriCameraObjectTrackerDriver::get_observation);
+
+    pybind11::class_<TriCameraObjectObservation>(m, "TriCameraObjectObservation")
+        .def(pybind11::init<>())
+        .def_readwrite("cameras", &TriCameraObjectObservation::cameras)
+        .def_readwrite("object_pose", &TriCameraObjectObservation::object_pose);
+}
