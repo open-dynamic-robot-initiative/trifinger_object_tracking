@@ -286,7 +286,9 @@ cv::Mat PoseDetector::_get_face_normals_cost(
 
 std::vector<float> PoseDetector::cost_function(
     const std::vector<cv::Vec3f> &proposed_translation,
-    const std::vector<cv::Vec3f> &proposed_orientation)
+    const std::vector<cv::Vec3f> &proposed_orientation,
+    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+    const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
 {
     ScopedTimer timer("PoseDetector/cost_function");
 
@@ -387,7 +389,9 @@ void PoseDetector::initialise_pos_cams_w_frame()
     }
 }
 
-void PoseDetector::cross_entropy_method()
+void PoseDetector::cross_entropy_method(
+    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+    const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
 {
     ScopedTimer timer("PoseDetector/cross_entropy_method");
 
@@ -436,7 +440,7 @@ void PoseDetector::cross_entropy_method()
                                      3,
                                      "orientation");
         }
-        costs = cost_function(sample_p, sample_o);
+        costs = cost_function(sample_p, sample_o, dominant_colors, masks);
 
         std::vector<float> sorted_costs = costs;
         sort(sorted_costs.begin(), sorted_costs.end());
@@ -528,12 +532,14 @@ Pose PoseDetector::find_pose(
     // FIXME this is bad design
     lines_ = lines;
 
-    cross_entropy_method();  // calculates mean_position and mean_orientation
+    // calculates mean_position and mean_orientation
+    cross_entropy_method(dominant_colors, masks);
 
+    // if cost is too bad, run it again
     if (best_cost_ > 50)
     {
         initialisation_phase_ = true;
-        cross_entropy_method();
+        cross_entropy_method(dominant_colors, masks);
         if (best_cost_ > 50)
         {
             initialisation_phase_ = true;

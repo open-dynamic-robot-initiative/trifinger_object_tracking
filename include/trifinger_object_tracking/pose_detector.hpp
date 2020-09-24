@@ -59,10 +59,15 @@ private:
     float best_cost_;
     std::vector<cv::Mat> pos_cams_w_frame_;
 
-    void cross_entropy_method();
+    void cross_entropy_method(
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
 
-    std::vector<float> cost_function(const std::vector<cv::Vec3f> &tvecs,
-                                     const std::vector<cv::Vec3f> &rvecs);
+    std::vector<float> cost_function(
+        const std::vector<cv::Vec3f> &tvecs,
+        const std::vector<cv::Vec3f> &rvecs,
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
 
     std::vector<cv::Vec3f> random_normal(
         cv::Vec3f, cv::Vec3f, int rows, int cols, std::string bounds_for = "");
