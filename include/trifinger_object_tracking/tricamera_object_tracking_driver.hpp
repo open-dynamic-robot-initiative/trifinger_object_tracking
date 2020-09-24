@@ -9,8 +9,8 @@
 
 #include <robot_interfaces/sensors/sensor_driver.hpp>
 #include <trifinger_cameras/pylon_driver.hpp>
-#include <trifinger_object_tracking/tricamera_object_observation.hpp>
 #include <trifinger_object_tracking/cube_detector.hpp>
+#include <trifinger_object_tracking/tricamera_object_observation.hpp>
 
 namespace trifinger_object_tracking
 {

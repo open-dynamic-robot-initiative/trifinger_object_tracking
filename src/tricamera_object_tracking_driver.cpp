@@ -97,7 +97,9 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
     {
         observation.cameras[i] = cameras_[i].get_observation();
 
-        cv::cvtColor(observation.cameras[i].image, full_res_images[i], cv::COLOR_BayerBG2BGR);
+        cv::cvtColor(observation.cameras[i].image,
+                     full_res_images[i],
+                     cv::COLOR_BayerBG2BGR);
 
         // downsample observation
         observation.cameras[i].image =
@@ -122,7 +124,8 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
                          cube_pose.rotation[2],
                          std::cos(angle / 2));
 
-    cv::cv2eigen(static_cast<cv::Vec3d>(cube_pose.translation), observation.object_pose.position);
+    cv::cv2eigen(static_cast<cv::Vec3d>(cube_pose.translation),
+                 observation.object_pose.position);
     cv::cv2eigen(quaternion, observation.object_pose.orientation);
 
     // FIXME
