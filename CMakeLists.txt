@@ -27,21 +27,6 @@ find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(Armadillo REQUIRED)
 
-#get_cmake_property(_variableNames VARIABLES)
-#list (SORT _variableNames)
-#foreach (_variableName ${_variableNames})
-#    message(WARNING "${_variableName}=${${_variableName}}")
-#endforeach()
-
-
-# TODO can this be removed?
-find_package(OpenMP)
-if (OPENMP_FOUND)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif()
-
 
 catkin_python_setup()
 
@@ -89,7 +74,6 @@ target_link_libraries(object_pose
     cube_detector
     cv_sub_images
     pthread
-    ${OpenMP_CXX_LIBRARIES}
 )
 
 add_executable(single_observation src/single_observation.cpp)
