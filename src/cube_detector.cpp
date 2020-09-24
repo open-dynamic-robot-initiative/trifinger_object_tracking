@@ -51,7 +51,7 @@ Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
     return pose_detector_.find_pose(lines, dominant_colors, masks);
 }
 
-cv::Mat CubeDetector::create_debug_image() const
+cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
 {
     cv::Mat image0 = line_detectors_[0].get_image();
     trifinger_object_tracking::CvSubImages subplot(
@@ -67,17 +67,51 @@ cv::Mat CubeDetector::create_debug_image() const
         subplot.set_subimg(line_detectors_[i].get_image_lines(), i, 3);
 
         std::vector<cv::Point2f> imgpoints = projected_cube_corners[i];
-        // draw the cube edges in the image
-        for (auto &it : cube_model_.object_model_)
-        {
-            cv::Point p1, p2;
-            p1.x = imgpoints[it.second.first].x;
-            p1.y = imgpoints[it.second.first].y;
-            p2.x = imgpoints[it.second.second].x;
-            p2.y = imgpoints[it.second.second].y;
 
-            cv::line(image, p1, p2, cv::Scalar(255, 100, 0), 2);
+        if (fill_faces)
+        {
+            for (auto [color, corner_indices] :
+                 pose_detector_.get_visible_faces(i))
+            {
+                auto rgb = cube_model_.get_rgb(color);
+
+                std::vector<cv::Point> corners = {imgpoints[corner_indices[0]],
+                                                  imgpoints[corner_indices[1]],
+                                                  imgpoints[corner_indices[2]],
+                                                  imgpoints[corner_indices[3]]};
+                cv::fillConvexPoly(
+                    image, corners, cv::Scalar(rgb[2], rgb[1], rgb[0], 0.7));
+            }
         }
+        else
+        {
+            // draw all the cube edges in the image
+            for (auto &it : cube_model_.object_model_)
+            {
+                cv::line(image,
+                         imgpoints[it.second.first],
+                         imgpoints[it.second.second],
+                         cv::Scalar(100, 50, 0),
+                         2);
+            }
+
+            // over-draw with the visible edges in a brighter colour
+            for (auto [color, corner_indices] :
+                 pose_detector_.get_visible_faces(i))
+            {
+                auto rgb = cube_model_.get_rgb(color);
+
+                for (size_t ci = 0; ci < 4; ci++)
+                {
+                    cv::line(image,
+                             imgpoints[corner_indices[ci]],
+                             imgpoints[corner_indices[(ci + 1) % 4]],
+                             cv::Scalar(255, 100, 0),
+                             2);
+                }
+            }
+        }
+
         subplot.set_subimg(image, i, 4);
     }
 

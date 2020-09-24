@@ -42,9 +42,11 @@ public:
     /**
      * @brief Create debug image for the last call of detect_cube.
      *
+     * @param fill_faces If true, the cube is drawn with filled faces, otherwise
+     *     only a wire frame is drawn.
      * @return Aggregate image showing different stages of the cube detection.
      */
-    cv::Mat create_debug_image() const;
+    cv::Mat create_debug_image(bool fill_faces = false) const;
 
 private:
     CubeModel cube_model_;

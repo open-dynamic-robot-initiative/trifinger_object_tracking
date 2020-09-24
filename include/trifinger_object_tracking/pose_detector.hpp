@@ -40,6 +40,22 @@ public:
     // TODO which points are projected?
     std::vector<std::vector<cv::Point2f>> get_projected_points() const;
 
+    /**
+     * @brief Get corner indices of the visibles faces.
+     *
+     * Call find_pose() first, otherwise the result is undefined!
+     *
+     * Determines which faces of the object visible to the camera and returns
+     * the corner indices of these faces.
+     *
+     * @param camera_idx Index of the camera.
+     *
+     * @return For each visible face a pair of the face color and the list of
+     *     the corner indices of the four corners of that face.
+     */
+    std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
+    get_visible_faces(unsigned int camera_idx) const;
+
 private:
     CubeModel cube_model_;
     std::array<ColorEdgeLineList, N_CAMERAS> lines_;
