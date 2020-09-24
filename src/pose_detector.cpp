@@ -212,7 +212,8 @@ cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
 }
 
 cv::Mat PoseDetector::_get_face_normals_cost(
-    const std::vector<cv::Affine3f> &object_pose_matrices)
+    const std::vector<cv::Affine3f> &object_pose_matrices,
+    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors)
 {
     ScopedTimer timer("PoseDetector/_get_face_normals_cost");
 
@@ -244,20 +245,10 @@ cv::Mat PoseDetector::_get_face_normals_cost(
             v_cam_to_cube.push_back(c);
         }
 
-        std::set<FaceColor> color_set;
-        for (auto &it : lines_[i])
-        {
-            color_set.insert(it.first.first);
-            color_set.insert(it.first.second);
-        }
-
-        // for each colour that gave a line, check if the corresponding face of
-        // the cube is pointing towards the camera and add some cost (based on
-        // the angle) if it is not.
-        //
-        // TODO: This should be done for all visible colours, not only the ones
-        // that provided a line.
-        for (auto &color : color_set)
+        // for each dominant colour, check if the corresponding face of the cube
+        // is pointing towards the camera and add some cost (based on the angle)
+        // if it is not.
+        for (auto &color : dominant_colors[i])
         {
             for (int j = 0; j < number_of_particles; j++)
             {
@@ -342,7 +333,8 @@ std::vector<float> PoseDetector::cost_function(
     // Error matrix initialisation
     cv::Mat error;
     constexpr float FACE_NORMALS_SCALING_FACTOR = 500.0;
-    error = FACE_NORMALS_SCALING_FACTOR * _get_face_normals_cost(poses);
+    error = FACE_NORMALS_SCALING_FACTOR *
+            _get_face_normals_cost(poses, dominant_colors);
     error = error + _cost_of_out_of_bounds_projection(projected_points);
 
     for (int i = 0; i < N_CAMERAS; i++)

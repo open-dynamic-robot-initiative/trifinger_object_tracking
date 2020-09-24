@@ -86,7 +86,8 @@ private:
     cv::Vec3f var(const std::vector<cv::Vec3f> &);
 
     cv::Mat _get_face_normals_cost(
-        const std::vector<cv::Affine3f> &object_pose_matrices);
+        const std::vector<cv::Affine3f> &object_pose_matrices,
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors);
 
     cv::Mat _cost_of_out_of_bounds_projection(
         const std::array<cv::Mat, N_CAMERAS> &projected_points);
