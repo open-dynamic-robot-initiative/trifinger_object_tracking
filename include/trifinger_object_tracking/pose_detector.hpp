@@ -40,6 +40,10 @@ public:
     // TODO which points are projected?
     std::vector<std::vector<cv::Point2f>> get_projected_points() const;
 
+    bool is_face_visible(FaceColor color,
+                         unsigned int camera_idx,
+                         const cv::Affine3f &cube_pose_world) const;
+
     /**
      * @brief Get corner indices of the visible faces.
      *

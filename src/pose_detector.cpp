@@ -671,18 +671,18 @@ std::vector<std::vector<cv::Point2f>> PoseDetector::get_projected_points() const
     return projected_points;
 }
 
-std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
-PoseDetector::get_visible_faces(unsigned int camera_idx,
-                                const cv::Affine3f &cube_pose_world) const
+bool PoseDetector::is_face_visible(FaceColor color,
+                                   unsigned int camera_idx,
+                                   const cv::Affine3f &cube_pose_world) const
 {
-    std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>> result;
-
+    // TODO do this once for each camera in the c'tor
     cv::Affine3f camera_pose(camera_orientations_[camera_idx],
                              camera_translations_[camera_idx]);
 
     // cube pose in camera frame
     cv::Affine3f cube_pose_camera = camera_pose * cube_pose_world;
 
+    // TODO only transform the normal vector and corner that are actually used
     // rotate face normals (3x6) according to given cube pose
     cv::Mat face_normal_vectors =
         cv::Mat(cube_pose_camera.rotation()) * reference_vector_normals_;
@@ -691,26 +691,38 @@ PoseDetector::get_visible_faces(unsigned int camera_idx,
     cv::Mat cube_corners = cv::Mat(cube_pose_camera.matrix) *
                            corners_at_origin_in_world_frame_.t();
 
+    // get the normal vector of that face
+    int normal_idx = cube_model_.map_color_to_normal_index[color];
+    cv::Vec3f face_normal = face_normal_vectors.col(normal_idx);
+
+    auto corner_indices = cube_model_.get_face_corner_indices(color);
+
+    // get an arbitrary corner of that face
+    unsigned int corner_idx = corner_indices[0];
+    cv::Vec3f corner = cube_corners.col(corner_idx).rowRange(0, 3);
+
+    // if the angle between the face normal and the camera-to-corner
+    // vector is greater than 90 deg, the face is visible
+    float dot_prod = face_normal.dot(corner);
+
+    // dot_prod < 0 ==> angle > 90 deg
+    bool is_visible = (dot_prod < 0);
+
+    return is_visible;
+}
+
+std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
+PoseDetector::get_visible_faces(unsigned int camera_idx,
+                                const cv::Affine3f &cube_pose_world) const
+{
+    std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>> result;
+
     // check for each color if the face is visible
     for (FaceColor color : cube_model_.get_colors())
     {
-        // get the normal vector of that face
-        int normal_idx = cube_model_.map_color_to_normal_index[color];
-        cv::Vec3f face_normal = face_normal_vectors.col(normal_idx);
-
-        auto corner_indices = cube_model_.get_face_corner_indices(color);
-
-        // get an arbitrary corner of that face
-        unsigned int corner_idx = corner_indices[0];
-        cv::Vec3f corner = cube_corners.col(corner_idx).rowRange(0, 3);
-
-        // if the angle between the face normal and the camera-to-corner
-        // vector is greater than 90 deg, the face is visible
-        float dot_prod = face_normal.dot(corner);
-
-        // dot_prod < 0 ==> angle > 90 deg
-        if (dot_prod < 0)
+        if (is_face_visible(color, camera_idx, cube_pose_world))
         {
+            auto corner_indices = cube_model_.get_face_corner_indices(color);
             result.push_back(std::make_pair(color, corner_indices));
         }
     }
