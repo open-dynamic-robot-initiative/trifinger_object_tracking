@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
     time_series
     roslib
     trifinger_cameras
+    robot_interfaces
 )
 
 search_for_eigen()
@@ -27,19 +28,14 @@ find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(Armadillo REQUIRED)
 
-#get_cmake_property(_variableNames VARIABLES)
-#list (SORT _variableNames)
-#foreach (_variableName ${_variableNames})
-#    message(WARNING "${_variableName}=${${_variableName}}")
-#endforeach()
 
+if (${HAS_PYLON_DRIVERS})
+    add_definitions(-DPylon_FOUND)
 
-# TODO can this be removed?
-find_package(OpenMP)
-if (OPENMP_FOUND)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+    # Set library names to variables, so we can use the variable instead of the
+    # direct name below.  In case, Pylon drivers are not built, the variables
+    # will be empty and thus not cause trouble when used for linking etc.
+    set(tricamera_object_tracking_driver tricamera_object_tracking_driver)
 endif()
 
 
@@ -47,7 +43,12 @@ catkin_python_setup()
 
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES simulation_object_tracker fake_object_tracker
+    LIBRARIES
+        cv_sub_images
+        cube_detector
+        simulation_object_tracker
+        fake_object_tracker
+        ${tricamera_object_tracking_driver}
 )
 
 
@@ -61,6 +62,11 @@ include_directories(
     ${BLAS_INCLUDE_DIRS}
     ${XGBOOST_INCLUDE_DIRS}
 )
+
+
+add_library(cv_sub_images src/cv_sub_images.cpp)
+target_link_libraries(cv_sub_images ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
 
 add_library(cube_detector
     src/cube_detector.cpp
@@ -78,10 +84,8 @@ target_link_libraries(cube_detector
     ${ARMADILLO_LIBRARIES}
     ${BLAS_LIBRARIES}
     ${LAPACK_LIBRARIES}
+    cv_sub_images
 )
-
-add_library(cv_sub_images src/cv_sub_images.cpp)
-target_link_libraries(cv_sub_images ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 
 add_executable(object_pose src/main.cpp)
@@ -89,7 +93,6 @@ target_link_libraries(object_pose
     cube_detector
     cv_sub_images
     pthread
-    ${OpenMP_CXX_LIBRARIES}
 )
 
 add_executable(single_observation src/single_observation.cpp)
@@ -118,8 +121,17 @@ add_library(fake_object_tracker
 )
 target_link_libraries(fake_object_tracker ${catkin_LIBRARIES})
 
+if (${HAS_PYLON_DRIVERS})
+    add_library(${tricamera_object_tracking_driver}
+        src/tricamera_object_tracking_driver.cpp)
+    target_link_libraries(${tricamera_object_tracking_driver}
+        ${catkin_LIBRARIES} cube_detector)
+    catkin_add_pybind11_module(py_tricamera_types ${tricamera_object_tracking_driver})
+endif()
+
 
 catkin_add_pybind11_module(py_object_tracker simulation_object_tracker fake_object_tracker)
+
 
 if (CATKIN_ENABLE_TESTING)
     find_package(roslib REQUIRED)

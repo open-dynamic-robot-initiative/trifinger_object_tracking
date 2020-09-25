@@ -35,11 +35,11 @@ struct Pose
 {
     // TODO use non-cv types?
 
-    cv::Point3f translation;
+    cv::Vec3f translation;
     //! rotation vector
-    cv::Point3f rotation;
+    cv::Vec3f rotation;
 
-    Pose(const cv::Point3f &translation, const cv::Point3f &rotation)
+    Pose(const cv::Vec3f &translation, const cv::Vec3f &rotation)
         : translation(translation), rotation(rotation)
     {
     }

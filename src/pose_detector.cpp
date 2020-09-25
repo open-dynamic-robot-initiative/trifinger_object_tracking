@@ -485,7 +485,7 @@ void PoseDetector::cross_entropy_method()
                                     ((1 - alpha) * new_var_orientation);
         }
     }
-    std::cout << "Best cost: " << best_cost_ << std::endl;
+    //std::cout << "Best cost: " << best_cost_ << std::endl;
     if (continuous_estimation_ == true)
     {
         position_.mean = best_position_;

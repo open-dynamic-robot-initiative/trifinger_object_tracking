@@ -20,6 +20,7 @@
   <depend>serialization_utils</depend>
   <depend>time_series</depend>
   <depend>trifinger_cameras</depend>
+  <depend>robot_interfaces</depend>
 
   <test_depend>roslib</test_depend>
 
