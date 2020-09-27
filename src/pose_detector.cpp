@@ -332,11 +332,25 @@ std::vector<float> PoseDetector::cost_function(
     //    projected_points[i] = imgpoints.reshape(2, number_of_particles);
     //}
 
+
+    // per camera per mask the pixels of that mask
+    std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS> masks_pixels;
+    for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
+    {
+        for (const cv::Mat &mask: masks[camera_idx]){
+            std::vector<cv::Point> pixels;
+            cv::findNonZero(mask, pixels);
+            masks_pixels[camera_idx].push_back(pixels);
+        }
+    }
+
+
+
     ////////////////////////////////////////////////////////////////////////
     constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-4;
     constexpr float FACE_INVISIBLE_SCALE_FACTOR = 1.0;
     constexpr float FACE_INVISIBLE_COST = 1e9;
-    std::vector<float> foo_error(number_of_particles, 0.0);
+    std::vector<float> particle_errors(number_of_particles, 0.0);
     for (int i = 0; i < number_of_particles; i++)
     {
         cv::Affine3f cube_pose_world =
@@ -345,7 +359,7 @@ std::vector<float> PoseDetector::cost_function(
         for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
         {
             // get visible faces
-            auto visible_faces = get_visible_faces(camera_idx, cube_pose_world);
+            //auto visible_faces = get_visible_faces(camera_idx, cube_pose_world);
 
             for (size_t col_idx = 0;
                  col_idx < dominant_colors[camera_idx].size();
@@ -418,13 +432,9 @@ std::vector<float> PoseDetector::cost_function(
                     //    std::cout << "  _ " << k << " " << corners2[k] << std::endl;
                     //}
 
-                    // TODO do this once in the beginning
-                    std::vector<cv::Point> mask_pixels;
-                    cv::findNonZero(masks[camera_idx][col_idx], mask_pixels);
-
                     int counter = 0;
                     float cost = 0;
-                    for (const cv::Point &pixel : mask_pixels)
+                    for (const cv::Point &pixel : masks_pixels[camera_idx][col_idx])
                     {
                         double dist = cv::pointPolygonTest(corners, pixel, true);
                         //std::cout << "px: " << pixel << " dist: " << dist << std::endl;
@@ -435,14 +445,13 @@ std::vector<float> PoseDetector::cost_function(
                             cost += -dist * PIXEL_DIST_SCALE_FACTOR;
                         }
                     }
-                    foo_error[i] += cost;
+                    particle_errors[i] += cost;
 
                     //std::cout << "cost (visible): " << cost << std::endl;
                 }
                 else
                 {
-                    // TODO do this once in the beginning
-                    int num_pixels = cv::countNonZero(masks[camera_idx][col_idx]);
+                    int num_pixels = masks_pixels[camera_idx][col_idx].size();
 
                     float cost = face_normal_camera_dot_prouct * num_pixels;
                     //std::cout << "cost (invisible): " << cost << std::endl;
@@ -451,14 +460,14 @@ std::vector<float> PoseDetector::cost_function(
                     // pose.  Penalise with high cost.
                     // TODO: do something that directs the algorithm towards the
                     // solution?
-                    //foo_error[i] += FACE_INVISIBLE_COST;
-                    foo_error[i] += FACE_INVISIBLE_SCALE_FACTOR * cost;
+                    //particle_errors[i] += FACE_INVISIBLE_COST;
+                    particle_errors[i] += FACE_INVISIBLE_SCALE_FACTOR * cost;
                 }
             }
         }
     }
 
-    return foo_error;
+    return particle_errors;
     ////////////////////////////////////////////////////////////////////////
 }
 
