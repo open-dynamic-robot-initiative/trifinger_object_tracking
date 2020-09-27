@@ -333,6 +333,7 @@ std::vector<float> PoseDetector::cost_function(
     //    projected_points[i] = imgpoints.reshape(2, number_of_particles);
     //}
 
+    constexpr int REDUCED_SAMPLES_STEPS = 5;
 
     // per camera per mask the pixels of that mask
     std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS> masks_pixels;
@@ -342,6 +343,11 @@ std::vector<float> PoseDetector::cost_function(
             constexpr unsigned int max_num_samples = 100;
 
             unsigned int num_samples = max_num_samples;
+            // FIXME use something more robust to parameter changes
+            if (iteration < REDUCED_SAMPLES_STEPS)
+            {
+                num_samples -= (REDUCED_SAMPLES_STEPS - iteration) * 19;
+            }
 
             std::vector<cv::Point> all_pixels;
             std::vector<cv::Point> sampled_pixels(num_samples);
@@ -353,13 +359,6 @@ std::vector<float> PoseDetector::cost_function(
                         sampled_pixels.begin(),
                         num_samples,
                         std::mt19937{std::random_device{}()});
-
-            //if (iteration < 3)
-            //{
-            //    cv::Point p = pixels[pixels.size()/2];
-            //    pixels.clear();
-            //    pixels.push_back(p);
-            //}
 
             masks_pixels[camera_idx].push_back(sampled_pixels);
         }
@@ -374,9 +373,14 @@ std::vector<float> PoseDetector::cost_function(
     std::vector<float> particle_errors(number_of_particles, 0.0);
     for (int i = 0; i < number_of_particles; i++)
     {
-        // FIXME
-        //if (iteration < 3)
-        //    particle_errors[i] += 1000;
+        // FIXME is there a better solution?
+        // Add some fixed value to the cost in the first iterations with
+        // reduced number of pixel samples.  This is because the cost scales
+        // with the number of samples.
+        if (iteration < REDUCED_SAMPLES_STEPS)
+        {
+            particle_errors[i] += 1000;
+        }
 
         cv::Affine3f cube_pose_world =
             cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
@@ -639,6 +643,8 @@ void PoseDetector::cross_entropy_method(
         sort(sorted_costs.begin(), sorted_costs.end());
         sorted_costs.resize(elites);
 
+        // TODO: always keep the best sample in the population
+
         if (sorted_costs[0] < best_cost_)
         {
             best_cost_ = sorted_costs[0];
@@ -647,12 +653,13 @@ void PoseDetector::cross_entropy_method(
             best_position_ = sample_p[idx];
             best_orientation_ = sample_o[idx];
         }
-        std::cout << "best cost: " << best_cost_ << std::endl;
+        std::cout << "best cost: " << sorted_costs[0] << std::endl;
 
         std::vector<cv::Vec3f> elites_p;
         std::vector<cv::Vec3f> elites_o;
         for (auto &it : sorted_costs)
         {
+            // FIXME this can be improved
             int idx = find(costs.begin(), costs.end(), it) - costs.begin();
             elites_p.push_back(sample_p[idx]);
             elites_o.push_back(sample_o[idx]);
