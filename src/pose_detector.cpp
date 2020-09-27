@@ -356,10 +356,27 @@ std::vector<float> PoseDetector::cost_function(
         cv::Affine3f cube_pose_world =
             cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
 
+        cv::Mat cube_corners_world = (cv::Mat(cube_pose_world.matrix) *
+                         corners_at_origin_in_world_frame_.t());
+
+        std::vector<cv::Point3f> cube_corners_world_vec;
+        for (int j = 0; j < 8; j++)
+        {
+            cv::Vec3f cube_corner(cube_corners_world.col(j).rowRange(0, 3));
+            //std::cout << "  corner: " << cube_corner << std::endl;
+            cube_corners_world_vec.push_back(cube_corner);
+        }
+
+
         for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
         {
-            // get visible faces
-            //auto visible_faces = get_visible_faces(camera_idx, cube_pose_world);
+            std::vector<cv::Point2f> imgpoints;
+            cv::projectPoints(cube_corners_world_vec,
+                    camera_orientations_[camera_idx],
+                    camera_translations_[camera_idx],
+                    camera_matrices_[camera_idx],
+                    distortion_coeffs_[camera_idx],
+                    imgpoints);
 
             for (size_t col_idx = 0;
                  col_idx < dominant_colors[camera_idx].size();
@@ -371,43 +388,6 @@ std::vector<float> PoseDetector::cost_function(
                 {
                     auto corner_indices =
                         cube_model_.get_face_corner_indices(color);
-
-                    // get the projected corner point
-
-                    //////
-
-                    //std::cout << "   trans: " << proposed_translation[i] << std::endl;
-                    // initialization of pose
-                    cv::Affine3f pose =
-                        cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
-
-                    cv::Mat cube_corners_world = (cv::Mat(pose.matrix) *
-                                     corners_at_origin_in_world_frame_.t());
-                    //cube_corners_world = cube_corners_world.colRange(0, 3);
-                    //std::cout << "   corners: \n" << cube_corners_world << std::endl;
-
-                    std::vector<cv::Point3f> cube_corners_world_vec;
-                    for (int j = 0; j < 8; j++)
-                    {
-                        cv::Vec3f cube_corner(cube_corners_world.col(j).rowRange(0, 3));
-                        //std::cout << "  corner: " << cube_corner << std::endl;
-                        cube_corners_world_vec.push_back(cube_corner);
-                    }
-
-                    //cv::Mat imgpoints(8, 2, CV_32FC1, cv::Scalar(0));
-                    std::vector<cv::Point2f> imgpoints;
-                    cv::projectPoints(cube_corners_world_vec,
-                            camera_orientations_[camera_idx],
-                            camera_translations_[camera_idx],
-                            camera_matrices_[camera_idx],
-                            distortion_coeffs_[camera_idx],
-                            imgpoints);
-
-                    //for (int j=0; j<8;j++)
-                    //    std::cout << "   projected meins: " << imgpoints[j] << std::endl;
-                    //std::cout << "   projected: \n" << projected_points[camera_idx].row(i).reshape(1, 8) << std::endl;
-
-                    //////
 
                     //std::vector<cv::Point2f> corners2 = {
                     //    projected_points[camera_idx].at<cv::Point>(
