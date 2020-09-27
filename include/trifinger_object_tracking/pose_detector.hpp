@@ -42,7 +42,8 @@ public:
 
     bool is_face_visible(FaceColor color,
                          unsigned int camera_idx,
-                         const cv::Affine3f &cube_pose_world) const;
+                         const cv::Affine3f &cube_pose_world,
+                         float *out_dot_product = nullptr) const;
 
     /**
      * @brief Get corner indices of the visible faces.

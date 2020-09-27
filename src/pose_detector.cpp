@@ -334,6 +334,7 @@ std::vector<float> PoseDetector::cost_function(
 
     ////////////////////////////////////////////////////////////////////////
     constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-4;
+    constexpr float FACE_INVISIBLE_SCALE_FACTOR = 1.0;
     constexpr float FACE_INVISIBLE_COST = 1e9;
     std::vector<float> foo_error(number_of_particles, 0.0);
     for (int i = 0; i < number_of_particles; i++)
@@ -351,7 +352,8 @@ std::vector<float> PoseDetector::cost_function(
                  col_idx++)
             {
                 FaceColor color = dominant_colors[camera_idx][col_idx];
-                if (is_face_visible(color, camera_idx, cube_pose_world))
+                float face_normal_camera_dot_prouct = 0;
+                if (is_face_visible(color, camera_idx, cube_pose_world, &face_normal_camera_dot_prouct))
                 {
                     auto corner_indices =
                         cube_model_.get_face_corner_indices(color);
@@ -416,11 +418,12 @@ std::vector<float> PoseDetector::cost_function(
                     //    std::cout << "  _ " << k << " " << corners2[k] << std::endl;
                     //}
 
+                    // TODO do this once in the beginning
                     std::vector<cv::Point> mask_pixels;
                     cv::findNonZero(masks[camera_idx][col_idx], mask_pixels);
 
-                    //std::cout << "before: " << foo_error[i] << std::endl;
                     int counter = 0;
+                    float cost = 0;
                     for (const cv::Point &pixel : mask_pixels)
                     {
                         double dist = cv::pointPolygonTest(corners, pixel, true);
@@ -428,19 +431,28 @@ std::vector<float> PoseDetector::cost_function(
 
                         // negative distance means the point is outside
                         if (dist < 0) {
-                            foo_error[i] += -dist * PIXEL_DIST_SCALE_FACTOR;
+                            // TODO: scale later to reduce computations
+                            cost += -dist * PIXEL_DIST_SCALE_FACTOR;
                         }
                     }
+                    foo_error[i] += cost;
 
-                    //std::cout << "after: " << foo_error[i] << std::endl;
+                    //std::cout << "cost (visible): " << cost << std::endl;
                 }
                 else
                 {
+                    // TODO do this once in the beginning
+                    int num_pixels = cv::countNonZero(masks[camera_idx][col_idx]);
+
+                    float cost = face_normal_camera_dot_prouct * num_pixels;
+                    //std::cout << "cost (invisible): " << cost << std::endl;
+
                     // Face of detected color is not visible with the given
                     // pose.  Penalise with high cost.
                     // TODO: do something that directs the algorithm towards the
                     // solution?
-                    foo_error[i] += FACE_INVISIBLE_COST;
+                    //foo_error[i] += FACE_INVISIBLE_COST;
+                    foo_error[i] += FACE_INVISIBLE_SCALE_FACTOR * cost;
                 }
             }
         }
@@ -756,7 +768,8 @@ std::vector<std::vector<cv::Point2f>> PoseDetector::get_projected_points() const
 
 bool PoseDetector::is_face_visible(FaceColor color,
                                    unsigned int camera_idx,
-                                   const cv::Affine3f &cube_pose_world) const
+                                   const cv::Affine3f &cube_pose_world,
+                                   float *out_dot_product) const
 {
     // TODO do this once for each camera in the c'tor
     cv::Affine3f camera_pose(camera_orientations_[camera_idx],
@@ -790,6 +803,11 @@ bool PoseDetector::is_face_visible(FaceColor color,
 
     // dot_prod < 0 ==> angle > 90 deg
     bool is_visible = (dot_prod < 0);
+
+    if (out_dot_product != nullptr)
+    {
+        *out_dot_product = dot_prod;
+    }
 
     return is_visible;
 }
