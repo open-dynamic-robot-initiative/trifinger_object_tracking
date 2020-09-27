@@ -437,30 +437,27 @@ std::vector<float> PoseDetector::cost_function(
                     for (const cv::Point &pixel : masks_pixels[camera_idx][col_idx])
                     {
                         double dist = cv::pointPolygonTest(corners, pixel, true);
-                        //std::cout << "px: " << pixel << " dist: " << dist << std::endl;
 
                         // negative distance means the point is outside
                         if (dist < 0) {
-                            // TODO: scale later to reduce computations
-                            cost += -dist * PIXEL_DIST_SCALE_FACTOR;
+                            cost += -dist;
                         }
                     }
-                    particle_errors[i] += cost;
-
+                    cost *= PIXEL_DIST_SCALE_FACTOR;
                     //std::cout << "cost (visible): " << cost << std::endl;
+
+                    particle_errors[i] += cost;
                 }
                 else
                 {
+                    // if the face of the current color is not pointing towards
+                    // the camera, penalize it with a cost base on the angle of
+                    // the face normal to the camera-to-face vector.
                     int num_pixels = masks_pixels[camera_idx][col_idx].size();
 
                     float cost = face_normal_camera_dot_prouct * num_pixels;
                     //std::cout << "cost (invisible): " << cost << std::endl;
 
-                    // Face of detected color is not visible with the given
-                    // pose.  Penalise with high cost.
-                    // TODO: do something that directs the algorithm towards the
-                    // solution?
-                    //particle_errors[i] += FACE_INVISIBLE_COST;
                     particle_errors[i] += FACE_INVISIBLE_SCALE_FACTOR * cost;
                 }
             }
