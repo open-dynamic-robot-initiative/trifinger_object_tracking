@@ -333,6 +333,8 @@ std::vector<float> PoseDetector::cost_function(
     }
 
     ////////////////////////////////////////////////////////////////////////
+    constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-4;
+    constexpr float FACE_INVISIBLE_COST = 1e9;
     std::vector<float> foo_error(number_of_particles, 0.0);
     for (int i = 0; i < number_of_particles; i++)
     {
@@ -356,31 +358,81 @@ std::vector<float> PoseDetector::cost_function(
 
                     // get the projected corner point
 
+                    //////
+
+                    //std::cout << "   trans: " << proposed_translation[i] << std::endl;
+                    // initialization of pose
+                    cv::Affine3f pose =
+                        cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
+
+                    cv::Mat cube_corners_world = (cv::Mat(pose.matrix) *
+                                     corners_at_origin_in_world_frame_.t());
+                    //cube_corners_world = cube_corners_world.colRange(0, 3);
+                    //std::cout << "   corners: \n" << cube_corners_world << std::endl;
+
+                    std::vector<cv::Point3f> cube_corners_world_vec;
+                    for (int j = 0; j < 8; j++)
+                    {
+                        cv::Vec3f cube_corner(cube_corners_world.col(j).rowRange(0, 3));
+                        //std::cout << "  corner: " << cube_corner << std::endl;
+                        cube_corners_world_vec.push_back(cube_corner);
+                    }
+
+                    //cv::Mat imgpoints(8, 2, CV_32FC1, cv::Scalar(0));
+                    std::vector<cv::Point2f> imgpoints;
+                    cv::projectPoints(cube_corners_world_vec,
+                            camera_orientations_[camera_idx],
+                            camera_translations_[camera_idx],
+                            camera_matrices_[camera_idx],
+                            distortion_coeffs_[camera_idx],
+                            imgpoints);
+
+                    //for (int j=0; j<8;j++)
+                    //    std::cout << "   projected meins: " << imgpoints[j] << std::endl;
+                    //std::cout << "   projected: \n" << projected_points[camera_idx].row(i).reshape(1, 8) << std::endl;
+
+                    //////
+
+                    //std::vector<cv::Point2f> corners2 = {
+                    //    projected_points[camera_idx].at<cv::Point>(
+                    //        i, corner_indices[0]),
+                    //    projected_points[camera_idx].at<cv::Point>(
+                    //        i, corner_indices[1]),
+                    //    projected_points[camera_idx].at<cv::Point>(
+                    //        i, corner_indices[2]),
+                    //    projected_points[camera_idx].at<cv::Point>(
+                    //        i, corner_indices[3])};
+
                     std::vector<cv::Point> corners = {
-                        projected_points[camera_idx].at<cv::Point>(
-                            i, corner_indices[0]),
-                        projected_points[camera_idx].at<cv::Point>(
-                            i, corner_indices[1]),
-                        projected_points[camera_idx].at<cv::Point>(
-                            i, corner_indices[1]),
-                        projected_points[camera_idx].at<cv::Point>(
-                            i, corner_indices[1])};
+                        imgpoints[corner_indices[0]],
+                        imgpoints[corner_indices[1]],
+                        imgpoints[corner_indices[2]],
+                        imgpoints[corner_indices[3]]};
+
+                    //for (int k = 0; k < 4; k++){
+                    //    std::cout << "  m " << k << " " << corners[k] << std::endl;
+                    //}
+                    //for (int k = 0; k < 4; k++){
+                    //    std::cout << "  _ " << k << " " << corners2[k] << std::endl;
+                    //}
 
                     std::vector<cv::Point> mask_pixels;
                     cv::findNonZero(masks[camera_idx][col_idx], mask_pixels);
 
+                    //std::cout << "before: " << foo_error[i] << std::endl;
                     int counter = 0;
                     for (const cv::Point &pixel : mask_pixels)
                     {
                         double dist = cv::pointPolygonTest(corners, pixel, true);
+                        //std::cout << "px: " << pixel << " dist: " << dist << std::endl;
 
                         // negative distance means the point is outside
                         if (dist < 0) {
-                            foo_error[i] += -dist;
+                            foo_error[i] += -dist * PIXEL_DIST_SCALE_FACTOR;
                         }
                     }
 
-                    foo_error[i] /= mask_pixels.size();
+                    //std::cout << "after: " << foo_error[i] << std::endl;
                 }
                 else
                 {
@@ -388,7 +440,7 @@ std::vector<float> PoseDetector::cost_function(
                     // pose.  Penalise with high cost.
                     // TODO: do something that directs the algorithm towards the
                     // solution?
-                    foo_error[i] += 1000;
+                    foo_error[i] += FACE_INVISIBLE_COST;
                 }
             }
         }
@@ -514,7 +566,8 @@ void PoseDetector::cross_entropy_method(
     int number_of_particles = 1000;
     int elites = 100;
     float alpha = 0.3;
-    float eps = 5.0;
+    //float eps = 5.0;
+    float eps = 0.00001;
     best_cost_ = FLT_MAX;
     std::vector<float> costs;
 
@@ -652,15 +705,15 @@ Pose PoseDetector::find_pose(
     cross_entropy_method(dominant_colors, masks);
 
     // if cost is too bad, run it again
-    if (best_cost_ > 50)
-    {
-        initialisation_phase_ = true;
-        cross_entropy_method(dominant_colors, masks);
-        if (best_cost_ > 50)
-        {
-            initialisation_phase_ = true;
-        }
-    }
+    //if (best_cost_ > 50)
+    //{
+    //    initialisation_phase_ = true;
+    //    cross_entropy_method(dominant_colors, masks);
+    //    if (best_cost_ > 50)
+    //    {
+    //        initialisation_phase_ = true;
+    //    }
+    //}
 
     return Pose(position_.mean, orientation_.mean);
 }
