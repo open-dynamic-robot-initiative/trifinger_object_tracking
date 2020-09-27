@@ -349,7 +349,7 @@ std::vector<float> PoseDetector::cost_function(
                  col_idx++)
             {
                 FaceColor color = dominant_colors[camera_idx][col_idx];
-                if (true or is_face_visible(color, camera_idx, cube_pose_world))
+                if (is_face_visible(color, camera_idx, cube_pose_world))
                 {
                     auto corner_indices =
                         cube_model_.get_face_corner_indices(color);
