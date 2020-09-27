@@ -590,7 +590,8 @@ void PoseDetector::cross_entropy_method(
     ScopedTimer timer("PoseDetector/cross_entropy_method");
 
     int max_iterations = 30;
-    int number_of_particles = 1000;
+    int number_of_particles_first_iteration = 1000;
+    int number_of_particles = 500;
     int elites = 100;
     float alpha = 0.3;
     //float eps = 5.0;
@@ -615,12 +616,10 @@ void PoseDetector::cross_entropy_method(
             // TODO: fix the following for initialisation phase
             sample_p = random_uniform(position_.lower_bound,
                                       position_.upper_bound,
-                                      //number_of_particles * 10,
-                                      number_of_particles,
+                                      number_of_particles_first_iteration,
                                       3);
 
-            //sample_o = sample_random_so3_rotvecs(number_of_particles * 10);
-            sample_o = sample_random_so3_rotvecs(number_of_particles);
+            sample_o = sample_random_so3_rotvecs(number_of_particles_first_iteration);
         }
         else
         {
