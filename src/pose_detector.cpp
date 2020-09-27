@@ -611,10 +611,12 @@ void PoseDetector::cross_entropy_method(
             // TODO: fix the following for initialisation phase
             sample_p = random_uniform(position_.lower_bound,
                                       position_.upper_bound,
-                                      number_of_particles * 10,
+                                      //number_of_particles * 10,
+                                      number_of_particles,
                                       3);
 
-            sample_o = sample_random_so3_rotvecs(number_of_particles * 10);
+            //sample_o = sample_random_so3_rotvecs(number_of_particles * 10);
+            sample_o = sample_random_so3_rotvecs(number_of_particles);
         }
         else
         {
