@@ -102,7 +102,8 @@ private:
         const std::vector<cv::Vec3f> &tvecs,
         const std::vector<cv::Vec3f> &rvecs,
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
-        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
+        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks,
+        unsigned int iteration);
 
     std::vector<float> cost_function__(
         const std::vector<cv::Vec3f> &tvecs,

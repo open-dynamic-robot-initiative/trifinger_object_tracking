@@ -83,7 +83,7 @@ int main(int argc, char **argv)
     cube_detector.detect_cube(frames);
 
 #ifdef VISUALIZE
-    cv::Mat debug_img = cube_detector.create_debug_image(true);
+    cv::Mat debug_img = cube_detector.create_debug_image(false);
 
     // scale down debug image by factor 2, otherwise it is too big
     cv::Mat rescaled_debug_img;
