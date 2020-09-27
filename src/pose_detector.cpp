@@ -333,7 +333,7 @@ std::vector<float> PoseDetector::cost_function(
     }
 
     ////////////////////////////////////////////////////////////////////////
-    std::vector<float> foo_error(number_of_particles);
+    std::vector<float> foo_error(number_of_particles, 0.0);
     for (int i = 0; i < number_of_particles; i++)
     {
         cv::Affine3f cube_pose_world =
