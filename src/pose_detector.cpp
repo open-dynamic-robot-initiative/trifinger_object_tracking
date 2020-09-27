@@ -286,51 +286,51 @@ std::vector<float> PoseDetector::cost_function(
 
     int number_of_particles = proposed_translation.size();
 
-    std::vector<cv::Affine3f> poses;
-    cv::Mat proposed_new_cube_pts_w(
-        number_of_particles, 8, CV_32FC3, cv::Scalar(0, 0, 0));
+    //std::vector<cv::Affine3f> poses;
+    //cv::Mat proposed_new_cube_pts_w(
+    //    number_of_particles, 8, CV_32FC3, cv::Scalar(0, 0, 0));
 
-    // for each particle compute cube corners at the given pose
-    poses.reserve(number_of_particles);
-    for (int i = 0; i < number_of_particles; i++)
-    {
-        // initialization of pose
-        cv::Affine3f pose_transform =
-            cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
+    //// for each particle compute cube corners at the given pose
+    //poses.reserve(number_of_particles);
+    //for (int i = 0; i < number_of_particles; i++)
+    //{
+    //    // initialization of pose
+    //    cv::Affine3f pose_transform =
+    //        cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
 
-        poses.push_back(pose_transform);
-        cv::Mat new_pt = cv::Mat(pose_transform.matrix) *
-                         corners_at_origin_in_world_frame_.t();
+    //    poses.push_back(pose_transform);
+    //    cv::Mat new_pt = cv::Mat(pose_transform.matrix) *
+    //                     corners_at_origin_in_world_frame_.t();
 
-        new_pt = new_pt.t();  // 8x4
-        for (int j = 0; j < new_pt.rows; j++)
-        {
-            // 8x3
-            proposed_new_cube_pts_w.at<cv::Vec3f>(i, j) =
-                cv::Vec3f(new_pt.at<float>(j, 0),
-                          new_pt.at<float>(j, 1),
-                          new_pt.at<float>(j, 2));
-        }
-    }
+    //    new_pt = new_pt.t();  // 8x4
+    //    for (int j = 0; j < new_pt.rows; j++)
+    //    {
+    //        // 8x3
+    //        proposed_new_cube_pts_w.at<cv::Vec3f>(i, j) =
+    //            cv::Vec3f(new_pt.at<float>(j, 0),
+    //                      new_pt.at<float>(j, 1),
+    //                      new_pt.at<float>(j, 2));
+    //    }
+    //}
 
-    proposed_new_cube_pts_w =
-        proposed_new_cube_pts_w.reshape(3, number_of_particles * 8);
+    //proposed_new_cube_pts_w =
+    //    proposed_new_cube_pts_w.reshape(3, number_of_particles * 8);
 
-    // project the cube corners of the particles to the images
-    std::array<cv::Mat, N_CAMERAS> projected_points;
-    for (int i = 0; i < N_CAMERAS; i++)
-    {
-        // range (r_vecs)
-        cv::Mat imgpoints(number_of_particles * 8, 2, CV_32FC1, cv::Scalar(0));
-        cv::projectPoints(proposed_new_cube_pts_w,
-                          camera_orientations_[i],
-                          camera_translations_[i],
-                          camera_matrices_[i],
-                          distortion_coeffs_[i],
-                          imgpoints);
+    //// project the cube corners of the particles to the images
+    //std::array<cv::Mat, N_CAMERAS> projected_points;
+    //for (int i = 0; i < N_CAMERAS; i++)
+    //{
+    //    // range (r_vecs)
+    //    cv::Mat imgpoints(number_of_particles * 8, 2, CV_32FC1, cv::Scalar(0));
+    //    cv::projectPoints(proposed_new_cube_pts_w,
+    //                      camera_orientations_[i],
+    //                      camera_translations_[i],
+    //                      camera_matrices_[i],
+    //                      distortion_coeffs_[i],
+    //                      imgpoints);
 
-        projected_points[i] = imgpoints.reshape(2, number_of_particles);
-    }
+    //    projected_points[i] = imgpoints.reshape(2, number_of_particles);
+    //}
 
     ////////////////////////////////////////////////////////////////////////
     constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-4;
