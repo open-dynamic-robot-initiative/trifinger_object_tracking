@@ -68,6 +68,7 @@ def real():
     argparser.add_argument("--camera-name", "-c", choices=camera_names)
     argparser.add_argument("--object-type", choices=["cube", "aruco"],
                            default="cube")
+    argparser.add_argument("--no-downsample", action="store_true")
     args = argparser.parse_args()
 
     robot = robot_fingers.Robot.create_by_name("trifingerpro")
@@ -87,18 +88,24 @@ def real():
 
     camera_data = tricamera.SingleProcessData()
     camera_driver = tricamera.TriCameraObjectTrackerDriver(
-        *camera_names,
+        *camera_names, downsample_images=(not args.no_downsample)
     )
     camera_backend = tricamera.Backend(  # noqa
         camera_driver, camera_data
     )
     camera_frontend = tricamera.Frontend(camera_data)
 
-    detectors = [
-        ArucoDetector("/etc/trifingerpro/camera60_cropped_and_downsampled.yml"),
-        ArucoDetector("/etc/trifingerpro/camera180_cropped_and_downsampled.yml"),
-        ArucoDetector("/etc/trifingerpro/camera300_cropped_and_downsampled.yml"),
-    ]
+    if args.object_type == "aruco":
+        if args.no_downsample:
+            calib_file_fmt = "/etc/trifingerpro/camera{}_cropped.yml"
+        else:
+            calib_file_fmt = "/etc/trifingerpro/camera{}_cropped_and_downsampled.yml"
+
+        detectors = [
+            ArucoDetector(calib_file_fmt.format(60)),
+            ArucoDetector(calib_file_fmt.format(180)),
+            ArucoDetector(calib_file_fmt.format(300)),
+        ]
 
     robot.initialize()
 
