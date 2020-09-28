@@ -26,6 +26,7 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     const std::string& device_id_3,
     bool downsample_images)
     : last_update_time_(std::chrono::system_clock::now()),
+      downsample_images_(downsample_images),
       cameras_{trifinger_cameras::PylonDriver(device_id_1, false),
                trifinger_cameras::PylonDriver(device_id_2, false),
                trifinger_cameras::PylonDriver(device_id_3, false)}
@@ -102,9 +103,12 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
                      cv::COLOR_BayerBG2BGR);
 
         // downsample observation
-        observation.cameras[i].image =
-            trifinger_cameras::PylonDriver::downsample_raw_image(
-                observation.cameras[i].image);
+        if (downsample_images_)
+        {
+            observation.cameras[i].image =
+                trifinger_cameras::PylonDriver::downsample_raw_image(
+                    observation.cameras[i].image);
+        }
     }
 
     Pose cube_pose = cube_detector_->detect_cube(full_res_images);
