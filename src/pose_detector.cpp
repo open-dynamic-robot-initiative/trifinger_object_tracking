@@ -336,7 +336,7 @@ std::vector<float> PoseDetector::cost_function(
     //}
 
     constexpr int REDUCED_SAMPLES_STEPS = 5;
-    constexpr unsigned int MAX_NUM_SAMPLED_PIXELS = 100;
+    constexpr unsigned int MAX_NUM_SAMPLED_PIXELS = 20;
 
     // per camera per mask the pixels of that mask
     std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS>
@@ -349,7 +349,8 @@ std::vector<float> PoseDetector::cost_function(
             // FIXME use something more robust to parameter changes
             if (iteration < REDUCED_SAMPLES_STEPS)
             {
-                num_samples -= (REDUCED_SAMPLES_STEPS - iteration) * 19;
+                unsigned int step = MAX_NUM_SAMPLED_PIXELS / REDUCED_SAMPLES_STEPS - 1;
+                num_samples -= (REDUCED_SAMPLES_STEPS - iteration) * step;
             }
 
             std::vector<cv::Point> sampled_pixels(num_samples);
@@ -612,15 +613,29 @@ void PoseDetector::cross_entropy_method(
     initialise_pos_cams_w_frame();
 
     // extract pixels from the masks
-
+    std::array<std::vector<cv::Mat>, N_CAMERAS> contour_masks;
     // per camera per mask the pixels of that mask
     std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS> masks_pixels;
     for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
     {
         for (const cv::Mat &mask : masks[camera_idx])
         {
+            // create contour masks
+            cv::Mat eroded_mask, contour_mask;
+            int radius = 1;
+            static const cv::Mat kernel = cv::getStructuringElement(
+                cv::MORPH_ELLIPSE,
+                cv::Size(2 * radius + 1, 2 * radius + 1));
+            cv::erode(mask, eroded_mask, kernel);
+            cv::bitwise_xor(mask, eroded_mask, contour_mask);
+
+            //cv::imshow("mask", mask);
+            //cv::imshow("contour_mask", contour_mask);
+            //cv::waitKey(0);
+
             std::vector<cv::Point> pixels;
-            cv::findNonZero(mask, pixels);
+            //cv::findNonZero(mask, pixels);
+            cv::findNonZero(contour_mask, pixels);
             masks_pixels[camera_idx].push_back(pixels);
         }
     }
