@@ -27,15 +27,18 @@ PyBulletTriCameraObjectTrackerDriver::get_observation()
     {
         py::gil_scoped_acquire acquire;
 
-        py::list images = cameras_.attr("get_bayer_images")();
-        for (int i = 0; i < 3; i++)
+        if (render_images_)
         {
-            // ensure that the image array is contiguous in memory, otherwise
-            // conversion to cv::Mat would fail
-            auto image = numpy_.attr("ascontiguousarray")(images[i]);
-            // convert to cv::Mat
-            image = cvMat_(image);
-            observation.cameras[i].image = image.cast<cv::Mat>();
+            py::list images = cameras_.attr("get_bayer_images")();
+            for (int i = 0; i < 3; i++)
+            {
+                // ensure that the image array is contiguous in memory, otherwise
+                // conversion to cv::Mat would fail
+                auto image = numpy_.attr("ascontiguousarray")(images[i]);
+                // convert to cv::Mat
+                image = cvMat_(image);
+                observation.cameras[i].image = image.cast<cv::Mat>();
+            }
         }
 
         pybind11::tuple state = tracking_object_.attr("get_state")();
