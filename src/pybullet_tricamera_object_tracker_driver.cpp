@@ -27,17 +27,31 @@ PyBulletTriCameraObjectTrackerDriver::get_observation()
     {
         py::gil_scoped_acquire acquire;
 
+        auto current_time = std::chrono::system_clock::now();
+        double timestamp =
+            std::chrono::duration<double>(current_time.time_since_epoch())
+                .count();
+
         if (render_images_)
         {
             py::list images = cameras_.attr("get_bayer_images")();
             for (int i = 0; i < 3; i++)
             {
-                // ensure that the image array is contiguous in memory, otherwise
-                // conversion to cv::Mat would fail
+                // ensure that the image array is contiguous in memory,
+                // otherwise conversion to cv::Mat would fail
                 auto image = numpy_.attr("ascontiguousarray")(images[i]);
                 // convert to cv::Mat
                 image = cvMat_(image);
                 observation.cameras[i].image = image.cast<cv::Mat>();
+                observation.cameras[i].timestamp = timestamp;
+            }
+        }
+        else
+        {
+            // still set time stamps, even if no images are rended
+            for (int i = 0; i < 3; i++)
+            {
+                observation.cameras[i].timestamp = timestamp;
             }
         }
 
