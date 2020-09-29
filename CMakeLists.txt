@@ -49,6 +49,7 @@ catkin_package(
         simulation_object_tracker
         fake_object_tracker
         ${tricamera_object_tracking_driver}
+        pybullet_tricamera_object_tracker_driver
 )
 
 
@@ -126,11 +127,22 @@ if (${HAS_PYLON_DRIVERS})
         src/tricamera_object_tracking_driver.cpp)
     target_link_libraries(${tricamera_object_tracking_driver}
         ${catkin_LIBRARIES} cube_detector)
-    catkin_add_pybind11_module(py_tricamera_types ${tricamera_object_tracking_driver})
 endif()
 
+add_library(pybullet_tricamera_object_tracker_driver
+    src/pybullet_tricamera_object_tracker_driver.cpp)
+target_link_libraries(pybullet_tricamera_object_tracker_driver
+    ${catkin_LIBRARIES} cube_detector)
 
-catkin_add_pybind11_module(py_object_tracker simulation_object_tracker fake_object_tracker)
+
+catkin_add_pybind11_module(py_object_tracker
+    simulation_object_tracker
+    fake_object_tracker
+)
+catkin_add_pybind11_module(py_tricamera_types
+    ${tricamera_object_tracking_driver}
+    pybullet_tricamera_object_tracker_driver
+)
 
 
 if (CATKIN_ENABLE_TESTING)

@@ -69,9 +69,8 @@ def real():
     argparser.add_argument("--object-type", choices=["cube", "aruco"],
                            default="cube")
     argparser.add_argument("--no-downsample", action="store_true")
+    argparser.add_argument("--multi-process", action="store_true")
     args = argparser.parse_args()
-
-    robot = robot_fingers.Robot.create_by_name("trifingerpro")
 
     robot_properties_path = rospkg.RosPack().get_path("robot_properties_fingers")
     urdf_file = trifinger_simulation.finger_types_data.get_finger_urdf("trifingerpro")
@@ -86,13 +85,16 @@ def real():
     else:
         camera_index = None
 
-    camera_data = tricamera.SingleProcessData()
-    camera_driver = tricamera.TriCameraObjectTrackerDriver(
-        *camera_names, downsample_images=(not args.no_downsample)
-    )
-    camera_backend = tricamera.Backend(  # noqa
-        camera_driver, camera_data
-    )
+    if args.multi_process:
+        camera_data = tricamera.MultiProcessData("tricamera", False)
+    else:
+        camera_data = tricamera.SingleProcessData()
+        camera_driver = tricamera.TriCameraObjectTrackerDriver(
+            *camera_names, downsample_images=(not args.no_downsample)
+        )
+        camera_backend = tricamera.Backend(  # noqa
+            camera_driver, camera_data
+        )
     camera_frontend = tricamera.Frontend(camera_data)
 
     if args.object_type == "aruco":
@@ -107,13 +109,20 @@ def real():
             ArucoDetector(calib_file_fmt.format(300)),
         ]
 
-    robot.initialize()
+    if args.multi_process:
+        robot_data = robot_interfaces.trifinger.MultiProcessData("trifinger",
+                                                                 False)
+        frontend = robot_interfaces.trifinger.Frontend(robot_data)
+    else:
+        robot = robot_fingers.Robot.create_by_name("trifingerpro")
+        robot.initialize()
+        frontend = robot.frontend
 
     init_pos = np.array([0, 1.5, -2.7] * 3)
 
     for i in range(500):
         finger_action = robot_interfaces.trifinger.Action(position=init_pos)
-        robot.frontend.append_desired_action(finger_action)
+        frontend.append_desired_action(finger_action)
 
     joint_pos = init_pos
     i = 0
@@ -123,8 +132,8 @@ def real():
         finger_action = robot_interfaces.trifinger.Action(position=joint_pos)
         finger_action.position_kp = [8] * 9
         finger_action.position_kd = [0.01] * 9
-        t = robot.frontend.append_desired_action(finger_action)
-        obs = robot.frontend.get_observation(t)
+        t = frontend.append_desired_action(finger_action)
+        obs = frontend.get_observation(t)
 
         images = camera_frontend.get_latest_observation()
 
