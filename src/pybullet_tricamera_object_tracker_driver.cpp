@@ -24,13 +24,16 @@ PyBulletTriCameraObjectTrackerDriver::get_observation()
 
     trifinger_object_tracking::TriCameraObjectObservation observation;
 
+    auto current_time = std::chrono::system_clock::now();
+    double timestamp =
+        std::chrono::duration<double>(current_time.time_since_epoch()).count();
+    for (int i = 0; i < 3; i++)
+    {
+        observation.cameras[i].timestamp = timestamp;
+    }
+
     {
         py::gil_scoped_acquire acquire;
-
-        auto current_time = std::chrono::system_clock::now();
-        double timestamp =
-            std::chrono::duration<double>(current_time.time_since_epoch())
-                .count();
 
         if (render_images_)
         {
@@ -43,24 +46,16 @@ PyBulletTriCameraObjectTrackerDriver::get_observation()
                 // convert to cv::Mat
                 image = cvMat_(image);
                 observation.cameras[i].image = image.cast<cv::Mat>();
-                observation.cameras[i].timestamp = timestamp;
-            }
-        }
-        else
-        {
-            // still set time stamps, even if no images are rended
-            for (int i = 0; i < 3; i++)
-            {
-                observation.cameras[i].timestamp = timestamp;
             }
         }
 
         pybind11::tuple state = tracking_object_.attr("get_state")();
         observation.object_pose.position = state[0].cast<Eigen::Vector3d>();
         observation.object_pose.orientation = state[1].cast<Eigen::Vector4d>();
-        // there is no noise in the simulation
-        observation.object_pose.confidence = 1.0;
     }
+
+    // there is no noise in the simulation
+    observation.object_pose.confidence = 1.0;
 
     // run at around 10 Hz
     using namespace std::chrono_literals;
