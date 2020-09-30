@@ -5,10 +5,14 @@
  * @license BSD 3-clause
  */
 #include <pybind11/eigen.h>
+#include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 
+#include <trifinger_object_tracking/pybullet_tricamera_object_tracker_driver.hpp>
+#ifdef Pylon_FOUND
 #include <trifinger_object_tracking/tricamera_object_tracking_driver.hpp>
+#endif
 
 #include <robot_interfaces/sensors/pybind_sensors.hpp>
 #include <robot_interfaces/sensors/sensor_driver.hpp>
@@ -20,9 +24,17 @@ PYBIND11_MODULE(py_tricamera_types, m)
 {
     create_sensor_bindings<TriCameraObjectObservation>(m);
 
+    pybind11::class_<TriCameraObjectObservation>(m,
+                                                 "TriCameraObjectObservation")
+        .def(pybind11::init<>())
+        .def_readwrite("cameras", &TriCameraObjectObservation::cameras)
+        .def_readwrite("object_pose", &TriCameraObjectObservation::object_pose);
+
+#ifdef Pylon_FOUND
     pybind11::class_<TriCameraObjectTrackerDriver,
                      std::shared_ptr<TriCameraObjectTrackerDriver>,
-                     SensorDriver<TriCameraObjectObservation>>(m, "TriCameraObjectTrackerDriver")
+                     SensorDriver<TriCameraObjectObservation>>(
+        m, "TriCameraObjectTrackerDriver")
         .def(pybind11::init<const std::string&,
                             const std::string&,
                             const std::string&,
@@ -32,9 +44,13 @@ PYBIND11_MODULE(py_tricamera_types, m)
              pybind11::arg("camera3"),
              pybind11::arg("downsample_images") = true)
         .def("get_observation", &TriCameraObjectTrackerDriver::get_observation);
+#endif
 
-    pybind11::class_<TriCameraObjectObservation>(m, "TriCameraObjectObservation")
-        .def(pybind11::init<>())
-        .def_readwrite("cameras", &TriCameraObjectObservation::cameras)
-        .def_readwrite("object_pose", &TriCameraObjectObservation::object_pose);
+    pybind11::class_<PyBulletTriCameraObjectTrackerDriver,
+                     std::shared_ptr<PyBulletTriCameraObjectTrackerDriver>,
+                     SensorDriver<TriCameraObjectObservation>>(
+        m, "PyBulletTriCameraObjectTrackerDriver")
+        .def(pybind11::init<pybind11::object, robot_interfaces::TriFingerTypes::BaseDataPtr, bool>())
+        .def("get_observation",
+             &PyBulletTriCameraObjectTrackerDriver::get_observation);
 }
