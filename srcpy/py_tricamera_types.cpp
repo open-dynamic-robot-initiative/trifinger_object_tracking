@@ -50,7 +50,7 @@ PYBIND11_MODULE(py_tricamera_types, m)
                      std::shared_ptr<PyBulletTriCameraObjectTrackerDriver>,
                      SensorDriver<TriCameraObjectObservation>>(
         m, "PyBulletTriCameraObjectTrackerDriver")
-        .def(pybind11::init<pybind11::object, bool>())
+        .def(pybind11::init<pybind11::object, robot_interfaces::TriFingerTypes::BaseDataPtr, bool>())
         .def("get_observation",
              &PyBulletTriCameraObjectTrackerDriver::get_observation);
 }

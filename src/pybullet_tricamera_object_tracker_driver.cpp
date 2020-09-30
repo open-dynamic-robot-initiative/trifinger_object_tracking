@@ -20,7 +20,34 @@ namespace trifinger_object_tracking
 trifinger_object_tracking::TriCameraObjectObservation
 PyBulletTriCameraObjectTrackerDriver::get_observation()
 {
-    auto start_time = std::chrono::system_clock::now();
+    time_series::Index robot_t =
+        robot_data_->observation->newest_timeindex(false);
+    if (robot_t == time_series::EMPTY)
+    {
+        // As long as robot backend did not start yet, run at around 10 Hz
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(100ms);
+    }
+    else
+    {
+        // Synchronize with robot backend:  To achieve 10 Hz, there should be
+        // one camera observation every 100 robot steps.
+        while (robot_t < last_update_robot_time_index_ + 100)
+        {
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(10ms);
+            auto new_robot_t = robot_data_->observation->newest_timeindex(false);
+
+            // If robot t did not increase, assume the robot has stopped.
+            // Break this look to avoid a dead-lock.
+            if (new_robot_t == robot_t)
+            {
+                break;
+            }
+            robot_t = new_robot_t;
+        }
+        last_update_robot_time_index_ = robot_t;
+    }
 
     trifinger_object_tracking::TriCameraObjectObservation observation;
 
@@ -56,10 +83,6 @@ PyBulletTriCameraObjectTrackerDriver::get_observation()
 
     // there is no noise in the simulation
     observation.object_pose.confidence = 1.0;
-
-    // run at around 10 Hz
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_until(start_time + 100ms);
 
     return observation;
 }
