@@ -111,7 +111,9 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
         }
     }
 
-    Pose cube_pose = cube_detector_->detect_cube(full_res_images);
+    // Until object tracker is ready, simply return a fixed pose here
+    Pose cube_pose(cv::Vec3f(0, 0, 0.0325), cv::Vec3f(0, 0, 0));
+    //Pose cube_pose = cube_detector_->detect_cube(full_res_images);
 
     // convert rotation vector to quaternion
     // http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/
