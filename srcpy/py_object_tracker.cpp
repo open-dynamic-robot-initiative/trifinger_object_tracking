@@ -22,9 +22,17 @@ PYBIND11_MODULE(py_object_tracker, m)
     pybind11::class_<ObjectPose>(m, "ObjectPose")
         .def(pybind11::init<size_t>())
         .def_readwrite("timestamp", &ObjectPose::timestamp)
-        .def_readwrite("position", &ObjectPose::position)
-        .def_readwrite("orientation", &ObjectPose::orientation)
-        .def_readwrite("confidence", &ObjectPose::confidence)
+        .def_readwrite("position",
+                       &ObjectPose::position,
+                       "Position (x, y, z) in the world frame.")
+        .def_readwrite(
+            "orientation",
+            &ObjectPose::orientation,
+            "Orientation quaternion (x, y, z, w) in the world frame.")
+        .def_readwrite(
+            "confidence",
+            &ObjectPose::confidence,
+            "Confidence measure of the object tracker.  Between 0 and 1.")
         .def("__str__",
              &ObjectPose::to_string,
              pybind11::call_guard<pybind11::gil_scoped_release>());

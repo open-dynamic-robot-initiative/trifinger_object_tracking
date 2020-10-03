@@ -27,11 +27,20 @@ PYBIND11_MODULE(py_tricamera_types, m)
 
     create_sensor_bindings<TriCameraObjectObservation>(m);
 
-    pybind11::class_<TriCameraObjectObservation>(m,
-                                                 "TriCameraObjectObservation")
+    pybind11::class_<TriCameraObjectObservation>(
+        m,
+        "TriCameraObjectObservation",
+        "Observation from the three cameras, including the estimated object "
+        "pose provided by the integrated object tracker.")
         .def(pybind11::init<>())
-        .def_readwrite("cameras", &TriCameraObjectObservation::cameras)
-        .def_readwrite("object_pose", &TriCameraObjectObservation::object_pose);
+        .def_readwrite(
+            "cameras",
+            &TriCameraObjectObservation::cameras,
+            "List[CameraObservation]: List of observations from cameras "
+            "'camera60', 'camera180' and 'camera300' (in this order)")
+        .def_readwrite("object_pose",
+                       &TriCameraObjectObservation::object_pose,
+                       "ObjectPose: Estimated object pose.");
 
 #ifdef Pylon_FOUND
     pybind11::class_<TriCameraObjectTrackerDriver,
@@ -53,7 +62,9 @@ PYBIND11_MODULE(py_tricamera_types, m)
                      std::shared_ptr<PyBulletTriCameraObjectTrackerDriver>,
                      SensorDriver<TriCameraObjectObservation>>(
         m, "PyBulletTriCameraObjectTrackerDriver")
-        .def(pybind11::init<pybind11::object, robot_interfaces::TriFingerTypes::BaseDataPtr, bool>())
+        .def(pybind11::init<pybind11::object,
+                            robot_interfaces::TriFingerTypes::BaseDataPtr,
+                            bool>())
         .def("get_observation",
              &PyBulletTriCameraObjectTrackerDriver::get_observation);
 }
