@@ -76,7 +76,11 @@ cv::Vec3f PoseDetector::power(cv::Vec3f p, float n)
 }
 
 std::vector<cv::Vec3f> PoseDetector::random_normal(
-    cv::Vec3f mean, cv::Vec3f var, int rows, int cols, std::string clip_for)
+    cv::Vec3f mean,
+    cv::Vec3f var,  // todo: this should be called std, not var
+    int rows,
+    int cols,
+    std::string clip_for)
 {
     std::vector<cv::Vec3f> data;
     std::random_device rd;
@@ -284,7 +288,7 @@ std::vector<float> PoseDetector::cost_function(
         &masks_pixels,
     unsigned int iteration)
 {
-    ScopedTimer timer("PoseDetector/cost_function");
+    // ScopedTimer timer("PoseDetector/cost_function");
 
     int number_of_particles = proposed_translation.size();
 
@@ -605,15 +609,11 @@ void PoseDetector::cross_entropy_method(
 {
     ScopedTimer timer("PoseDetector/cross_entropy_method");
 
-    // int number_of_particles = 50;
-    // int elites = 5;
-    // float alpha = 0.3;
-    int number_of_particles = 500;
-    int elites = 100;
-    float alpha = 0.3;
-    int max_iterations = 20;
+    std::vector<int> number_of_particles_per_round(40, 40);
+    number_of_particles_per_round[0] = 200;
+    double elite_ratio = 0.1;
+    float alpha = 0.5;
 
-    int number_of_particles_first_iteration = number_of_particles;
     float eps = -10;
 
     best_cost_ = FLT_MAX;
@@ -654,7 +654,9 @@ void PoseDetector::cross_entropy_method(
         }
     }
 
-    for (int i = 0; i < max_iterations && best_cost_ > eps; i++)
+    for (int i = 0;
+         i < number_of_particles_per_round.size() && best_cost_ > eps;
+         i++)
     {
         std::vector<cv::Vec3f> sample_p;
         std::vector<cv::Vec3f> sample_o;
@@ -663,24 +665,24 @@ void PoseDetector::cross_entropy_method(
             // TODO: fix the following for initialisation phase
             sample_p = random_uniform(position_.lower_bound,
                                       position_.upper_bound,
-                                      number_of_particles_first_iteration,
+                                      number_of_particles_per_round[i],
                                       3);
 
             sample_o =
-                sample_random_so3_rotvecs(number_of_particles_first_iteration);
+                sample_random_so3_rotvecs(number_of_particles_per_round[i]);
         }
         else
         {
             // TODO: reduce the number_of_particles from 10k to 1k
             sample_p = random_normal(position_.mean,
                                      power(position_.variance, 0.5),
-                                     number_of_particles,
+                                     number_of_particles_per_round[i],
                                      3,
                                      "position");
 
             sample_o = random_normal(orientation_.mean,
                                      power(orientation_.variance, 0.5),
-                                     number_of_particles,
+                                     number_of_particles_per_round[i],
                                      3,
                                      "orientation");
         }
@@ -689,7 +691,8 @@ void PoseDetector::cross_entropy_method(
 
         std::vector<float> sorted_costs = costs;
         sort(sorted_costs.begin(), sorted_costs.end());
-        sorted_costs.resize(elites);
+        int number_of_elites = number_of_particles_per_round[i] * elite_ratio;
+        sorted_costs.resize(number_of_elites);
 
         // TODO: always keep the best sample in the population
 
@@ -702,9 +705,6 @@ void PoseDetector::cross_entropy_method(
             best_orientation_ = sample_o[idx];
         }
 
-        std::cout << "iteration: " << i << "  best cost: " << sorted_costs[0]
-                  << std::endl;
-
         std::vector<cv::Vec3f> elites_p;
         std::vector<cv::Vec3f> elites_o;
         for (auto &it : sorted_costs)
@@ -713,12 +713,18 @@ void PoseDetector::cross_entropy_method(
             int idx = find(costs.begin(), costs.end(), it) - costs.begin();
             elites_p.push_back(sample_p[idx]);
             elites_o.push_back(sample_o[idx]);
+
+            elites_p.push_back(best_position_);
+            elites_o.push_back(best_orientation_);
         }
 
         cv::Vec3f new_mean_position = mean(elites_p);
         cv::Vec3f new_mean_orientation = mean(elites_o);
         cv::Vec3f new_var_position = var(elites_p);
         cv::Vec3f new_var_orientation = var(elites_o);
+
+        new_var_position += cv::Vec3f(0.0001, 0.0001, 0.0001);
+        new_var_orientation += cv::Vec3f(0.001, 0.001, 0.001);
 
         if (initialisation_phase_ == true)
         {
