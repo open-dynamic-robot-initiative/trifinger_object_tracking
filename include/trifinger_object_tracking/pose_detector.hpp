@@ -1,11 +1,8 @@
 #pragma once
 #include <Eigen/Geometry>
-
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/opencv.hpp>
-
 #include <trifinger_cameras/camera_parameters.hpp>
-
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/types.hpp>
 

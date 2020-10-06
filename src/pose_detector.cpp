@@ -348,7 +348,8 @@ std::vector<float> PoseDetector::cost_function(
             // FIXME use something more robust to parameter changes
             if (iteration < REDUCED_SAMPLES_STEPS)
             {
-                unsigned int step = MAX_NUM_SAMPLED_PIXELS / REDUCED_SAMPLES_STEPS - 1;
+                unsigned int step =
+                    MAX_NUM_SAMPLED_PIXELS / REDUCED_SAMPLES_STEPS - 1;
                 num_samples -= (REDUCED_SAMPLES_STEPS - iteration) * step;
             }
 
@@ -364,7 +365,7 @@ std::vector<float> PoseDetector::cost_function(
     }
 
     ////////////////////////////////////////////////////////////////////////
-    // seems a bit low
+    // todo: is this right?
     constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-2;
     constexpr float FACE_INVISIBLE_SCALE_FACTOR = 1.0;
     std::vector<float> particle_errors(number_of_particles, 0.0);
@@ -631,17 +632,16 @@ void PoseDetector::cross_entropy_method(
             cv::Mat eroded_mask, contour_mask;
             int radius = 1;
             static const cv::Mat kernel = cv::getStructuringElement(
-                cv::MORPH_ELLIPSE,
-                cv::Size(2 * radius + 1, 2 * radius + 1));
+                cv::MORPH_ELLIPSE, cv::Size(2 * radius + 1, 2 * radius + 1));
             cv::erode(mask, eroded_mask, kernel);
             cv::bitwise_xor(mask, eroded_mask, contour_mask);
 
-            //cv::imshow("mask", mask);
-            //cv::imshow("contour_mask", contour_mask);
-            //cv::waitKey(0);
+            // cv::imshow("mask", mask);
+            // cv::imshow("contour_mask", contour_mask);
+            // cv::waitKey(0);
 
             std::vector<cv::Point> pixels;
-            //cv::findNonZero(mask, pixels);
+            // cv::findNonZero(mask, pixels);
             cv::findNonZero(mask, pixels);
             masks_pixels[camera_idx].push_back(pixels);
         }
@@ -733,7 +733,7 @@ void PoseDetector::cross_entropy_method(
                                     ((1 - alpha) * new_var_orientation);
         }
     }
-    
+
     if (continuous_estimation_ == true)
     {
         position_.mean = best_position_;
@@ -877,7 +877,6 @@ bool PoseDetector::is_face_visible(FaceColor color,
     return is_visible;
 }
 
-
 bool PoseDetector::compute_face_normals_and_corners(
     const unsigned int camera_idx,
     const cv::Affine3f &cube_pose_world,
@@ -919,7 +918,7 @@ bool PoseDetector::compute_color_visibility(
     // if the angle between the face normal and the camera-to-corner
     // vector is greater than 90 deg, the face is visible
     *face_normal_dot_camera_direction =
-        face_normal.dot(corner);// / cv::norm(face_normal) / cv::norm(corner);
+        face_normal.dot(corner);  // / cv::norm(face_normal) / cv::norm(corner);
 
     // dot_prod < 0 ==> angle > 90 deg
     *is_visible = (face_normal_dot_camera_direction < 0);
