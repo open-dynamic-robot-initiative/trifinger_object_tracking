@@ -874,6 +874,54 @@ bool PoseDetector::is_face_visible(FaceColor color,
     return is_visible;
 }
 
+
+bool PoseDetector::compute_face_normals_and_corners(
+    const unsigned int camera_idx,
+    const cv::Affine3f &cube_pose_world,
+    cv::Mat *normals,
+    cv::Mat *corners) const
+{
+    cv::Affine3f camera_pose(camera_orientations_[camera_idx],
+                             camera_translations_[camera_idx]);
+
+    // cube pose in camera frame
+    cv::Affine3f cube_pose_camera = camera_pose * cube_pose_world;
+
+    // TODO only transform the normal vector and corner that are actually used
+    // rotate face normals (3x6) according to given cube pose
+    *normals = cv::Mat(cube_pose_camera.rotation()) * reference_vector_normals_;
+
+    // transform all cube corners according to the cube pose (4x8)
+    *corners = cv::Mat(cube_pose_camera.matrix) *
+               corners_at_origin_in_world_frame_.t();
+}
+
+bool PoseDetector::compute_color_visibility(
+    const FaceColor &color,
+    const cv::Mat &face_normals,
+    const cv::Mat &cube_corners,
+    bool *is_visible,
+    float *face_normal_dot_camera_direction) const
+{
+    // get the normal vector of that face
+    int normal_idx = cube_model_.map_color_to_normal_index[color];
+    cv::Vec3f face_normal = face_normals.col(normal_idx);
+
+    auto corner_indices = cube_model_.get_face_corner_indices(color);
+
+    // get an arbitrary corner of that face
+    unsigned int corner_idx = corner_indices[0];
+    cv::Vec3f corner = cube_corners.col(corner_idx).rowRange(0, 3);
+
+    // if the angle between the face normal and the camera-to-corner
+    // vector is greater than 90 deg, the face is visible
+    *face_normal_dot_camera_direction =
+        face_normal.dot(corner);// / cv::norm(face_normal) / cv::norm(corner);
+
+    // dot_prod < 0 ==> angle > 90 deg
+    *is_visible = (face_normal_dot_camera_direction < 0);
+}
+
 std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
 PoseDetector::get_visible_faces(unsigned int camera_idx,
                                 const cv::Affine3f &cube_pose_world) const
