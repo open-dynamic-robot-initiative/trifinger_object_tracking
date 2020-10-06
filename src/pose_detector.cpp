@@ -364,7 +364,8 @@ std::vector<float> PoseDetector::cost_function(
     }
 
     ////////////////////////////////////////////////////////////////////////
-    constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-4;
+    // seems a bit low
+    constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-2;
     constexpr float FACE_INVISIBLE_SCALE_FACTOR = 1.0;
     std::vector<float> particle_errors(number_of_particles, 0.0);
     for (int i = 0; i < number_of_particles; i++)
@@ -414,7 +415,7 @@ std::vector<float> PoseDetector::cost_function(
                                     cube_pose_world,
                                     &face_normal_camera_dot_product);
 
-                if (face_is_visible)
+                if (true || face_is_visible)
                 {
                     auto corner_indices =
                         cube_model_.get_face_corner_indices(color);
@@ -861,7 +862,9 @@ bool PoseDetector::is_face_visible(FaceColor color,
 
     // if the angle between the face normal and the camera-to-corner
     // vector is greater than 90 deg, the face is visible
-    float dot_prod = face_normal.dot(corner);
+    // we should probably normalize these vectors
+    float dot_prod =
+        face_normal.dot(corner) / cv::norm(face_normal) / cv::norm(corner);
 
     // dot_prod < 0 ==> angle > 90 deg
     bool is_visible = (dot_prod < 0);
