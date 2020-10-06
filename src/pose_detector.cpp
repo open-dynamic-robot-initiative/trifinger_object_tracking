@@ -404,17 +404,24 @@ std::vector<float> PoseDetector::cost_function(
                               distortion_coeffs_[camera_idx],
                               imgpoints);
 
+            cv::Mat face_normals;
+            cv::Mat cube_corners;
+            compute_face_normals_and_corners(
+                camera_idx, cube_pose_world, &face_normals, &cube_corners);
+
             for (size_t col_idx = 0;
                  col_idx < dominant_colors[camera_idx].size();
                  col_idx++)
             {
                 FaceColor color = dominant_colors[camera_idx][col_idx];
-                float face_normal_camera_dot_product = 0;
-                bool face_is_visible =
-                    is_face_visible(color,
-                                    camera_idx,
-                                    cube_pose_world,
-                                    &face_normal_camera_dot_product);
+
+                bool face_is_visible;
+                float face_normal_dot_camera_direction;
+                compute_color_visibility(color,
+                                         face_normals,
+                                         cube_corners,
+                                         &face_is_visible,
+                                         &face_normal_dot_camera_direction);
 
                 if (true || face_is_visible)
                 {
@@ -473,7 +480,7 @@ std::vector<float> PoseDetector::cost_function(
                     int num_pixels =
                         sampled_masks_pixels[camera_idx][col_idx].size();
 
-                    float cost = face_normal_camera_dot_product * num_pixels;
+                    float cost = face_normal_dot_camera_direction * num_pixels;
                     // std::cout << "cost (invisible): " << cost << std::endl;
 
                     particle_errors[i] += FACE_INVISIBLE_SCALE_FACTOR * cost;
@@ -834,44 +841,23 @@ bool PoseDetector::is_face_visible(FaceColor color,
                                    const cv::Affine3f &cube_pose_world,
                                    float *out_dot_product) const
 {
-    // TODO do this once for each camera in the c'tor
-    cv::Affine3f camera_pose(camera_orientations_[camera_idx],
-                             camera_translations_[camera_idx]);
+    cv::Mat face_normals;
+    cv::Mat cube_corners;
 
-    // cube pose in camera frame
-    cv::Affine3f cube_pose_camera = camera_pose * cube_pose_world;
+    compute_face_normals_and_corners(
+        camera_idx, cube_pose_world, &face_normals, &cube_corners);
 
-    // TODO only transform the normal vector and corner that are actually used
-    // rotate face normals (3x6) according to given cube pose
-    cv::Mat face_normal_vectors =
-        cv::Mat(cube_pose_camera.rotation()) * reference_vector_normals_;
-
-    // transform all cube corners according to the cube pose (4x8)
-    cv::Mat cube_corners = cv::Mat(cube_pose_camera.matrix) *
-                           corners_at_origin_in_world_frame_.t();
-
-    // get the normal vector of that face
-    int normal_idx = cube_model_.map_color_to_normal_index[color];
-    cv::Vec3f face_normal = face_normal_vectors.col(normal_idx);
-
-    auto corner_indices = cube_model_.get_face_corner_indices(color);
-
-    // get an arbitrary corner of that face
-    unsigned int corner_idx = corner_indices[0];
-    cv::Vec3f corner = cube_corners.col(corner_idx).rowRange(0, 3);
-
-    // if the angle between the face normal and the camera-to-corner
-    // vector is greater than 90 deg, the face is visible
-    // we should probably normalize these vectors
-    float dot_prod =
-        face_normal.dot(corner) / cv::norm(face_normal) / cv::norm(corner);
-
-    // dot_prod < 0 ==> angle > 90 deg
-    bool is_visible = (dot_prod < 0);
+    bool is_visible;
+    float face_normal_dot_camera_direction;
+    compute_color_visibility(color,
+                             face_normals,
+                             cube_corners,
+                             &is_visible,
+                             &face_normal_dot_camera_direction);
 
     if (out_dot_product != nullptr)
     {
-        *out_dot_product = dot_prod;
+        *out_dot_product = face_normal_dot_camera_direction;
     }
 
     return is_visible;
@@ -918,10 +904,10 @@ bool PoseDetector::compute_color_visibility(
     // if the angle between the face normal and the camera-to-corner
     // vector is greater than 90 deg, the face is visible
     *face_normal_dot_camera_direction =
-        face_normal.dot(corner);  // / cv::norm(face_normal) / cv::norm(corner);
+        face_normal.dot(corner) / cv::norm(face_normal) / cv::norm(corner);
 
     // dot_prod < 0 ==> angle > 90 deg
-    *is_visible = (face_normal_dot_camera_direction < 0);
+    *is_visible = (*face_normal_dot_camera_direction < 0);
 }
 
 std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
