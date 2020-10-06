@@ -334,7 +334,7 @@ std::vector<float> PoseDetector::cost_function(
     //    projected_points[i] = imgpoints.reshape(2, number_of_particles);
     //}
 
-    constexpr int REDUCED_SAMPLES_STEPS = 5;
+    constexpr int REDUCED_SAMPLES_STEPS = 0;
     constexpr unsigned int MAX_NUM_SAMPLED_PIXELS = 20;
 
     // per camera per mask the pixels of that mask
@@ -596,13 +596,17 @@ void PoseDetector::cross_entropy_method(
 {
     ScopedTimer timer("PoseDetector/cross_entropy_method");
 
-    int max_iterations = 30;
-    int number_of_particles_first_iteration = 1000;
+    // int number_of_particles = 50;
+    // int elites = 5;
+    // float alpha = 0.3;
     int number_of_particles = 500;
     int elites = 100;
     float alpha = 0.3;
-    // float eps = 5.0;
-    float eps = 0.00001;
+    int max_iterations = 20;
+
+    int number_of_particles_first_iteration = number_of_particles;
+    float eps = -10;
+
     best_cost_ = FLT_MAX;
     std::vector<float> costs;
 
@@ -637,7 +641,7 @@ void PoseDetector::cross_entropy_method(
 
             std::vector<cv::Point> pixels;
             //cv::findNonZero(mask, pixels);
-            cv::findNonZero(contour_mask, pixels);
+            cv::findNonZero(mask, pixels);
             masks_pixels[camera_idx].push_back(pixels);
         }
     }
@@ -689,7 +693,9 @@ void PoseDetector::cross_entropy_method(
             best_position_ = sample_p[idx];
             best_orientation_ = sample_o[idx];
         }
-        std::cout << "best cost: " << sorted_costs[0] << std::endl;
+
+        std::cout << "iteration: " << i << "  best cost: " << sorted_costs[0]
+                  << std::endl;
 
         std::vector<cv::Vec3f> elites_p;
         std::vector<cv::Vec3f> elites_o;
@@ -726,7 +732,7 @@ void PoseDetector::cross_entropy_method(
                                     ((1 - alpha) * new_var_orientation);
         }
     }
-    //std::cout << "Best cost: " << best_cost_ << std::endl;
+    
     if (continuous_estimation_ == true)
     {
         position_.mean = best_position_;
