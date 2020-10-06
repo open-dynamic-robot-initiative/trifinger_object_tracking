@@ -91,15 +91,21 @@ int main(int argc, char **argv)
                rescaled_debug_img,
                cv::Size(debug_img.cols / 2, debug_img.rows / 2));
 
-    // cv::imwrite("/tmp/images/" +
-    //                data_dir.substr(data_dir.find_last_of("/\\") + 1, 4) +
-    //                ".jpg",
-    //            rescaled_debug_img);
 
-    cv::namedWindow("debug", cv::WINDOW_NORMAL);
-    cv::resizeWindow("debug", rescaled_debug_img.cols, rescaled_debug_img.rows);
-    cv::imshow("debug", rescaled_debug_img);
-    cv::waitKey(0);
+     time_t t = time(0);   // get time now
+     struct tm * now = localtime( & t );
+     char buffer [80];
+     strftime (buffer,80,"%d-%h-%s",now);
+
+    cv::imwrite("./results/" +
+                   data_dir.substr(data_dir.find_last_of("/\\") + 1, 4) + "__" + buffer +
+                   ".jpg",
+               rescaled_debug_img);
+
+    // cv::namedWindow("debug", cv::WINDOW_NORMAL);
+    // cv::resizeWindow("debug", rescaled_debug_img.cols, rescaled_debug_img.rows);
+    // cv::imshow("debug", rescaled_debug_img);
+    // cv::waitKey(0);
 #endif
 
     return 0;

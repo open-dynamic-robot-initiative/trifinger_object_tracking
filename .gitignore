@@ -2,4 +2,4 @@
 *.pyc
 .idea
 build/
-
+results/
