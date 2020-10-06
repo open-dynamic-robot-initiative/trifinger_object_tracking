@@ -1,11 +1,10 @@
-#include <trifinger_object_tracking/pose_detector.hpp>
-
 #include <float.h>
 #include <math.h>
+
 #include <iostream>
 #include <random>
 #include <thread>
-
+#include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
 
 namespace trifinger_object_tracking
@@ -408,11 +407,14 @@ std::vector<float> PoseDetector::cost_function(
                  col_idx++)
             {
                 FaceColor color = dominant_colors[camera_idx][col_idx];
-                float face_normal_camera_dot_prouct = 0;
-                if (is_face_visible(color,
+                float face_normal_camera_dot_product = 0;
+                bool face_is_visible =
+                    is_face_visible(color,
                                     camera_idx,
                                     cube_pose_world,
-                                    &face_normal_camera_dot_prouct))
+                                    &face_normal_camera_dot_product);
+
+                if (face_is_visible)
                 {
                     auto corner_indices =
                         cube_model_.get_face_corner_indices(color);
@@ -461,7 +463,7 @@ std::vector<float> PoseDetector::cost_function(
 
                     particle_errors[i] += cost;
                 }
-                else
+                if (!face_is_visible)
                 {
                     // if the face of the current color is not pointing towards
                     // the camera, penalize it with a cost base on the angle of
@@ -469,7 +471,7 @@ std::vector<float> PoseDetector::cost_function(
                     int num_pixels =
                         sampled_masks_pixels[camera_idx][col_idx].size();
 
-                    float cost = face_normal_camera_dot_prouct * num_pixels;
+                    float cost = face_normal_camera_dot_product * num_pixels;
                     // std::cout << "cost (invisible): " << cost << std::endl;
 
                     particle_errors[i] += FACE_INVISIBLE_SCALE_FACTOR * cost;
