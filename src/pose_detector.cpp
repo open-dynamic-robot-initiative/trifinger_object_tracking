@@ -603,6 +603,102 @@ void PoseDetector::initialise_pos_cams_w_frame()
     }
 }
 
+void pose2position_and_orientation(const arma::vec &pose,
+                                   cv::Vec3f *position,
+                                   cv::Vec3f *orientation)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        (*position)(i) = pose(i);
+        (*orientation)(i) = pose(3 + i);
+    }
+}
+
+arma::vec position_and_orientation2pose(const cv::Vec3f &position,
+                                        const cv::Vec3f &orientation)
+{
+    arma::vec pose(6);
+    for (int i = 0; i < 3; i++)
+    {
+        pose(i) = position(i);
+        pose(3 + i) = orientation(i);
+    }
+
+    return pose;
+}
+
+void PoseDetector::optimize_using_optim(
+    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+    const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
+{
+    ScopedTimer timer("PoseDetector/optim");
+
+    // FIXME this is probably static and should be done in c'tor
+    initialise_pos_cams_w_frame();
+    // extract pixels from the masks
+    std::array<std::vector<cv::Mat>, N_CAMERAS> contour_masks;
+    // per camera per mask the pixels of that mask
+    std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS> masks_pixels;
+    for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
+    {
+        for (const cv::Mat &mask : masks[camera_idx])
+        {
+            // create contour masks
+            cv::Mat eroded_mask, contour_mask;
+            int radius = 1;
+            static const cv::Mat kernel = cv::getStructuringElement(
+                cv::MORPH_ELLIPSE, cv::Size(2 * radius + 1, 2 * radius + 1));
+            cv::erode(mask, eroded_mask, kernel);
+            cv::bitwise_xor(mask, eroded_mask, contour_mask);
+
+            // cv::imshow("mask", mask);
+            // cv::imshow("contour_mask", contour_mask);
+            // cv::waitKey(0);
+
+            std::vector<cv::Point> pixels;
+            // cv::findNonZero(mask, pixels);
+            cv::findNonZero(mask, pixels);
+            masks_pixels[camera_idx].push_back(pixels);
+        }
+    }
+
+    optim::algo_settings_t settings;
+    settings.de_settings.n_gen = 50;
+    settings.de_settings.n_pop = 40;
+    settings.de_settings.n_pop_best = 1;
+    settings.de_settings.mutation_method = 2;
+
+    arma::vec lower_bound = position_and_orientation2pose(
+        position_.lower_bound, orientation_.lower_bound);
+    arma::vec upper_bound = position_and_orientation2pose(
+        position_.upper_bound, orientation_.upper_bound);
+
+    arma::vec pose = (lower_bound + upper_bound) / 2.0;
+    bool success = optim::de(
+        pose,
+        [this, &dominant_colors, &masks, &masks_pixels](
+            const arma::vec &pose,
+            arma::vec *grad_out,
+            void *opt_data) -> double {
+            std::vector<cv::Vec3f> position(1);
+            std::vector<cv::Vec3f> orientation(1);
+            pose2position_and_orientation(pose, &position[0], &orientation[0]);
+
+            double cost = this->cost_function(position,
+                                              orientation,
+                                              dominant_colors,
+                                              masks,
+                                              masks_pixels,
+                                              0)[0];
+
+            return cost;
+        },
+        nullptr,
+        settings);
+
+    pose2position_and_orientation(pose, &position_.mean, &orientation_.mean);
+}
+
 void PoseDetector::cross_entropy_method(
     const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
     const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
@@ -790,7 +886,7 @@ Pose PoseDetector::find_pose(
     lines_ = lines;
 
     // calculates mean_position and mean_orientation
-    cross_entropy_method(dominant_colors, masks);
+    optimize_using_optim(dominant_colors, masks);
 
     // if cost is too bad, run it again
     // if (best_cost_ > 50)

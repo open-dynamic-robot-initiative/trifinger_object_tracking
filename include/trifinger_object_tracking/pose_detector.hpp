@@ -6,6 +6,9 @@
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/types.hpp>
 
+#define OPTIM_ENABLE_ARMA_WRAPPERS
+#include <optim/optim.hpp>
+
 namespace trifinger_object_tracking
 {
 struct Stats
@@ -102,6 +105,10 @@ private:
     cv::Vec3f best_position_, best_orientation_;
     float best_cost_;
     std::vector<cv::Mat> pos_cams_w_frame_;
+
+    void optimize_using_optim(
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
 
     void cross_entropy_method(
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
