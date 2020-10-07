@@ -42,14 +42,20 @@ PoseDetector::PoseDetector(const CubeModel &cube_model,
     // unfortunately, there is no real const cv::Mat, so we cannot wrap it
     // around the const array but need to copy the data
     corners_at_origin_in_world_frame_ = cv::Mat(8, 4, CV_32F);
+    //std::memcpy(corners_at_origin_in_world_frame_.data,
+    //            cube_model_.corners_at_origin_in_world_frame,
+    //            corners_at_origin_in_world_frame_.total() * sizeof(float));
     std::memcpy(corners_at_origin_in_world_frame_.data,
-                cube_model_.corners_at_origin_in_world_frame,
+                cube_model_.cube_corners,
                 corners_at_origin_in_world_frame_.total() * sizeof(float));
+    // transform from cube frame to world frame
+    corners_at_origin_in_world_frame_.col(2) += CubeModel::HALF_WIDTH;
 
-    reference_vector_normals_ = cv::Mat(3, 6, CV_32F);
+    reference_vector_normals_ = cv::Mat(6, 3, CV_32F);
     std::memcpy(reference_vector_normals_.data,
                 cube_model_.face_normal_vectors,
                 reference_vector_normals_.total() * sizeof(float));
+    reference_vector_normals_ = reference_vector_normals_.t();
 
     // Setting the bounds for pose estimation
     position_.lower_bound = cv::Vec3f(-0.25, -0.25, 0);
@@ -253,7 +259,7 @@ cv::Mat PoseDetector::_get_face_normals_cost(
             {
                 float angle = 0;
                 const int normal_vector_index =
-                    cube_model_.map_color_to_normal_index[color];
+                    cube_model_.map_color_to_face[color];
 
                 // FIXME this is not exactly correct.  see get_visible_faces()
                 cv::Vec3f v_a = face_normal_vectors[j].col(normal_vector_index);
@@ -485,15 +491,20 @@ std::vector<float> PoseDetector::cost_function__(
         cv::Mat imgpoints_reshaped = projected_points[i];
         for (auto &line_it : lines_[i])
         {
-            auto points_lying = cube_model_.object_model_.at(line_it.first);
+            std::pair<FaceColor, FaceColor> color_pair = line_it.first;
+            std::pair<CubeFace, CubeFace> face_pair = std::make_pair(
+                cube_model_.map_color_to_face[color_pair.first],
+                cube_model_.map_color_to_face[color_pair.second]
+            );
+            CubeModel::Edge points_lying = cube_model_.edges.at(face_pair);
             Line line = line_it.second;
 
             cv::Mat points_on_edge(
                 number_of_particles, 2, CV_32FC2, cv::Scalar(0, 0));
 
-            imgpoints_reshaped.col(points_lying.first)
+            imgpoints_reshaped.col(points_lying.c1)
                 .copyTo(points_on_edge.col(0));
-            imgpoints_reshaped.col(points_lying.second)
+            imgpoints_reshaped.col(points_lying.c2)
                 .copyTo(points_on_edge.col(1));
             cv::Mat distance;  // 2Nx1
             cv::Mat ch1, ch2;
@@ -725,6 +736,7 @@ std::vector<std::vector<cv::Point2f>> PoseDetector::get_projected_points() const
 
     cv::Mat pose = getPoseMatrix(orientation_.mean, position_.mean);
 
+    // FIXME store differently to avoid transposing here
     cv::Mat proposed_new_cube_pts_w =
         pose * corners_at_origin_in_world_frame_.t();
     proposed_new_cube_pts_w = proposed_new_cube_pts_w.t();  // 8x4
@@ -777,7 +789,7 @@ bool PoseDetector::is_face_visible(FaceColor color,
                            corners_at_origin_in_world_frame_.t();
 
     // get the normal vector of that face
-    int normal_idx = cube_model_.map_color_to_normal_index[color];
+    int normal_idx = cube_model_.map_color_to_face[color];
     cv::Vec3f face_normal = face_normal_vectors.col(normal_idx);
 
     auto corner_indices = cube_model_.get_face_corner_indices(color);

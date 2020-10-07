@@ -525,11 +525,17 @@ LineDetector::make_valid_combinations() const
     {
         for (auto it2 = it + 1; it2 != dominant_colors_.end(); it2++)
         {
-            auto p = std::make_pair(*it, *it2);
-            auto idx = cube_model_.object_model_.find(p);
-            if (idx != cube_model_.object_model_.end())
+            auto color_pair = std::make_pair(*it, *it2);
+            auto face_pair = std::make_pair(
+                cube_model_.map_color_to_face[color_pair.first],
+                cube_model_.map_color_to_face[color_pair.second]
+            );
+
+            // check if the given combination is a valid edge
+            auto idx = cube_model_.edges.find(face_pair);
+            if (idx != cube_model_.edges.end())
             {
-                color_pairs.push_back(p);
+                color_pairs.push_back(color_pair);
             }
         }
     }

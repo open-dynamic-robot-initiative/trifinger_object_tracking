@@ -86,11 +86,11 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
         else
         {
             // draw all the cube edges in the image
-            for (auto &it : cube_model_.object_model_)
+            for (auto &it : cube_model_.edges)
             {
                 cv::line(image,
-                         imgpoints[it.second.first],
-                         imgpoints[it.second.second],
+                         imgpoints[it.second.c1],
+                         imgpoints[it.second.c2],
                          cv::Scalar(100, 50, 0),
                          2);
             }
