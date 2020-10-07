@@ -49,22 +49,15 @@ public:
     static constexpr float WIDTH = 0.0652;
     static constexpr float HALF_WIDTH = WIDTH / 2.0;
 
-    //static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {
-    //    CubeFace::FACE_1,  // RED
-    //    CubeFace::FACE_2,  // GREEN
-    //    CubeFace::FACE_0,  // BLUE
-    //    CubeFace::FACE_5,  // CYAN
-    //    CubeFace::FACE_4,  // MAGENTA
-    //    CubeFace::FACE_3   // YELLOW
-    //};
-
+    // Colour mapping of cube v1.  Red, green, blue faces are pointing in x, y,
+    // z directions.
     static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {
-        CubeFace::FACE_5,  // RED
-        CubeFace::FACE_3,  // GREEN
-        CubeFace::FACE_2,  // BLUE
-        CubeFace::FACE_4,  // CYAN
-        CubeFace::FACE_1,  // MAGENTA
-        CubeFace::FACE_0   // YELLOW
+        CubeFace::FACE_1,  // RED
+        CubeFace::FACE_2,  // GREEN
+        CubeFace::FACE_0,  // BLUE
+        CubeFace::FACE_5,  // CYAN
+        CubeFace::FACE_4,  // MAGENTA
+        CubeFace::FACE_3   // YELLOW
     };
 
     // TODO make this nice and const
