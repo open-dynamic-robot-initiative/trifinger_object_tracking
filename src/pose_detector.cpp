@@ -77,7 +77,7 @@ cv::Vec3f PoseDetector::power(cv::Vec3f p, float n)
 
 std::vector<cv::Vec3f> PoseDetector::random_normal(
     cv::Vec3f mean,
-    cv::Vec3f var,  // todo: this should be called std, not var
+    cv::Vec3f var,  // TODO: this should be called std, not var
     int rows,
     int cols,
     std::string clip_for)
@@ -360,7 +360,7 @@ std::vector<float> PoseDetector::cost_function(
     int number_of_particles = proposed_translation.size();
     ////////////////////////////////////////////////////////////////////////
     // todo: what is the best value here?
-    constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-1;
+    constexpr float PIXEL_DIST_SCALE_FACTOR = 5 * 1e-2;
     constexpr float FACE_INVISIBLE_SCALE_FACTOR = 1.0;
     std::vector<float> particle_errors(number_of_particles, 0.0);
     for (int i = 0; i < number_of_particles; i++)
@@ -771,7 +771,7 @@ void PoseDetector::cross_entropy_method(
                                      3,
                                      "orientation");
         }
-        // todo: the masks are not downsampled internally anymore, so we would
+        // TODO: the masks are not downsampled internally anymore, so we would
         // probably have to downsample here
         costs =
             cost_function(sample_p, sample_o, dominant_colors, masks_pixels, i);
