@@ -54,9 +54,9 @@ void LineDetector::load_segmentation_models(const std::string &model_directory)
         trifinger_object_tracking::load_gmm_models_from_file(model_file);
 }
 
-ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
+void LineDetector::detect_colors(const cv::Mat &image_bgr)
 {
-    ScopedTimer timer("LineDetector/detect_lines");
+    ScopedTimer timer("LineDetector/detect_colors");
 
     // TODO better solution than class members for images
 
@@ -65,13 +65,18 @@ ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
 
     cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
 
-    lines_.clear();
-
-    // gmm_mask();
     xgboost_mask();
     find_dominant_colors(3);
-    deflate_masks_of_dominant_colors();
+}
 
+ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
+{
+    ScopedTimer timer("LineDetector/detect_lines");
+
+    detect_colors(image_bgr);
+
+    lines_.clear();
+    deflate_masks_of_dominant_colors();
     for (auto [color1, color2] : make_valid_combinations())
     {
         get_line_between_colors(color1, color2);
