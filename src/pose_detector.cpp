@@ -339,7 +339,7 @@ std::vector<float> PoseDetector::cost_function(
     //}
 
     constexpr int REDUCED_SAMPLES_STEPS = 0;
-    constexpr unsigned int MAX_NUM_SAMPLED_PIXELS = 20;
+    constexpr unsigned int MAX_NUM_SAMPLED_PIXELS = 15;
 
     // per camera per mask the pixels of that mask
     std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS>
@@ -476,7 +476,7 @@ std::vector<float> PoseDetector::cost_function(
 
                     particle_errors[i] += cost;
                 }
-                if (!face_is_visible)
+                if (false && !face_is_visible)
                 {
                     // if the face of the current color is not pointing towards
                     // the camera, penalize it with a cost base on the angle of
