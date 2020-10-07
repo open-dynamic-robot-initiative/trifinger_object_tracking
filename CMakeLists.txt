@@ -11,7 +11,7 @@ string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors")
 string(APPEND CMAKE_CXX_FLAGS_RELEASE " -O3")
 
 # Specify for which cube version to build the object tracker
-set(CUBE_VERSION 1)
+set(CUBE_VERSION 2)
 
 find_package(catkin REQUIRED COMPONENTS
     mpi_cmake_modules

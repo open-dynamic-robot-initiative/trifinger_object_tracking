@@ -49,6 +49,7 @@ public:
     static constexpr float WIDTH = 0.0652;
     static constexpr float HALF_WIDTH = WIDTH / 2.0;
 
+#if CUBE_VERSION == 1
     // Colour mapping of cube v1.  Red, green, blue faces are pointing in x, y,
     // z directions.
     static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {
@@ -59,6 +60,18 @@ public:
         CubeFace::FACE_4,  // MAGENTA
         CubeFace::FACE_3   // YELLOW
     };
+#elif CUBE_VERSION == 2
+    // Colour mapping of cube v2.  Red, green, blue faces are pointing in x, y,
+    // z directions.
+    static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {
+        CubeFace::FACE_1,  // RED
+        CubeFace::FACE_2,  // GREEN
+        CubeFace::FACE_0,  // BLUE
+        CubeFace::FACE_5,  // CYAN
+        CubeFace::FACE_3,  // MAGENTA
+        CubeFace::FACE_4   // YELLOW
+    };
+#endif
 
     // TODO make this nice and const
     std::map<std::pair<CubeFace, CubeFace>, Edge> edges;
