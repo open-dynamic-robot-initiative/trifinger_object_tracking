@@ -283,9 +283,7 @@ std::vector<float> PoseDetector::cost_function(
     const std::vector<cv::Vec3f> &proposed_translation,
     const std::vector<cv::Vec3f> &proposed_orientation,
     const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
-    const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks,
-    const std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS>
-        &masks_pixels,
+    const MasksPixels &masks_pixels,
     unsigned int iteration)
 {
     // ScopedTimer timer("PoseDetector/cost_function");
@@ -346,22 +344,14 @@ std::vector<float> PoseDetector::cost_function(
         sampled_masks_pixels;
     for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
     {
-        for (size_t col_idx = 0; col_idx < masks[camera_idx].size(); col_idx++)
+            for (size_t col_idx = 0; col_idx < masks_pixels[camera_idx].size();
+                 col_idx++)
         {
-            unsigned int num_samples = MAX_NUM_SAMPLED_PIXELS;
-            // FIXME use something more robust to parameter changes
-            if (iteration < REDUCED_SAMPLES_STEPS)
-            {
-                unsigned int step =
-                    MAX_NUM_SAMPLED_PIXELS / REDUCED_SAMPLES_STEPS - 1;
-                num_samples -= (REDUCED_SAMPLES_STEPS - iteration) * step;
-            }
-
-            std::vector<cv::Point> sampled_pixels(num_samples);
+                std::vector<cv::Point> sampled_pixels(MAX_NUM_SAMPLED_PIXELS);
             std::sample(masks_pixels[camera_idx][col_idx].begin(),
                         masks_pixels[camera_idx][col_idx].end(),
                         sampled_pixels.begin(),
-                        num_samples,
+                            MAX_NUM_SAMPLED_PIXELS,
                         std::mt19937{std::random_device{}()});
 
             sampled_masks_pixels[camera_idx].push_back(sampled_pixels);
@@ -687,7 +677,6 @@ void PoseDetector::optimize_using_optim(
             double cost = this->cost_function(position,
                                               orientation,
                                               dominant_colors,
-                                              masks,
                                               masks_pixels,
                                               0)[0];
 
@@ -783,7 +772,7 @@ void PoseDetector::cross_entropy_method(
                                      "orientation");
         }
         costs = cost_function(
-            sample_p, sample_o, dominant_colors, masks, masks_pixels, i);
+            sample_p, sample_o, dominant_colors, masks_pixels, i);
 
         std::vector<float> sorted_costs = costs;
         sort(sorted_costs.begin(), sorted_costs.end());

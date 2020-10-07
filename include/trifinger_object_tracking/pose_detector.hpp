@@ -88,6 +88,10 @@ public:
     get_visible_faces(unsigned int camera_idx) const;
 
 private:
+    typedef std::array<std::vector<std::vector<cv::Point>>,
+                       PoseDetector::N_CAMERAS>
+        MasksPixels;
+
     CubeModel cube_model_;
     std::array<ColorEdgeLineList, N_CAMERAS> lines_;
 
@@ -118,9 +122,7 @@ private:
         const std::vector<cv::Vec3f> &tvecs,
         const std::vector<cv::Vec3f> &rvecs,
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
-        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks,
-        const std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS>
-            &masks_pixels,
+        const MasksPixels &masks_pixels,
         unsigned int iteration);
 
     std::vector<float> cost_function__(
