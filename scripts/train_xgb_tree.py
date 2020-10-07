@@ -67,7 +67,7 @@ def create_channels(image_bgr):
 
 def create_features(*, image_bgr, flatten=False):
 
-    # image_bgr = cv.medianBlur(image_bgr, 7)
+    image_bgr = cv.medianBlur(image_bgr, 7)
     channels = create_channels(image_bgr=image_bgr)
 
     if flatten:
