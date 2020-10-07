@@ -18,10 +18,10 @@ public:
     {
 #ifndef DISABLE_SCOPED_TIMER
         auto end_time = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
             end_time - start_time_);
 
-        std::cout << "Duration " << name_ << ": " << duration.count() << " ms."
+        std::cout << "Duration " << name_ << ": " << duration.count() / 1000000. << " ms."
                   << std::endl;
 #endif
     }

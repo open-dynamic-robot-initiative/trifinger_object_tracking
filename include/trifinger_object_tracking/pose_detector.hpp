@@ -1,13 +1,13 @@
 #pragma once
 #include <Eigen/Geometry>
-
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/opencv.hpp>
-
 #include <trifinger_cameras/camera_parameters.hpp>
-
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/types.hpp>
+
+#define OPTIM_ENABLE_ARMA_WRAPPERS
+#include <optim/optim.hpp>
 
 namespace trifinger_object_tracking
 {
@@ -39,6 +39,18 @@ public:
 
     // TODO which points are projected?
     std::vector<std::vector<cv::Point2f>> get_projected_points() const;
+
+    bool compute_color_visibility(
+        const FaceColor &color,
+        const cv::Mat &face_normals,
+        const cv::Mat &cube_corners,
+        bool *is_visible,
+        float *face_normal_dot_camera_direction) const;
+
+    bool compute_face_normals_and_corners(const unsigned int camera_idx,
+                                          const cv::Affine3f &cube_pose_world,
+                                          cv::Mat *normals,
+                                          cv::Mat *corners) const;
 
     bool is_face_visible(FaceColor color,
                          unsigned int camera_idx,
@@ -75,6 +87,10 @@ public:
     std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
     get_visible_faces(unsigned int camera_idx) const;
 
+    typedef std::array<std::vector<std::vector<cv::Point>>,
+                       PoseDetector::N_CAMERAS>
+        MasksPixels;
+
 private:
     CubeModel cube_model_;
     std::array<ColorEdgeLineList, N_CAMERAS> lines_;
@@ -94,6 +110,10 @@ private:
     float best_cost_;
     std::vector<cv::Mat> pos_cams_w_frame_;
 
+    void optimize_using_optim(
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
+
     void cross_entropy_method(
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
         const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
@@ -102,9 +122,7 @@ private:
         const std::vector<cv::Vec3f> &tvecs,
         const std::vector<cv::Vec3f> &rvecs,
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
-        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks,
-        const std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS>
-            &masks_pixels,
+        const MasksPixels &masks_pixels,
         unsigned int iteration);
 
     std::vector<float> cost_function__(
