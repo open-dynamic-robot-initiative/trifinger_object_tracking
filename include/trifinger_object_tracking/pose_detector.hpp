@@ -107,12 +107,6 @@ private:
             &masks_pixels,
         unsigned int iteration);
 
-    std::vector<float> cost_function__(
-        const std::vector<cv::Vec3f> &tvecs,
-        const std::vector<cv::Vec3f> &rvecs,
-        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
-        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
-
     std::vector<cv::Vec3f> random_normal(
         cv::Vec3f, cv::Vec3f, int rows, int cols, std::string bounds_for = "");
 
