@@ -87,11 +87,11 @@ public:
     std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
     get_visible_faces(unsigned int camera_idx) const;
 
-private:
     typedef std::array<std::vector<std::vector<cv::Point>>,
                        PoseDetector::N_CAMERAS>
         MasksPixels;
 
+private:
     CubeModel cube_model_;
     std::array<ColorEdgeLineList, N_CAMERAS> lines_;
 

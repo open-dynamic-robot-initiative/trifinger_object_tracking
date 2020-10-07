@@ -279,6 +279,30 @@ cv::Mat PoseDetector::_get_face_normals_cost(
     return error;
 }
 
+PoseDetector::MasksPixels sample_masks_pixels(
+    const PoseDetector::MasksPixels &masks_pixels,
+    const unsigned int &num_samples_per_mask)
+{
+    PoseDetector::MasksPixels sampled_masks_pixels;
+    for (int camera_idx = 0; camera_idx < PoseDetector::N_CAMERAS; camera_idx++)
+    {
+        for (size_t col_idx = 0; col_idx < masks_pixels[camera_idx].size();
+             col_idx++)
+        {
+            std::vector<cv::Point> sampled_pixels(num_samples_per_mask);
+            std::sample(masks_pixels[camera_idx][col_idx].begin(),
+                        masks_pixels[camera_idx][col_idx].end(),
+                        sampled_pixels.begin(),
+                        num_samples_per_mask,
+                        std::mt19937{std::random_device{}()});
+
+            sampled_masks_pixels[camera_idx].push_back(sampled_pixels);
+        }
+    }
+
+    return sampled_masks_pixels;
+}
+
 std::vector<float> PoseDetector::cost_function(
     const std::vector<cv::Vec3f> &proposed_translation,
     const std::vector<cv::Vec3f> &proposed_orientation,
@@ -289,75 +313,6 @@ std::vector<float> PoseDetector::cost_function(
     // ScopedTimer timer("PoseDetector/cost_function");
 
     int number_of_particles = proposed_translation.size();
-
-    // std::vector<cv::Affine3f> poses;
-    // cv::Mat proposed_new_cube_pts_w(
-    //    number_of_particles, 8, CV_32FC3, cv::Scalar(0, 0, 0));
-
-    //// for each particle compute cube corners at the given pose
-    // poses.reserve(number_of_particles);
-    // for (int i = 0; i < number_of_particles; i++)
-    //{
-    //    // initialization of pose
-    //    cv::Affine3f pose_transform =
-    //        cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
-
-    //    poses.push_back(pose_transform);
-    //    cv::Mat new_pt = cv::Mat(pose_transform.matrix) *
-    //                     corners_at_origin_in_world_frame_.t();
-
-    //    new_pt = new_pt.t();  // 8x4
-    //    for (int j = 0; j < new_pt.rows; j++)
-    //    {
-    //        // 8x3
-    //        proposed_new_cube_pts_w.at<cv::Vec3f>(i, j) =
-    //            cv::Vec3f(new_pt.at<float>(j, 0),
-    //                      new_pt.at<float>(j, 1),
-    //                      new_pt.at<float>(j, 2));
-    //    }
-    //}
-
-    // proposed_new_cube_pts_w =
-    //    proposed_new_cube_pts_w.reshape(3, number_of_particles * 8);
-
-    //// project the cube corners of the particles to the images
-    // std::array<cv::Mat, N_CAMERAS> projected_points;
-    // for (int i = 0; i < N_CAMERAS; i++)
-    //{
-    //    // range (r_vecs)
-    //    cv::Mat imgpoints(number_of_particles * 8, 2, CV_32FC1,
-    //    cv::Scalar(0)); cv::projectPoints(proposed_new_cube_pts_w,
-    //                      camera_orientations_[i],
-    //                      camera_translations_[i],
-    //                      camera_matrices_[i],
-    //                      distortion_coeffs_[i],
-    //                      imgpoints);
-
-    //    projected_points[i] = imgpoints.reshape(2, number_of_particles);
-    //}
-
-    constexpr int REDUCED_SAMPLES_STEPS = 0;
-    constexpr unsigned int MAX_NUM_SAMPLED_PIXELS = 15;
-
-    // per camera per mask the pixels of that mask
-    std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS>
-        sampled_masks_pixels;
-    for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
-    {
-            for (size_t col_idx = 0; col_idx < masks_pixels[camera_idx].size();
-                 col_idx++)
-        {
-                std::vector<cv::Point> sampled_pixels(MAX_NUM_SAMPLED_PIXELS);
-            std::sample(masks_pixels[camera_idx][col_idx].begin(),
-                        masks_pixels[camera_idx][col_idx].end(),
-                        sampled_pixels.begin(),
-                            MAX_NUM_SAMPLED_PIXELS,
-                        std::mt19937{std::random_device{}()});
-
-            sampled_masks_pixels[camera_idx].push_back(sampled_pixels);
-        }
-    }
-
     ////////////////////////////////////////////////////////////////////////
     // todo: is this right?
     constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-2;
@@ -365,15 +320,6 @@ std::vector<float> PoseDetector::cost_function(
     std::vector<float> particle_errors(number_of_particles, 0.0);
     for (int i = 0; i < number_of_particles; i++)
     {
-        // FIXME is there a better solution?
-        // Add some fixed value to the cost in the first iterations with
-        // reduced number of pixel samples.  This is because the cost scales
-        // with the number of samples.
-        if (iteration < REDUCED_SAMPLES_STEPS)
-        {
-            particle_errors[i] += 1000;
-        }
-
         cv::Affine3f cube_pose_world =
             cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
 
@@ -450,7 +396,7 @@ std::vector<float> PoseDetector::cost_function(
                     int counter = 0;
                     float cost = 0;
                     for (const cv::Point &pixel :
-                         sampled_masks_pixels[camera_idx][col_idx])
+                         masks_pixels[camera_idx][col_idx])
                     {
                         double dist =
                             cv::pointPolygonTest(corners, pixel, true);
@@ -471,8 +417,7 @@ std::vector<float> PoseDetector::cost_function(
                     // if the face of the current color is not pointing towards
                     // the camera, penalize it with a cost base on the angle of
                     // the face normal to the camera-to-face vector.
-                    int num_pixels =
-                        sampled_masks_pixels[camera_idx][col_idx].size();
+                    int num_pixels = masks_pixels[camera_idx][col_idx].size();
 
                     float cost = face_normal_dot_camera_direction * num_pixels;
                     // std::cout << "cost (invisible): " << cost << std::endl;
@@ -652,6 +597,12 @@ void PoseDetector::optimize_using_optim(
         }
     }
 
+    // downsample mask for computational efficiency
+    // TODO! it would probably be better to sample according to mask size
+    unsigned int num_pixels_per_mask = 15;
+    MasksPixels sampled_masks_pixels =
+        sample_masks_pixels(masks_pixels, num_pixels_per_mask);
+
     optim::algo_settings_t settings;
     settings.de_settings.n_gen = 50;
     settings.de_settings.n_pop = 40;
@@ -666,7 +617,7 @@ void PoseDetector::optimize_using_optim(
     arma::vec pose = (lower_bound + upper_bound) / 2.0;
     bool success = optim::de(
         pose,
-        [this, &dominant_colors, &masks, &masks_pixels](
+        [this, &dominant_colors, &masks, &sampled_masks_pixels](
             const arma::vec &pose,
             arma::vec *grad_out,
             void *opt_data) -> double {
@@ -677,7 +628,7 @@ void PoseDetector::optimize_using_optim(
             double cost = this->cost_function(position,
                                               orientation,
                                               dominant_colors,
-                                              masks_pixels,
+                                              sampled_masks_pixels,
                                               0)[0];
 
             return cost;
@@ -771,8 +722,10 @@ void PoseDetector::cross_entropy_method(
                                      3,
                                      "orientation");
         }
-        costs = cost_function(
-            sample_p, sample_o, dominant_colors, masks_pixels, i);
+        // todo: the masks are not downsampled internally anymore, so we would
+        // probably have to downsample here
+        costs =
+            cost_function(sample_p, sample_o, dominant_colors, masks_pixels, i);
 
         std::vector<float> sorted_costs = costs;
         sort(sorted_costs.begin(), sorted_costs.end());
