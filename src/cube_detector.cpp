@@ -27,7 +27,7 @@ Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
     {
         threads[i] = std::thread(
             [this, &dominant_colors, &masks](int i, const cv::Mat &image) {
-                line_detectors_[i].detect_lines(image);
+                line_detectors_[i].detect_colors(image);
 
                 dominant_colors[i] = line_detectors_[i].get_dominant_colors();
                 for (FaceColor color : dominant_colors[i])
@@ -53,7 +53,7 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
 {
     cv::Mat image0 = line_detectors_[0].get_image();
     trifinger_object_tracking::CvSubImages subplot(
-        cv::Size(image0.cols, image0.rows), 3, 5);
+        cv::Size(image0.cols, image0.rows), 3, 3);
 
     auto projected_cube_corners = pose_detector_.get_projected_points();
     for (int i = 0; i < N_CAMERAS; i++)
@@ -61,8 +61,6 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
         cv::Mat image = line_detectors_[i].get_image();
         subplot.set_subimg(image, i, 0);
         subplot.set_subimg(line_detectors_[i].get_segmented_image(), i, 1);
-        subplot.set_subimg(line_detectors_[i].get_front_line_image(), i, 2);
-        subplot.set_subimg(line_detectors_[i].get_image_lines(), i, 3);
 
         std::vector<cv::Point2f> imgpoints = projected_cube_corners[i];
 
@@ -110,7 +108,7 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
             }
         }
 
-        subplot.set_subimg(image, i, 4);
+        subplot.set_subimg(image, i, 2);
     }
 
     return subplot.get_image();
