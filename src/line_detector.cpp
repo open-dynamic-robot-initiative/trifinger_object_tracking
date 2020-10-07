@@ -359,6 +359,8 @@ void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
 {
     ScopedTimer timer("LineDetector/find_dominant_colors");
 
+    // TODO this method can probably be optimized
+
     struct cmp
     {  // Declaring a set that will store the std::pairs using the comparator
        // logic
@@ -374,41 +376,13 @@ void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
     // N dominant colors
     std::map<FaceColor, int> color_count_copy(color_count_);
 
-    int contains_blue = 0;
-    int contains_cyan = 0;
-
     for (auto &i : color_count_copy)
     {
+        // FIXME magic number
         if (i.second > 100)
         {
-            if (i.first == FaceColor::BLUE)
-            {
-                contains_blue = 1;
-            }
-            if (i.first == FaceColor::CYAN)
-            {
-                contains_cyan = 1;
-            }
-
-            if (contains_blue == 1 && contains_cyan == 1)
-            {
-                if (color_count_[FaceColor::BLUE] >
-                    color_count_[FaceColor::CYAN])
-                {
-                    color_count_.erase(FaceColor::CYAN);
-                    contains_cyan = 0;
-                }
-                else
-                {
-                    color_count_.erase(FaceColor::BLUE);
-                    contains_blue = 0;
-                }
-            }
-            else
-            {
-                auto c = std::make_pair(i.first, i.second);
-                dominant_color_count_set.insert(c);
-            }
+            auto c = std::make_pair(i.first, i.second);
+            dominant_color_count_set.insert(c);
         }
         else
         {
