@@ -10,6 +10,9 @@ string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors")
 
 string(APPEND CMAKE_CXX_FLAGS_RELEASE " -O3")
 
+# Specify for which cube version to build the object tracker
+set(CUBE_VERSION 2)
+
 find_package(catkin REQUIRED COMPONENTS
     mpi_cmake_modules
     pybind11_catkin
@@ -65,6 +68,16 @@ include_directories(
 )
 
 
+add_definitions(-DCUBE_VERSION=${CUBE_VERSION})
+if (${CUBE_VERSION} EQUAL 1)
+    set(cube_model_dir src/cube_v1/)
+elseif(${CUBE_VERSION} EQUAL 2)
+    set(cube_model_dir src/cube_v2/)
+else()
+    message(FATAL_ERROR "Invalid CUBE_VERSION '${CUBE_VERSION}'")
+endif()
+
+
 add_library(cv_sub_images src/cv_sub_images.cpp)
 target_link_libraries(cv_sub_images ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
@@ -76,7 +89,7 @@ add_library(cube_detector
     src/utils.cpp
     src/cube_model.cpp
     src/gmm_params.cpp
-    src/xgboost_classifier.cpp
+    ${cube_model_dir}/xgboost_classifier.cpp
 )
 target_link_libraries(cube_detector
     ${catkin_LIBRARIES}

@@ -58,8 +58,11 @@ ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
 {
     ScopedTimer timer("LineDetector/detect_lines");
 
-    // TODO better solution than class members
-    image_bgr_ = image_bgr;
+    // TODO better solution than class members for images
+
+    // blur the image to make colour classification easier
+    cv::medianBlur(image_bgr, image_bgr_, 7);
+
     cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
 
     lines_.clear();
@@ -359,6 +362,8 @@ void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
 {
     ScopedTimer timer("LineDetector/find_dominant_colors");
 
+    // TODO this method can probably be optimized
+
     struct cmp
     {  // Declaring a set that will store the std::pairs using the comparator
        // logic
@@ -374,41 +379,13 @@ void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
     // N dominant colors
     std::map<FaceColor, int> color_count_copy(color_count_);
 
-    int contains_blue = 0;
-    int contains_cyan = 0;
-
     for (auto &i : color_count_copy)
     {
+        // FIXME magic number
         if (i.second > 100)
         {
-            if (i.first == FaceColor::BLUE)
-            {
-                contains_blue = 1;
-            }
-            if (i.first == FaceColor::CYAN)
-            {
-                contains_cyan = 1;
-            }
-
-            if (contains_blue == 1 && contains_cyan == 1)
-            {
-                if (color_count_[FaceColor::BLUE] >
-                    color_count_[FaceColor::CYAN])
-                {
-                    color_count_.erase(FaceColor::CYAN);
-                    contains_cyan = 0;
-                }
-                else
-                {
-                    color_count_.erase(FaceColor::BLUE);
-                    contains_blue = 0;
-                }
-            }
-            else
-            {
-                auto c = std::make_pair(i.first, i.second);
-                dominant_color_count_set.insert(c);
-            }
+            auto c = std::make_pair(i.first, i.second);
+            dominant_color_count_set.insert(c);
         }
         else
         {
@@ -525,11 +502,17 @@ LineDetector::make_valid_combinations() const
     {
         for (auto it2 = it + 1; it2 != dominant_colors_.end(); it2++)
         {
-            auto p = std::make_pair(*it, *it2);
-            auto idx = cube_model_.object_model_.find(p);
-            if (idx != cube_model_.object_model_.end())
+            auto color_pair = std::make_pair(*it, *it2);
+            auto face_pair = std::make_pair(
+                cube_model_.map_color_to_face[color_pair.first],
+                cube_model_.map_color_to_face[color_pair.second]
+            );
+
+            // check if the given combination is a valid edge
+            auto idx = cube_model_.edges.find(face_pair);
+            if (idx != cube_model_.edges.end())
             {
-                color_pairs.push_back(p);
+                color_pairs.push_back(color_pair);
             }
         }
     }

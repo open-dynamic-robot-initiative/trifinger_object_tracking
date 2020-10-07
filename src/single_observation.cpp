@@ -69,18 +69,31 @@ int main(int argc, char **argv)
     bool success;
     success = trifinger_cameras::readCalibrationYml(
         data_dir + "/../camera_calib_60.yml", camera_name, camera_params[0]);
-    assert(success && camera_name == "camera60");
+    if (!success || camera_name != "camera60")
+    {
+        throw std::runtime_error("Failed to load parameters of camera60 ");
+    }
+
     success = trifinger_cameras::readCalibrationYml(
         data_dir + "/../camera_calib_180.yml", camera_name, camera_params[1]);
-    assert(success && camera_name == "camera180");
+    if (!success || camera_name != "camera180")
+    {
+        throw std::runtime_error("Failed to load parameters of camera60");
+    }
+
     success = trifinger_cameras::readCalibrationYml(
         data_dir + "/../camera_calib_300.yml", camera_name, camera_params[2]);
-    assert(success && camera_name == "camera300");
+    if (!success || camera_name != "camera300")
+    {
+        throw std::runtime_error("Failed to load parameters of camera60");
+    }
 
     trifinger_object_tracking::CubeDetector cube_detector(model_directory,
                                                           camera_params);
 
-    cube_detector.detect_cube(frames);
+    trifinger_object_tracking::Pose pose = cube_detector.detect_cube(frames);
+
+    std::cout << "Cube Position: " << pose.translation << std::endl;
 
 #ifdef VISUALIZE
     cv::Mat debug_img = cube_detector.create_debug_image(false);
