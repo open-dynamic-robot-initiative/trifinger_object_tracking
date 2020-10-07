@@ -58,8 +58,11 @@ ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
 {
     ScopedTimer timer("LineDetector/detect_lines");
 
-    // TODO better solution than class members
-    image_bgr_ = image_bgr;
+    // TODO better solution than class members for images
+
+    // blur the image to make colour classification easier
+    cv::medianBlur(image_bgr, image_bgr_, 7);
+
     cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
 
     lines_.clear();
