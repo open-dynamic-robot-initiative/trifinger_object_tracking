@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-#define DISABLE_SCOPED_TIMER
+// #define DISABLE_SCOPED_TIMER
 
 class ScopedTimer
 {

@@ -42,7 +42,9 @@ public:
 
     //! Column-wise face normal vectors
     const float face_normal_vectors[3][6] = {
-        {0, 0, 1, -1, 0, 0}, {0, 0, 0, 0, 1, -1}, {1, -1, 0, 0, 0, 0}};
+        {0, 0, 1, -1, 0, 0},
+        {0, 0, 0, 0, 1, -1},
+        {1, -1, 0, 0, 0, 0}};
 
     // TODO: find a good way to make this const
     std::array<int, FaceColor::N_COLORS> map_color_to_normal_index;
@@ -131,6 +133,30 @@ public:
                 return {90, 255, 255};
             case FaceColor::MAGENTA:
                 return {150, 255, 255};
+            case FaceColor::N_COLORS:
+            default:
+                throw std::invalid_argument(
+                    "N_COLORS does not refer to actual color");
+        }
+    }
+
+    //! Maps each color to the indices of the corresponding cube corners.
+    static std::array<unsigned int, 4> get_face_corner_indices(FaceColor color)
+    {
+        switch (color)
+        {
+            case FaceColor::RED:
+                return {4, 5, 7, 6};
+            case FaceColor::GREEN:
+                return {1, 3, 7, 5};
+            case FaceColor::BLUE:
+                return {2, 3, 7, 6};
+            case FaceColor::YELLOW:
+                return {0, 1, 3, 2};
+            case FaceColor::CYAN:
+                return {0, 1, 5, 4};
+            case FaceColor::MAGENTA:
+                return {0, 2, 6, 4};
             case FaceColor::N_COLORS:
             default:
                 throw std::invalid_argument(

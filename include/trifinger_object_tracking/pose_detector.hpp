@@ -32,10 +32,48 @@ public:
                  const std::array<trifinger_cameras::CameraParameters,
                                   N_CAMERAS> &camera_parameters);
 
-    Pose find_pose(const std::array<ColorEdgeLineList, N_CAMERAS> &lines);
+    Pose find_pose(
+        const std::array<ColorEdgeLineList, N_CAMERAS> &lines,
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
 
     // TODO which points are projected?
     std::vector<std::vector<cv::Point2f>> get_projected_points() const;
+
+    bool is_face_visible(FaceColor color,
+                         unsigned int camera_idx,
+                         const cv::Affine3f &cube_pose_world,
+                         float *out_dot_product = nullptr) const;
+
+    /**
+     * @brief Get corner indices of the visible faces.
+     *
+     * Determines which faces of the object is visible to the camera and returns
+     * the corner indices of these faces.
+     *
+     * @param camera_idx Index of the camera.
+     * @param cube_pose_world Pose of the cube in the world frame.
+     *
+     * @return For each visible face a pair of the face color and the list of
+     *     the corner indices of the four corners of that face.
+     */
+    std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
+    get_visible_faces(unsigned int camera_idx,
+                      const cv::Affine3f &cube_pose_world) const;
+
+    /**
+     * @brief Get corner indices of the visible faces.
+     *
+     * Overloaded version that used the last detected pose for the cube.
+     * Call find_pose() first, otherwise the result is undefined!
+     *
+     * @param camera_idx Index of the camera.
+     *
+     * @return For each visible face a pair of the face color and the list of
+     *     the corner indices of the four corners of that face.
+     */
+    std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
+    get_visible_faces(unsigned int camera_idx) const;
 
 private:
     CubeModel cube_model_;
@@ -56,10 +94,24 @@ private:
     float best_cost_;
     std::vector<cv::Mat> pos_cams_w_frame_;
 
-    void cross_entropy_method();
+    void cross_entropy_method(
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
 
-    std::vector<float> cost_function(const std::vector<cv::Vec3f> &tvecs,
-                                     const std::vector<cv::Vec3f> &rvecs);
+    std::vector<float> cost_function(
+        const std::vector<cv::Vec3f> &tvecs,
+        const std::vector<cv::Vec3f> &rvecs,
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks,
+        const std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS>
+            &masks_pixels,
+        unsigned int iteration);
+
+    std::vector<float> cost_function__(
+        const std::vector<cv::Vec3f> &tvecs,
+        const std::vector<cv::Vec3f> &rvecs,
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
 
     std::vector<cv::Vec3f> random_normal(
         cv::Vec3f, cv::Vec3f, int rows, int cols, std::string bounds_for = "");
@@ -78,7 +130,8 @@ private:
     cv::Vec3f var(const std::vector<cv::Vec3f> &);
 
     cv::Mat _get_face_normals_cost(
-        const std::vector<cv::Affine3f> &object_pose_matrices);
+        const std::vector<cv::Affine3f> &object_pose_matrices,
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors);
 
     cv::Mat _cost_of_out_of_bounds_projection(
         const std::array<cv::Mat, N_CAMERAS> &projected_points);

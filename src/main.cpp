@@ -5,11 +5,8 @@
 
 #include <trifinger_cameras/parse_yml.h>
 
-#include <trifinger_object_tracking/cube_model.hpp>
-#include <trifinger_object_tracking/cv_sub_images.hpp>
-#include <trifinger_object_tracking/line_detector.hpp>
-#include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/utils.hpp>
+#include <trifinger_object_tracking/cube_detector.hpp>
 
 int debug = 1;
 int cols_plot = 5;
@@ -37,9 +34,6 @@ int main(int argc, char **argv)
     cv::VideoCapture cap_300("../data/videos_trifingerone/11/video_300.avi");
 
     // initialize objects
-    trifinger_object_tracking::CubeModel cube_model;
-    trifinger_object_tracking::LineDetector line_detector(cube_model,
-                                                          "../data");
     std::array<trifinger_cameras::CameraParameters, 3> camera_params;
     std::string camera_name;
     bool success;
@@ -59,13 +53,9 @@ int main(int argc, char **argv)
         camera_params[2]);
     assert(success && camera_name == "camera300");
 
-    trifinger_object_tracking::PoseDetector pose(cube_model, camera_params);
-    // start plot
-    trifinger_object_tracking::CvSubImages subplot(cv::Size(720, 540), 3, 5);
-    cv::namedWindow("debug", cv::WINDOW_NORMAL);
-    cv::resizeWindow(
-        "debug", subplot.get_image().cols, subplot.get_image().rows);
-    // end plot
+    trifinger_object_tracking::CubeDetector cube_detector("../data",
+                                                          camera_params);
+
 
     // for saving to a video file
     int frame_width = 1815;
@@ -101,76 +91,12 @@ int main(int argc, char **argv)
         cap_60.read(image60);
         cap_180.read(image180);
         cap_300.read(image300);
-        auto frames = {image60, image180, image300};
-        std::array<trifinger_object_tracking::ColorEdgeLineList, 3> lines;
-        int i = 0;
-        for (const cv::Mat &image : frames)
-        {
-            // FIXME: move this processing to somewhere else!
-            cv::fastNlMeansDenoisingColored(image, image, 10, 10, 7, 21);
-            cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
-            // TODO clone needed?
-            lines[i] = line_detector.detect_lines(image.clone());
 
-            subplot.set_subimg(line_detector.get_image(), i, 0);
-            subplot.set_subimg(line_detector.get_segmented_image(), i, 1);
-            subplot.set_subimg(line_detector.get_front_line_image(), i, 2);
-            subplot.set_subimg(line_detector.get_image_lines(), i, 3);
-
-            i++;
-        }
-
-        pose.find_pose(lines);
+        cube_detector.detect_cube({image60, image180, image300});
 
         std::cout << "Pose detected\n";
 
-        if (debug == 1)
-        {
-            auto projected_cube_corners = pose.get_projected_points();
-            cv::Mat poseimg = image60.clone();
-            std::vector<cv::Point2f> imgpoints = projected_cube_corners[0];
-            // draw the cube edges in the image
-            for (auto &it : cube_model.object_model_)
-            {
-                cv::Point p1, p2;
-                p1.x = imgpoints[it.second.first].x;
-                p1.y = imgpoints[it.second.first].y;
-                p2.x = imgpoints[it.second.second].x;
-                p2.y = imgpoints[it.second.second].y;
-                cv::line(poseimg, p1, p2, cv::Scalar(255, 100, 0), 2);
-            }
-            subplot.set_subimg(poseimg, 0, 4);
-            poseimg = image180.clone();
-            imgpoints = projected_cube_corners[1];
-            // draw the cube edges in the image
-            for (auto &it : cube_model.object_model_)
-            {
-                cv::Point p1, p2;
-                p1.x = imgpoints[it.second.first].x;
-                p1.y = imgpoints[it.second.first].y;
-                p2.x = imgpoints[it.second.second].x;
-                p2.y = imgpoints[it.second.second].y;
-
-                cv::line(poseimg, p1, p2, cv::Scalar(255, 100, 0), 2);
-            }
-            subplot.set_subimg(poseimg, 1, 4);
-            poseimg = image300.clone();
-            imgpoints = projected_cube_corners[2];
-            // draw the cube edges in the image
-            for (auto &it : cube_model.object_model_)
-            {
-                cv::Point p1, p2;
-                p1.x = imgpoints[it.second.first].x;
-                p1.y = imgpoints[it.second.first].y;
-                p2.x = imgpoints[it.second.second].x;
-                p2.y = imgpoints[it.second.second].y;
-
-                cv::line(poseimg, p1, p2, cv::Scalar(255, 100, 0), 2);
-            }
-            subplot.set_subimg(poseimg, 2, 4);
-        }
-
-        cv::Mat debug_img = subplot.get_image();
+        cv::Mat debug_img = cube_detector.create_debug_image();
 
         // scale down debug image by factor 2, otherwise it is too big
         cv::Mat rescaled_debug_img;

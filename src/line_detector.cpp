@@ -736,4 +736,9 @@ cv::Mat LineDetector::get_mask(FaceColor color) const
     return masks_[color];
 }
 
+std::vector<FaceColor> LineDetector::get_dominant_colors() const
+{
+    return dominant_colors_;
+}
+
 }  // namespace trifinger_object_tracking

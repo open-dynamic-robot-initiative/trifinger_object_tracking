@@ -1,11 +1,10 @@
-#include <trifinger_object_tracking/pose_detector.hpp>
-
 #include <float.h>
 #include <math.h>
+
 #include <iostream>
 #include <random>
 #include <thread>
-
+#include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
 
 namespace trifinger_object_tracking
@@ -212,7 +211,8 @@ cv::Mat PoseDetector::_cost_of_out_of_bounds_projection(
 }
 
 cv::Mat PoseDetector::_get_face_normals_cost(
-    const std::vector<cv::Affine3f> &object_pose_matrices)
+    const std::vector<cv::Affine3f> &object_pose_matrices,
+    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors)
 {
     ScopedTimer timer("PoseDetector/_get_face_normals_cost");
 
@@ -244,20 +244,10 @@ cv::Mat PoseDetector::_get_face_normals_cost(
             v_cam_to_cube.push_back(c);
         }
 
-        std::set<FaceColor> color_set;
-        for (auto &it : lines_[i])
-        {
-            color_set.insert(it.first.first);
-            color_set.insert(it.first.second);
-        }
-
-        // for each colour that gave a line, check if the corresponding face of
-        // the cube is pointing towards the camera and add some cost (based on
-        // the angle) if it is not.
-        //
-        // TODO: This should be done for all visible colours, not only the ones
-        // that provided a line.
-        for (auto &color : color_set)
+        // for each dominant colour, check if the corresponding face of the cube
+        // is pointing towards the camera and add some cost (based on the angle)
+        // if it is not.
+        for (auto &color : dominant_colors[i])
         {
             for (int j = 0; j < number_of_particles; j++)
             {
@@ -265,6 +255,7 @@ cv::Mat PoseDetector::_get_face_normals_cost(
                 const int normal_vector_index =
                     cube_model_.map_color_to_normal_index[color];
 
+                // FIXME this is not exactly correct.  see get_visible_faces()
                 cv::Vec3f v_a = face_normal_vectors[j].col(normal_vector_index);
                 cv::Vec3f v_b(v_cam_to_cube[j]);
                 float dot_product = v_a.dot(v_b);
@@ -286,7 +277,151 @@ cv::Mat PoseDetector::_get_face_normals_cost(
 
 std::vector<float> PoseDetector::cost_function(
     const std::vector<cv::Vec3f> &proposed_translation,
-    const std::vector<cv::Vec3f> &proposed_orientation)
+    const std::vector<cv::Vec3f> &proposed_orientation,
+    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+    const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks,
+    const std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS>
+        &masks_pixels,
+    unsigned int iteration)
+{
+    ScopedTimer timer("PoseDetector/cost_function");
+
+    int number_of_particles = proposed_translation.size();
+
+    constexpr int REDUCED_SAMPLES_STEPS = 5;
+    constexpr unsigned int MAX_NUM_SAMPLED_PIXELS = 20;
+
+    // per camera per mask the pixels of that mask
+    std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS>
+        sampled_masks_pixels;
+    for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
+    {
+        for (size_t col_idx = 0; col_idx < masks[camera_idx].size(); col_idx++)
+        {
+            unsigned int num_samples = MAX_NUM_SAMPLED_PIXELS;
+            // FIXME use something more robust to parameter changes
+            if (iteration < REDUCED_SAMPLES_STEPS)
+            {
+                unsigned int step = MAX_NUM_SAMPLED_PIXELS / REDUCED_SAMPLES_STEPS - 1;
+                num_samples -= (REDUCED_SAMPLES_STEPS - iteration) * step;
+            }
+
+            std::vector<cv::Point> sampled_pixels(num_samples);
+            std::sample(masks_pixels[camera_idx][col_idx].begin(),
+                        masks_pixels[camera_idx][col_idx].end(),
+                        sampled_pixels.begin(),
+                        num_samples,
+                        std::mt19937{std::random_device{}()});
+
+            sampled_masks_pixels[camera_idx].push_back(sampled_pixels);
+        }
+    }
+
+    constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-4;
+    constexpr float FACE_INVISIBLE_SCALE_FACTOR = 1.0;
+    std::vector<float> particle_errors(number_of_particles, 0.0);
+    for (int i = 0; i < number_of_particles; i++)
+    {
+        // FIXME is there a better solution?
+        // Add some fixed value to the cost in the first iterations with
+        // reduced number of pixel samples.  This is because the cost scales
+        // with the number of samples.
+        if (iteration < REDUCED_SAMPLES_STEPS)
+        {
+            particle_errors[i] += 1000;
+        }
+
+        cv::Affine3f cube_pose_world =
+            cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
+
+        cv::Mat cube_corners_world = (cv::Mat(cube_pose_world.matrix) *
+                                      corners_at_origin_in_world_frame_.t());
+
+        std::vector<cv::Point3f> cube_corners_world_vec;
+        for (int j = 0; j < 8; j++)
+        {
+            cv::Vec3f cube_corner(cube_corners_world.col(j).rowRange(0, 3));
+            // std::cout << "  corner: " << cube_corner << std::endl;
+            cube_corners_world_vec.push_back(cube_corner);
+        }
+
+        for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
+        {
+            std::vector<cv::Point2f> imgpoints;
+            cv::projectPoints(cube_corners_world_vec,
+                              camera_orientations_[camera_idx],
+                              camera_translations_[camera_idx],
+                              camera_matrices_[camera_idx],
+                              distortion_coeffs_[camera_idx],
+                              imgpoints);
+
+            for (size_t col_idx = 0;
+                 col_idx < dominant_colors[camera_idx].size();
+                 col_idx++)
+            {
+                FaceColor color = dominant_colors[camera_idx][col_idx];
+                float face_normal_camera_dot_product = 0;
+                bool face_is_visible =
+                    is_face_visible(color,
+                                    camera_idx,
+                                    cube_pose_world,
+                                    &face_normal_camera_dot_product);
+
+                if (face_is_visible)
+                {
+                    auto corner_indices =
+                        cube_model_.get_face_corner_indices(color);
+
+                    std::vector<cv::Point> corners = {
+                        imgpoints[corner_indices[0]],
+                        imgpoints[corner_indices[1]],
+                        imgpoints[corner_indices[2]],
+                        imgpoints[corner_indices[3]]};
+
+                    int counter = 0;
+                    float cost = 0;
+                    for (const cv::Point &pixel :
+                         sampled_masks_pixels[camera_idx][col_idx])
+                    {
+                        double dist =
+                            cv::pointPolygonTest(corners, pixel, true);
+
+                        // negative distance means the point is outside
+                        if (dist < 0)
+                        {
+                            cost += -dist;
+                        }
+                    }
+                    cost *= PIXEL_DIST_SCALE_FACTOR;
+                    // std::cout << "cost (visible): " << cost << std::endl;
+
+                    particle_errors[i] += cost;
+                }
+                if (!face_is_visible)
+                {
+                    // if the face of the current color is not pointing towards
+                    // the camera, penalize it with a cost base on the angle of
+                    // the face normal to the camera-to-face vector.
+                    int num_pixels =
+                        sampled_masks_pixels[camera_idx][col_idx].size();
+
+                    float cost = face_normal_camera_dot_product * num_pixels;
+                    // std::cout << "cost (invisible): " << cost << std::endl;
+
+                    particle_errors[i] += FACE_INVISIBLE_SCALE_FACTOR * cost;
+                }
+            }
+        }
+    }
+
+    return particle_errors;
+}
+
+std::vector<float> PoseDetector::cost_function__(
+    const std::vector<cv::Vec3f> &proposed_translation,
+    const std::vector<cv::Vec3f> &proposed_orientation,
+    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+    const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
 {
     ScopedTimer timer("PoseDetector/cost_function");
 
@@ -340,7 +475,8 @@ std::vector<float> PoseDetector::cost_function(
     // Error matrix initialisation
     cv::Mat error;
     constexpr float FACE_NORMALS_SCALING_FACTOR = 500.0;
-    error = FACE_NORMALS_SCALING_FACTOR * _get_face_normals_cost(poses);
+    error = FACE_NORMALS_SCALING_FACTOR *
+            _get_face_normals_cost(poses, dominant_colors);
     error = error + _cost_of_out_of_bounds_projection(projected_points);
 
     for (int i = 0; i < N_CAMERAS; i++)
@@ -387,15 +523,19 @@ void PoseDetector::initialise_pos_cams_w_frame()
     }
 }
 
-void PoseDetector::cross_entropy_method()
+void PoseDetector::cross_entropy_method(
+    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+    const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
 {
     ScopedTimer timer("PoseDetector/cross_entropy_method");
 
     int max_iterations = 30;
-    int number_of_particles = 1000;
+    int number_of_particles_first_iteration = 1000;
+    int number_of_particles = 500;
     int elites = 100;
     float alpha = 0.3;
-    float eps = 5.0;
+    // float eps = 5.0;
+    float eps = 0.00001;
     best_cost_ = FLT_MAX;
     std::vector<float> costs;
 
@@ -407,6 +547,34 @@ void PoseDetector::cross_entropy_method()
     // FIXME this is probably static and should be done in c'tor
     initialise_pos_cams_w_frame();
 
+    // extract pixels from the masks
+    std::array<std::vector<cv::Mat>, N_CAMERAS> contour_masks;
+    // per camera per mask the pixels of that mask
+    std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS> masks_pixels;
+    for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
+    {
+        for (const cv::Mat &mask : masks[camera_idx])
+        {
+            // create contour masks
+            cv::Mat eroded_mask, contour_mask;
+            int radius = 1;
+            static const cv::Mat kernel = cv::getStructuringElement(
+                cv::MORPH_ELLIPSE,
+                cv::Size(2 * radius + 1, 2 * radius + 1));
+            cv::erode(mask, eroded_mask, kernel);
+            cv::bitwise_xor(mask, eroded_mask, contour_mask);
+
+            //cv::imshow("mask", mask);
+            //cv::imshow("contour_mask", contour_mask);
+            //cv::waitKey(0);
+
+            std::vector<cv::Point> pixels;
+            //cv::findNonZero(mask, pixels);
+            cv::findNonZero(contour_mask, pixels);
+            masks_pixels[camera_idx].push_back(pixels);
+        }
+    }
+
     for (int i = 0; i < max_iterations && best_cost_ > eps; i++)
     {
         std::vector<cv::Vec3f> sample_p;
@@ -416,10 +584,11 @@ void PoseDetector::cross_entropy_method()
             // TODO: fix the following for initialisation phase
             sample_p = random_uniform(position_.lower_bound,
                                       position_.upper_bound,
-                                      number_of_particles * 10,
+                                      number_of_particles_first_iteration,
                                       3);
 
-            sample_o = sample_random_so3_rotvecs(number_of_particles * 10);
+            sample_o =
+                sample_random_so3_rotvecs(number_of_particles_first_iteration);
         }
         else
         {
@@ -436,11 +605,14 @@ void PoseDetector::cross_entropy_method()
                                      3,
                                      "orientation");
         }
-        costs = cost_function(sample_p, sample_o);
+        costs = cost_function(
+            sample_p, sample_o, dominant_colors, masks, masks_pixels, i);
 
         std::vector<float> sorted_costs = costs;
         sort(sorted_costs.begin(), sorted_costs.end());
         sorted_costs.resize(elites);
+
+        // TODO: always keep the best sample in the population
 
         if (sorted_costs[0] < best_cost_)
         {
@@ -450,11 +622,13 @@ void PoseDetector::cross_entropy_method()
             best_position_ = sample_p[idx];
             best_orientation_ = sample_o[idx];
         }
+        std::cout << "best cost: " << sorted_costs[0] << std::endl;
 
         std::vector<cv::Vec3f> elites_p;
         std::vector<cv::Vec3f> elites_o;
         for (auto &it : sorted_costs)
         {
+            // FIXME this can be improved
             int idx = find(costs.begin(), costs.end(), it) - costs.begin();
             elites_p.push_back(sample_p[idx]);
             elites_o.push_back(sample_o[idx]);
@@ -519,24 +693,28 @@ cv::Vec3f PoseDetector::var(const std::vector<cv::Vec3f> &points)
 }
 
 Pose PoseDetector::find_pose(
-    const std::array<ColorEdgeLineList, N_CAMERAS> &lines)
+    const std::array<ColorEdgeLineList, N_CAMERAS> &lines,
+    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+    const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
 {
     ScopedTimer timer("PoseDetector/find_pose");
 
     // FIXME this is bad design
     lines_ = lines;
 
-    cross_entropy_method();  // calculates mean_position and mean_orientation
+    // calculates mean_position and mean_orientation
+    cross_entropy_method(dominant_colors, masks);
 
-    if (best_cost_ > 50)
-    {
-        initialisation_phase_ = true;
-        cross_entropy_method();
-        if (best_cost_ > 50)
-        {
-            initialisation_phase_ = true;
-        }
-    }
+    // if cost is too bad, run it again
+    // if (best_cost_ > 50)
+    //{
+    //    initialisation_phase_ = true;
+    //    cross_entropy_method(dominant_colors, masks);
+    //    if (best_cost_ > 50)
+    //    {
+    //        initialisation_phase_ = true;
+    //    }
+    //}
 
     return Pose(position_.mean, orientation_.mean);
 }
@@ -575,6 +753,79 @@ std::vector<std::vector<cv::Point2f>> PoseDetector::get_projected_points() const
     }
 
     return projected_points;
+}
+
+bool PoseDetector::is_face_visible(FaceColor color,
+                                   unsigned int camera_idx,
+                                   const cv::Affine3f &cube_pose_world,
+                                   float *out_dot_product) const
+{
+    // TODO do this once for each camera in the c'tor
+    cv::Affine3f camera_pose(camera_orientations_[camera_idx],
+                             camera_translations_[camera_idx]);
+
+    // cube pose in camera frame
+    cv::Affine3f cube_pose_camera = camera_pose * cube_pose_world;
+
+    // TODO only transform the normal vector and corner that are actually used
+    // rotate face normals (3x6) according to given cube pose
+    cv::Mat face_normal_vectors =
+        cv::Mat(cube_pose_camera.rotation()) * reference_vector_normals_;
+
+    // transform all cube corners according to the cube pose (4x8)
+    cv::Mat cube_corners = cv::Mat(cube_pose_camera.matrix) *
+                           corners_at_origin_in_world_frame_.t();
+
+    // get the normal vector of that face
+    int normal_idx = cube_model_.map_color_to_normal_index[color];
+    cv::Vec3f face_normal = face_normal_vectors.col(normal_idx);
+
+    auto corner_indices = cube_model_.get_face_corner_indices(color);
+
+    // get an arbitrary corner of that face
+    unsigned int corner_idx = corner_indices[0];
+    cv::Vec3f corner = cube_corners.col(corner_idx).rowRange(0, 3);
+
+    // if the angle between the face normal and the camera-to-corner
+    // vector is greater than 90 deg, the face is visible
+    float dot_prod = face_normal.dot(corner);
+
+    // dot_prod < 0 ==> angle > 90 deg
+    bool is_visible = (dot_prod < 0);
+
+    if (out_dot_product != nullptr)
+    {
+        *out_dot_product = dot_prod;
+    }
+
+    return is_visible;
+}
+
+std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
+PoseDetector::get_visible_faces(unsigned int camera_idx,
+                                const cv::Affine3f &cube_pose_world) const
+{
+    std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>> result;
+
+    // check for each color if the face is visible
+    for (FaceColor color : cube_model_.get_colors())
+    {
+        if (is_face_visible(color, camera_idx, cube_pose_world))
+        {
+            auto corner_indices = cube_model_.get_face_corner_indices(color);
+            result.push_back(std::make_pair(color, corner_indices));
+        }
+    }
+
+    return result;
+}
+
+std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
+PoseDetector::get_visible_faces(unsigned int camera_idx) const
+{
+    cv::Affine3f cube_pose_world(orientation_.mean, position_.mean);
+
+    return get_visible_faces(camera_idx, cube_pose_world);
 }
 
 }  // namespace trifinger_object_tracking
