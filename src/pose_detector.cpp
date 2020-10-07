@@ -279,6 +279,51 @@ cv::Mat PoseDetector::_get_face_normals_cost(
     return error;
 }
 
+PoseDetector::MasksPixels sample_masks_pixels_proportionally(
+    const PoseDetector::MasksPixels &masks_pixels,
+    const unsigned int &num_samples)
+{
+    unsigned int num_pixels = 0;
+    for (int camera_idx = 0; camera_idx < PoseDetector::N_CAMERAS; camera_idx++)
+    {
+        for (size_t color_idx = 0; color_idx < masks_pixels[camera_idx].size();
+             color_idx++)
+        {
+            num_pixels += masks_pixels[camera_idx][color_idx].size();
+        }
+    }
+
+    double sampling_ratio = double(num_samples) / double(num_pixels);
+
+    std::cout << "num_pixels: " << num_pixels
+              << " ; sampling_ratio: " << sampling_ratio << std::endl;
+
+    PoseDetector::MasksPixels sampled_masks_pixels;
+    for (int camera_idx = 0; camera_idx < PoseDetector::N_CAMERAS; camera_idx++)
+    {
+        for (size_t color_idx = 0; color_idx < masks_pixels[camera_idx].size();
+             color_idx++)
+        {
+            unsigned int num_pixels_in_mask =
+                masks_pixels[camera_idx][color_idx].size();
+            unsigned int num_samples_in_mask =
+                sampling_ratio * num_pixels_in_mask;
+
+            std::cout << "num_samples_in_mask " << num_samples_in_mask << std::endl;
+
+            std::vector<cv::Point> sampled_pixels(num_samples_in_mask);
+            std::sample(masks_pixels[camera_idx][color_idx].begin(),
+                        masks_pixels[camera_idx][color_idx].end(),
+                        sampled_pixels.begin(),
+                        num_samples_in_mask,
+                        std::mt19937{std::random_device{}()});
+
+            sampled_masks_pixels[camera_idx].push_back(sampled_pixels);
+        }
+    }
+    return sampled_masks_pixels;
+}
+
 PoseDetector::MasksPixels sample_masks_pixels(
     const PoseDetector::MasksPixels &masks_pixels,
     const unsigned int &num_samples_per_mask)
@@ -314,8 +359,8 @@ std::vector<float> PoseDetector::cost_function(
 
     int number_of_particles = proposed_translation.size();
     ////////////////////////////////////////////////////////////////////////
-    // todo: is this right?
-    constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-2;
+    // todo: what is the best value here?
+    constexpr float PIXEL_DIST_SCALE_FACTOR = 1e-1;
     constexpr float FACE_INVISIBLE_SCALE_FACTOR = 1.0;
     std::vector<float> particle_errors(number_of_particles, 0.0);
     for (int i = 0; i < number_of_particles; i++)
@@ -412,7 +457,7 @@ std::vector<float> PoseDetector::cost_function(
 
                     particle_errors[i] += cost;
                 }
-                if (false && !face_is_visible)
+                if (!face_is_visible)
                 {
                     // if the face of the current color is not pointing towards
                     // the camera, penalize it with a cost base on the angle of
@@ -598,10 +643,14 @@ void PoseDetector::optimize_using_optim(
     }
 
     // downsample mask for computational efficiency
-    // TODO! it would probably be better to sample according to mask size
-    unsigned int num_pixels_per_mask = 15;
+    // todo: which is the right way of sampling?
+    // unsigned int num_pixels_per_mask = 15;
+    // MasksPixels sampled_masks_pixels =
+    //     sample_masks_pixels(masks_pixels, num_pixels_per_mask);
+
+    unsigned int num_samples = 150;
     MasksPixels sampled_masks_pixels =
-        sample_masks_pixels(masks_pixels, num_pixels_per_mask);
+        sample_masks_pixels_proportionally(masks_pixels, num_samples);
 
     optim::algo_settings_t settings;
     settings.de_settings.n_gen = 50;
