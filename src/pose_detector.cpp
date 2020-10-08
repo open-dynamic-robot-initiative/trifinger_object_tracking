@@ -315,15 +315,15 @@ void PoseDetector::optimize_using_optim(
 
     arma::vec pose = {0., 0., 0.1250, 0., 0., 0.};
 
-    std::cout << "initial_pose: " << pose.t() << std::endl;
-    std::cout << "settings.lower_bounds " << settings.lower_bounds.t()
-              << std::endl;
-    std::cout << "settings.upper_bounds " << settings.upper_bounds.t()
-              << std::endl;
-    std::cout << "settings.de_settings.initial_lb "
-              << settings.de_settings.initial_lb.t() << std::endl;
-    std::cout << "settings.de_settings.initial_ub "
-              << settings.de_settings.initial_ub.t() << std::endl;
+    // std::cout << "initial_pose: " << pose.t() << std::endl;
+    // std::cout << "settings.lower_bounds " << settings.lower_bounds.t()
+    //           << std::endl;
+    // std::cout << "settings.upper_bounds " << settings.upper_bounds.t()
+    //           << std::endl;
+    // std::cout << "settings.de_settings.initial_lb "
+    //           << settings.de_settings.initial_lb.t() << std::endl;
+    // std::cout << "settings.de_settings.initial_ub "
+    //           << settings.de_settings.initial_ub.t() << std::endl;
 
     bool success = optim::de(
         pose,
