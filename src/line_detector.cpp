@@ -49,9 +49,9 @@ void LineDetector::set_color_bounds()
 
 void LineDetector::load_segmentation_models(const std::string &model_directory)
 {
-    std::string model_file = model_directory + "/gmm_weights_from_python.yml";
-    segmentation_models_ =
-        trifinger_object_tracking::load_gmm_models_from_file(model_file);
+    // std::string model_file = model_directory + "/gmm_weights_from_python.yml";
+    // segmentation_models_ =
+    //     trifinger_object_tracking::load_gmm_models_from_file(model_file);
 }
 
 void LineDetector::detect_colors(const cv::Mat &image_bgr)
