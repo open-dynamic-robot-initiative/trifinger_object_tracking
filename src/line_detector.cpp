@@ -61,8 +61,7 @@ void LineDetector::detect_colors(const cv::Mat &image_bgr)
     // TODO better solution than class members for images
 
     // blur the image to make colour classification easier
-    cv::medianBlur(image_bgr, image_bgr_, 7);
-
+    cv::medianBlur(image_bgr, image_bgr_, 5);
     cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
 
     xgboost_mask();
