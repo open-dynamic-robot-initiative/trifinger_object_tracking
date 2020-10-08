@@ -68,6 +68,16 @@ public:
                  const std::string &model_directory);
 
     /**
+     * @brief Detect colours in the image and create segmentation masks.
+     *
+     * After calling this, dominant colours and segmentation masks are provided
+     * by get_dominant_colors() and get_mask().
+     *
+     * @param image_bgr
+     */
+    void detect_colors(const cv::Mat &image_bgr);
+
+    /**
      * @brief Detect cube edge lines in the given image.
      *
      * @param image_bgr

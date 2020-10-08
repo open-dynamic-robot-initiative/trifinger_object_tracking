@@ -423,103 +423,6 @@ std::vector<float> PoseDetector::cost_function(
     return particle_errors;
 }
 
-std::vector<float> PoseDetector::cost_function__(
-    const std::vector<cv::Vec3f> &proposed_translation,
-    const std::vector<cv::Vec3f> &proposed_orientation,
-    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
-    const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
-{
-    ScopedTimer timer("PoseDetector/cost_function");
-
-    int number_of_particles = proposed_translation.size();
-    std::vector<cv::Affine3f> poses;
-    cv::Mat proposed_new_cube_pts_w(
-        number_of_particles, 8, CV_32FC3, cv::Scalar(0, 0, 0));
-
-    // for each particle compute cube corners at the given pose
-    poses.reserve(number_of_particles);
-    for (int i = 0; i < number_of_particles; i++)
-    {
-        // initialization of pose
-        cv::Affine3f pose_transform =
-            cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
-
-        poses.push_back(pose_transform);
-        cv::Mat new_pt = cv::Mat(pose_transform.matrix) *
-                         corners_at_origin_in_world_frame_.t();
-
-        new_pt = new_pt.t();  // 8x4
-        for (int j = 0; j < new_pt.rows; j++)
-        {
-            // 8x3
-            proposed_new_cube_pts_w.at<cv::Vec3f>(i, j) =
-                cv::Vec3f(new_pt.at<float>(j, 0),
-                          new_pt.at<float>(j, 1),
-                          new_pt.at<float>(j, 2));
-        }
-    }
-
-    proposed_new_cube_pts_w =
-        proposed_new_cube_pts_w.reshape(3, number_of_particles * 8);
-
-    // project the cube corners of the particles to the images
-    std::array<cv::Mat, N_CAMERAS> projected_points;
-    for (int i = 0; i < N_CAMERAS; i++)
-    {
-        // range (r_vecs)
-        cv::Mat imgpoints(number_of_particles * 8, 2, CV_32FC1, cv::Scalar(0));
-        cv::projectPoints(proposed_new_cube_pts_w,
-                          camera_orientations_[i],
-                          camera_translations_[i],
-                          camera_matrices_[i],
-                          distortion_coeffs_[i],
-                          imgpoints);
-
-        projected_points[i] = imgpoints.reshape(2, number_of_particles);
-    }
-
-    // Error matrix initialisation
-    cv::Mat error;
-    constexpr float FACE_NORMALS_SCALING_FACTOR = 500.0;
-    error = FACE_NORMALS_SCALING_FACTOR *
-            _get_face_normals_cost(poses, dominant_colors);
-    error = error + _cost_of_out_of_bounds_projection(projected_points);
-
-    for (int i = 0; i < N_CAMERAS; i++)
-    {
-        // range (r_vecs)
-        cv::Mat imgpoints_reshaped = projected_points[i];
-        for (auto &line_it : lines_[i])
-        {
-            std::pair<FaceColor, FaceColor> color_pair = line_it.first;
-            std::pair<CubeFace, CubeFace> face_pair = std::make_pair(
-                cube_model_.map_color_to_face[color_pair.first],
-                cube_model_.map_color_to_face[color_pair.second]
-            );
-            CubeModel::Edge points_lying = cube_model_.edges.at(face_pair);
-            Line line = line_it.second;
-
-            cv::Mat points_on_edge(
-                number_of_particles, 2, CV_32FC2, cv::Scalar(0, 0));
-
-            imgpoints_reshaped.col(points_lying.c1)
-                .copyTo(points_on_edge.col(0));
-            imgpoints_reshaped.col(points_lying.c2)
-                .copyTo(points_on_edge.col(1));
-            cv::Mat distance;  // 2Nx1
-            cv::Mat ch1, ch2;
-            std::vector<cv::Mat> channels(2);
-            split(points_on_edge, channels);
-            absdiff(line.a * channels[1], channels[0] - line.b, distance);
-            distance = distance * (1 / (pow(pow(line.a, 2) + 1, 0.5)));
-            cv::Mat reduced_error(
-                number_of_particles, 1, CV_32FC1, cv::Scalar(0));
-            cv::reduce(distance, reduced_error, 1, CV_REDUCE_SUM);
-            error = error + reduced_error;
-        }
-    }
-    return error;
-}
 
 void PoseDetector::initialise_pos_cams_w_frame()
 {
@@ -704,14 +607,10 @@ cv::Vec3f PoseDetector::var(const std::vector<cv::Vec3f> &points)
 }
 
 Pose PoseDetector::find_pose(
-    const std::array<ColorEdgeLineList, N_CAMERAS> &lines,
     const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
     const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
 {
     ScopedTimer timer("PoseDetector/find_pose");
-
-    // FIXME this is bad design
-    lines_ = lines;
 
     // calculates mean_position and mean_orientation
     cross_entropy_method(dominant_colors, masks);
