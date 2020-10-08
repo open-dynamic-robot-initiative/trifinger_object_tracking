@@ -372,7 +372,7 @@ Pose PoseDetector::find_pose(
     // calculates mean_position and mean_orientation
     optimize_using_optim(dominant_colors, masks);
 
-    return Pose(position_.mean, orientation_.mean);
+    return Pose(position_.mean, orientation_.mean, num_misclassified_pixels_);
 }
 
 std::vector<std::vector<cv::Point2f>> PoseDetector::get_projected_points() const
