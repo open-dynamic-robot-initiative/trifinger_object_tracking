@@ -143,7 +143,7 @@ float PoseDetector::cost_function(
     const MasksPixels &masks_pixels,
     const float &distance_cost_scaling,
     const float &invisibility_cost_scaling,
-    int *num_misclassified_pixels)
+    unsigned int *num_misclassified_pixels)
 {
     float cost = 0.;
     *num_misclassified_pixels = 0;
@@ -238,9 +238,9 @@ float PoseDetector::cost_function(
                 invisibility_cost *= invisibility_cost_scaling;
             }
 
+            *num_misclassified_pixels += num_misclassified_pixels_in_segment;
             cost += distance_cost;
             cost += invisibility_cost;
-            *num_misclassified_pixels += num_misclassified_pixels_in_segment;
         }
     }
 
@@ -337,7 +337,7 @@ void PoseDetector::optimize_using_optim(
             cv::Vec3f position;
             cv::Vec3f orientation;
             pose2position_and_orientation(pose, &position, &orientation);
-            int num_misclassified_pixels;
+            unsigned int num_misclassified_pixels;
 
             float cost = this->cost_function(position,
                                              orientation,
