@@ -7,6 +7,7 @@
 #include <trifinger_object_tracking/types.hpp>
 
 #define OPTIM_ENABLE_ARMA_WRAPPERS
+#define OPTIM_DONT_USE_OPENMP
 #include <optim/optim.hpp>
 
 namespace trifinger_object_tracking
