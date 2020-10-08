@@ -305,13 +305,26 @@ void PoseDetector::optimize_using_optim(
     settings.de_settings.n_pop = 40;
     settings.de_settings.n_pop_best = 1;
     settings.de_settings.mutation_method = 2;
+    settings.print_level = 0;
 
-    arma::vec lower_bound = position_and_orientation2pose(
-        position_.lower_bound, orientation_.lower_bound);
-    arma::vec upper_bound = position_and_orientation2pose(
-        position_.upper_bound, orientation_.upper_bound);
+    settings.vals_bound = true;
+    settings.lower_bounds = {-0.35, -0.35, -0.1, -1e4, -1e4, -1e4};
+    settings.upper_bounds = {0.35, 0.35, 0.35, 1e4, 1e4, 1e4};
+    settings.de_settings.initial_lb = {-0.2, -0.2, 0, -1, -1, -1};
+    settings.de_settings.initial_ub = {0.2, 0.2, 0.2, 1, 1, 1};
 
-    arma::vec pose = (lower_bound + upper_bound) / 2.0;
+    arma::vec pose = {0., 0., 0.1250, 0., 0., 0.};
+
+    std::cout << "initial_pose: " << pose.t() << std::endl;
+    std::cout << "settings.lower_bounds " << settings.lower_bounds.t()
+              << std::endl;
+    std::cout << "settings.upper_bounds " << settings.upper_bounds.t()
+              << std::endl;
+    std::cout << "settings.de_settings.initial_lb "
+              << settings.de_settings.initial_lb.t() << std::endl;
+    std::cout << "settings.de_settings.initial_ub "
+              << settings.de_settings.initial_ub.t() << std::endl;
+
     bool success = optim::de(
         pose,
         [this,
@@ -359,7 +372,7 @@ Pose PoseDetector::find_pose(
     const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
 {
     ScopedTimer timer("PoseDetector/find_pose");
-
+    
     // calculates mean_position and mean_orientation
     optimize_using_optim(dominant_colors, masks);
 
