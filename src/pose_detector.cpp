@@ -136,119 +136,112 @@ PoseDetector::MasksPixels sample_masks_pixels(
     return sampled_masks_pixels;
 }
 
-std::vector<float> PoseDetector::cost_function(
-    const std::vector<cv::Vec3f> &proposed_translation,
-    const std::vector<cv::Vec3f> &proposed_orientation,
+float PoseDetector::cost_function(
+    const cv::Vec3f &position,
+    const cv::Vec3f &orientation,
     const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
-    const MasksPixels &masks_pixels,
-    unsigned int iteration)
+    const MasksPixels &masks_pixels)
 {
-    // ScopedTimer timer("PoseDetector/cost_function");
-
-    int number_of_particles = proposed_translation.size();
     ////////////////////////////////////////////////////////////////////////
     // todo: what is the best value here?
     constexpr float PIXEL_DIST_SCALE_FACTOR = 5 * 1e-2;
     constexpr float FACE_INVISIBLE_SCALE_FACTOR = 1.0;
-    std::vector<float> particle_errors(number_of_particles, 0.0);
-    for (int i = 0; i < number_of_particles; i++)
+    float cost = 0.;
+
+    cv::Affine3f cube_pose_world = cv::Affine3f(orientation, position);
+
+    cv::Mat cube_corners_world = (cv::Mat(cube_pose_world.matrix) *
+                                  corners_at_origin_in_world_frame_.t());
+
+    std::vector<cv::Point3f> cube_corners_world_vec;
+    for (int j = 0; j < 8; j++)
     {
-        cv::Affine3f cube_pose_world =
-            cv::Affine3f(proposed_orientation[i], proposed_translation[i]);
+        cv::Vec3f cube_corner(cube_corners_world.col(j).rowRange(0, 3));
+        // std::cout << "  corner: " << cube_corner << std::endl;
+        cube_corners_world_vec.push_back(cube_corner);
+    }
 
-        cv::Mat cube_corners_world = (cv::Mat(cube_pose_world.matrix) *
-                                      corners_at_origin_in_world_frame_.t());
+    for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
+    {
+        std::vector<cv::Point2f> imgpoints;
+        cv::projectPoints(cube_corners_world_vec,
+                          camera_orientations_[camera_idx],
+                          camera_translations_[camera_idx],
+                          camera_matrices_[camera_idx],
+                          distortion_coeffs_[camera_idx],
+                          imgpoints);
 
-        std::vector<cv::Point3f> cube_corners_world_vec;
-        for (int j = 0; j < 8; j++)
+        cv::Mat face_normals;
+        cv::Mat cube_corners;
+        compute_face_normals_and_corners(
+            camera_idx, cube_pose_world, &face_normals, &cube_corners);
+
+        for (size_t col_idx = 0; col_idx < dominant_colors[camera_idx].size();
+             col_idx++)
         {
-            cv::Vec3f cube_corner(cube_corners_world.col(j).rowRange(0, 3));
-            // std::cout << "  corner: " << cube_corner << std::endl;
-            cube_corners_world_vec.push_back(cube_corner);
-        }
+            FaceColor color = dominant_colors[camera_idx][col_idx];
 
-        for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
-        {
-            std::vector<cv::Point2f> imgpoints;
-            cv::projectPoints(cube_corners_world_vec,
-                              camera_orientations_[camera_idx],
-                              camera_translations_[camera_idx],
-                              camera_matrices_[camera_idx],
-                              distortion_coeffs_[camera_idx],
-                              imgpoints);
+            bool face_is_visible;
+            float face_normal_dot_camera_direction;
+            compute_color_visibility(color,
+                                     face_normals,
+                                     cube_corners,
+                                     &face_is_visible,
+                                     &face_normal_dot_camera_direction);
 
-            cv::Mat face_normals;
-            cv::Mat cube_corners;
-            compute_face_normals_and_corners(
-                camera_idx, cube_pose_world, &face_normals, &cube_corners);
+            int num_neglected_pixels_in_segment = 0;
 
-            for (size_t col_idx = 0;
-                 col_idx < dominant_colors[camera_idx].size();
-                 col_idx++)
+            float distance_cost = 0;
             {
-                FaceColor color = dominant_colors[camera_idx][col_idx];
+                auto corner_indices =
+                    cube_model_.get_face_corner_indices(color);
 
-                bool face_is_visible;
-                float face_normal_dot_camera_direction;
-                compute_color_visibility(color,
-                                         face_normals,
-                                         cube_corners,
-                                         &face_is_visible,
-                                         &face_normal_dot_camera_direction);
+                std::vector<cv::Point> corners = {imgpoints[corner_indices[0]],
+                                                  imgpoints[corner_indices[1]],
+                                                  imgpoints[corner_indices[2]],
+                                                  imgpoints[corner_indices[3]]};
 
-                float distance_cost = 0;
+                int counter = 0;
+                for (const cv::Point &pixel : masks_pixels[camera_idx][col_idx])
                 {
-                    auto corner_indices =
-                        cube_model_.get_face_corner_indices(color);
+                    double dist = cv::pointPolygonTest(corners, pixel, true);
 
-                    std::vector<cv::Point> corners = {
-                        imgpoints[corner_indices[0]],
-                        imgpoints[corner_indices[1]],
-                        imgpoints[corner_indices[2]],
-                        imgpoints[corner_indices[3]]};
-
-                    int counter = 0;
-                    for (const cv::Point &pixel :
-                         masks_pixels[camera_idx][col_idx])
+                    // negative distance means the point is outside
+                    if (dist < 0)
                     {
-                        double dist =
-                            cv::pointPolygonTest(corners, pixel, true);
-
-                        // negative distance means the point is outside
-                        if (dist < 0)
-                        {
-                            distance_cost += -dist;
-                        }
+                        num_neglected_pixels_in_segment++;
+                        distance_cost += -dist;
                     }
-                    distance_cost *= PIXEL_DIST_SCALE_FACTOR;
-                    // std::cout << "cost (visible): " << cost << std::endl;
                 }
-
-                float invisibility_cost = 0.;
-                {
-                    // if the face of the current color is not pointing towards
-                    // the camera, penalize it with a cost base on the dot
-                    // product of the face normal and the camera-to-face vector.
-
-                    if (!face_is_visible)
-                    {
-                        int num_pixels =
-                            masks_pixels[camera_idx][col_idx].size();
-
-                        invisibility_cost =
-                            face_normal_dot_camera_direction * num_pixels;
-                    }
-
-                    invisibility_cost *= FACE_INVISIBLE_SCALE_FACTOR;
-                }
-
-                particle_errors[i] += distance_cost;
-                particle_errors[i] += invisibility_cost;
+                distance_cost *= PIXEL_DIST_SCALE_FACTOR;
+                // std::cout << "cost (visible): " << cost << std::endl;
             }
+
+            float invisibility_cost = 0.;
+            {
+                // if the face of the current color is not pointing towards
+                // the camera, penalize it with a cost base on the dot
+                // product of the face normal and the camera-to-face vector.
+
+                if (!face_is_visible)
+                {
+                    int num_pixels = masks_pixels[camera_idx][col_idx].size();
+
+                    invisibility_cost =
+                        face_normal_dot_camera_direction * num_pixels;
+
+                    num_neglected_pixels_in_segment = num_pixels;
+                }
+
+                invisibility_cost *= FACE_INVISIBLE_SCALE_FACTOR;
+            }
+
+            cost += distance_cost;
+            cost += invisibility_cost;
         }
     }
 
-    return particle_errors;
+    return cost;
 }
 
 void pose2position_and_orientation(const arma::vec &pose,
@@ -320,15 +313,12 @@ void PoseDetector::optimize_using_optim(
             const arma::vec &pose,
             arma::vec *grad_out,
             void *opt_data) -> double {
-            std::vector<cv::Vec3f> position(1);
-            std::vector<cv::Vec3f> orientation(1);
-            pose2position_and_orientation(pose, &position[0], &orientation[0]);
+            cv::Vec3f position;
+            cv::Vec3f orientation;
+            pose2position_and_orientation(pose, &position, &orientation);
 
-            double cost = this->cost_function(position,
-                                              orientation,
-                                              dominant_colors,
-                                              sampled_masks_pixels,
-                                              0)[0];
+            float cost = this->cost_function(
+                position, orientation, dominant_colors, sampled_masks_pixels);
 
             return cost;
         },

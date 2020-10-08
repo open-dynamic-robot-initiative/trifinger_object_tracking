@@ -91,12 +91,11 @@ private:
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
         const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
 
-    std::vector<float> cost_function(
-        const std::vector<cv::Vec3f> &tvecs,
-        const std::vector<cv::Vec3f> &rvecs,
+    float cost_function(
+        const cv::Vec3f &position,
+        const cv::Vec3f &orientation,
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
-        const MasksPixels &masks_pixels,
-        unsigned int iteration);
+        const MasksPixels &masks_pixels);
 
     bool compute_color_visibility(
         const FaceColor &color,
