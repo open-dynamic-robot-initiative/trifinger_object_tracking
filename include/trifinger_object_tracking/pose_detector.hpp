@@ -90,6 +90,8 @@ public:
                        PoseDetector::N_CAMERAS>
         MasksPixels;
 
+    std::string info_;
+
 private:
     CubeModel cube_model_;
     std::array<ColorEdgeLineList, N_CAMERAS> lines_;

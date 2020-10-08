@@ -507,6 +507,8 @@ void PoseDetector::optimize_using_optim(
 {
     ScopedTimer timer("PoseDetector/optim");
 
+    info_ = "no info";
+
     // FIXME this is probably static and should be done in c'tor
     initialise_pos_cams_w_frame();
     // extract pixels from the masks
