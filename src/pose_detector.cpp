@@ -196,7 +196,7 @@ std::vector<float> PoseDetector::cost_function(
                                          &face_is_visible,
                                          &face_normal_dot_camera_direction);
 
-                if (true || face_is_visible)
+                float distance_cost = 0;
                 {
                     auto corner_indices =
                         cube_model_.get_face_corner_indices(color);
@@ -208,7 +208,6 @@ std::vector<float> PoseDetector::cost_function(
                         imgpoints[corner_indices[3]]};
 
                     int counter = 0;
-                    float cost = 0;
                     for (const cv::Point &pixel :
                          masks_pixels[camera_idx][col_idx])
                     {
@@ -218,26 +217,33 @@ std::vector<float> PoseDetector::cost_function(
                         // negative distance means the point is outside
                         if (dist < 0)
                         {
-                            cost += -dist;
+                            distance_cost += -dist;
                         }
                     }
-                    cost *= PIXEL_DIST_SCALE_FACTOR;
+                    distance_cost *= PIXEL_DIST_SCALE_FACTOR;
                     // std::cout << "cost (visible): " << cost << std::endl;
-
-                    particle_errors[i] += cost;
                 }
-                if (!face_is_visible)
+
+                float invisibility_cost = 0.;
                 {
                     // if the face of the current color is not pointing towards
-                    // the camera, penalize it with a cost base on the angle of
-                    // the face normal to the camera-to-face vector.
-                    int num_pixels = masks_pixels[camera_idx][col_idx].size();
+                    // the camera, penalize it with a cost base on the dot
+                    // product of the face normal and the camera-to-face vector.
 
-                    float cost = face_normal_dot_camera_direction * num_pixels;
-                    // std::cout << "cost (invisible): " << cost << std::endl;
+                    if (!face_is_visible)
+                    {
+                        int num_pixels =
+                            masks_pixels[camera_idx][col_idx].size();
 
-                    particle_errors[i] += FACE_INVISIBLE_SCALE_FACTOR * cost;
+                        invisibility_cost =
+                            face_normal_dot_camera_direction * num_pixels;
+                    }
+
+                    invisibility_cost *= FACE_INVISIBLE_SCALE_FACTOR;
                 }
+
+                particle_errors[i] += distance_cost;
+                particle_errors[i] += invisibility_cost;
             }
         }
     }
