@@ -1,6 +1,5 @@
-#include <trifinger_object_tracking/cube_detector.hpp>
-
 #include <thread>
+#include <trifinger_object_tracking/cube_detector.hpp>
 
 namespace trifinger_object_tracking
 {
@@ -111,7 +110,25 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
         subplot.set_subimg(image, i, 2);
     }
 
-    return subplot.get_image();
+    cv::Mat complete_image = subplot.get_image();
+    cv::Mat complete_image_with_text_field =
+        cv::Mat::ones(100, complete_image.cols, complete_image.type());
+
+    complete_image_with_text_field.push_back(complete_image);
+
+    cv::putText(complete_image_with_text_field,
+                pose_detector_.info_,
+                cv::Point(80, 80),          // Coordinates
+                cv::FONT_HERSHEY_PLAIN,     // Font
+                3.0,                        // Scale. 2.0 = 2x bigger
+                cv::Scalar(255, 255, 255),  // BGR Color
+                2,                          // Line Thickness (Optional)
+                cv::LINE_AA                 // Anti-alias (Optional)
+    );
+
+    int bla = 21321;
+
+    return complete_image_with_text_field;
 }
 
 }  // namespace trifinger_object_tracking

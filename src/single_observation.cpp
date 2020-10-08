@@ -107,7 +107,7 @@ int main(int argc, char **argv)
     char buffer[80];
     strftime(buffer, 80, "%s", now);
 
-    cv::imwrite("./results_new_cube/" +
+    cv::imwrite("./results/temp/" +
                     data_dir.substr(data_dir.find_last_of("/\\") + 1, 4) +
                     "__" + std::string(buffer) + ".jpg",
                 rescaled_debug_img);

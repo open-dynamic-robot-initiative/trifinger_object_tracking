@@ -16,8 +16,6 @@ struct Stats
     cv::Vec3f lower_bound;
     cv::Vec3f upper_bound;
     cv::Vec3f mean;
-    cv::Vec3f variance;
-    cv::Vec3f prev;
 };
 
 cv::Mat getPoseMatrix(cv::Point3f, cv::Point3f);
@@ -38,23 +36,6 @@ public:
 
     // TODO which points are projected?
     std::vector<std::vector<cv::Point2f>> get_projected_points() const;
-
-    bool compute_color_visibility(
-        const FaceColor &color,
-        const cv::Mat &face_normals,
-        const cv::Mat &cube_corners,
-        bool *is_visible,
-        float *face_normal_dot_camera_direction) const;
-
-    bool compute_face_normals_and_corners(const unsigned int camera_idx,
-                                          const cv::Affine3f &cube_pose_world,
-                                          cv::Mat *normals,
-                                          cv::Mat *corners) const;
-
-    bool is_face_visible(FaceColor color,
-                         unsigned int camera_idx,
-                         const cv::Affine3f &cube_pose_world,
-                         float *out_dot_product = nullptr) const;
 
     /**
      * @brief Get corner indices of the visible faces.
@@ -90,9 +71,10 @@ public:
                        PoseDetector::N_CAMERAS>
         MasksPixels;
 
+    std::string info_;
+
 private:
     CubeModel cube_model_;
-    std::array<ColorEdgeLineList, N_CAMERAS> lines_;
 
     std::array<cv::Mat, N_CAMERAS> camera_matrices_;
     std::array<cv::Mat, N_CAMERAS> distortion_coeffs_;
@@ -101,53 +83,39 @@ private:
 
     cv::Mat corners_at_origin_in_world_frame_;
     cv::Mat reference_vector_normals_;
+
     Stats position_;
     Stats orientation_;
-    bool initialisation_phase_ = true;
-    bool continuous_estimation_ = false;
-    cv::Vec3f best_position_, best_orientation_;
-    float best_cost_;
-    std::vector<cv::Mat> pos_cams_w_frame_;
 
     void optimize_using_optim(
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
         const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
 
-    void cross_entropy_method(
-        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
-        const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
-
-    std::vector<float> cost_function(
-        const std::vector<cv::Vec3f> &tvecs,
-        const std::vector<cv::Vec3f> &rvecs,
+    float cost_function(
+        const cv::Vec3f &position,
+        const cv::Vec3f &orientation,
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
         const MasksPixels &masks_pixels,
-        unsigned int iteration);
+        const float &distance_cost_scaling,
+        const float &invisibility_cost_scaling,
+        int *num_misclassified_pixels);
 
-    std::vector<cv::Vec3f> random_normal(
-        cv::Vec3f, cv::Vec3f, int rows, int cols, std::string bounds_for = "");
+    bool compute_color_visibility(
+        const FaceColor &color,
+        const cv::Mat &face_normals,
+        const cv::Mat &cube_corners,
+        bool *is_visible,
+        float *face_normal_dot_camera_direction) const;
 
-    std::vector<cv::Vec3f> random_uniform(cv::Vec3f lower_bound,
-                                          cv::Vec3f upper_bound,
-                                          int rows,
-                                          int cols);
+    bool compute_face_normals_and_corners(const unsigned int camera_idx,
+                                          const cv::Affine3f &cube_pose_world,
+                                          cv::Mat *normals,
+                                          cv::Mat *corners) const;
 
-    std::vector<cv::Vec3f> sample_random_so3_rotvecs(int number_of_particles);
-
-    cv::Vec3f power(cv::Vec3f, float);
-
-    cv::Vec3f mean(const std::vector<cv::Vec3f> &);
-
-    cv::Vec3f var(const std::vector<cv::Vec3f> &);
-
-    cv::Mat _get_face_normals_cost(
-        const std::vector<cv::Affine3f> &object_pose_matrices,
-        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors);
-
-    cv::Mat _cost_of_out_of_bounds_projection(
-        const std::array<cv::Mat, N_CAMERAS> &projected_points);
-
-    void initialise_pos_cams_w_frame();
+    bool is_face_visible(FaceColor color,
+                         unsigned int camera_idx,
+                         const cv::Affine3f &cube_pose_world,
+                         float *out_dot_product = nullptr) const;
 };
 
 }  // namespace trifinger_object_tracking
