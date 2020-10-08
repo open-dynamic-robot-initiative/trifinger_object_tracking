@@ -5,8 +5,8 @@
  */
 #pragma once
 
-#include <trifinger_object_tracking/object_pose.hpp>
 #include <trifinger_cameras/camera_observation.hpp>
+#include <trifinger_object_tracking/object_pose.hpp>
 
 namespace trifinger_object_tracking
 {
@@ -27,4 +27,3 @@ struct TriCameraObjectObservation
 };
 
 }  // namespace trifinger_object_tracking
-

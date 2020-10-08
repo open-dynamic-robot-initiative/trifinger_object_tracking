@@ -36,7 +36,8 @@ PyBulletTriCameraObjectTrackerDriver::get_observation()
         {
             using namespace std::chrono_literals;
             std::this_thread::sleep_for(10ms);
-            auto new_robot_t = robot_data_->observation->newest_timeindex(false);
+            auto new_robot_t =
+                robot_data_->observation->newest_timeindex(false);
 
             // If robot t did not increase, assume the robot has stopped.
             // Break this look to avoid a dead-lock.
@@ -88,4 +89,3 @@ PyBulletTriCameraObjectTrackerDriver::get_observation()
 }
 
 }  // namespace trifinger_object_tracking
-

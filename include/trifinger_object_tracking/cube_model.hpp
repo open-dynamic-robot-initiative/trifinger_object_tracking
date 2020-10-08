@@ -98,7 +98,6 @@ public:
     static constexpr float face_normal_vectors[6][3] = {
         {0, 0, 1}, {1, 0, 0}, {0, 1, 0}, {-1, 0, 0}, {0, -1, 0}, {0, 0, -1}};
 
-
     CubeModel()
     {
         initialise_edges();
@@ -189,7 +188,6 @@ public:
         const CubeFace face = map_color_to_face[color];
         return face_corner_indices[face];
     }
-
 
 private:
     void initialise_edges()

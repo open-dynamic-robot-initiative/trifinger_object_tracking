@@ -42,7 +42,7 @@ PoseDetector::PoseDetector(const CubeModel &cube_model,
     // unfortunately, there is no real const cv::Mat, so we cannot wrap it
     // around the const array but need to copy the data
     corners_at_origin_in_world_frame_ = cv::Mat(8, 4, CV_32F);
-    //std::memcpy(corners_at_origin_in_world_frame_.data,
+    // std::memcpy(corners_at_origin_in_world_frame_.data,
     //            cube_model_.corners_at_origin_in_world_frame,
     //            corners_at_origin_in_world_frame_.total() * sizeof(float));
     std::memcpy(corners_at_origin_in_world_frame_.data,
@@ -315,7 +315,8 @@ PoseDetector::MasksPixels sample_masks_pixels_proportionally(
             unsigned int num_samples_in_mask =
                 sampling_ratio * num_pixels_in_mask;
 
-            std::cout << "num_samples_in_mask " << num_samples_in_mask << std::endl;
+            std::cout << "num_samples_in_mask " << num_samples_in_mask
+                      << std::endl;
 
             std::vector<cv::Point> sampled_pixels(num_samples_in_mask);
             std::sample(masks_pixels[camera_idx][color_idx].begin(),
@@ -462,7 +463,6 @@ std::vector<float> PoseDetector::cost_function(
 
     return particle_errors;
 }
-
 
 void PoseDetector::initialise_pos_cams_w_frame()
 {
@@ -876,13 +876,13 @@ bool PoseDetector::compute_color_visibility(
     float *face_normal_dot_camera_direction) const
 {
     // get the normal vector of that face
-// <<<<<<< HEAD
+    // <<<<<<< HEAD
     int normal_idx = cube_model_.map_color_to_face[color];
     // cv::Vec3f face_normal = face_normal_vectors.col(normal_idx);
-// =======
+    // =======
     // int normal_idx = cube_model_.map_color_to_normal_index[color];
     cv::Vec3f face_normal = face_normals.col(normal_idx);
-// >>>>>>> manuel/optimizing_cem
+    // >>>>>>> manuel/optimizing_cem
 
     auto corner_indices = cube_model_.get_face_corner_indices(color);
 
