@@ -48,6 +48,28 @@ Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
     return pose_detector_.find_pose(dominant_colors, masks);
 }
 
+Pose CubeDetector::detect_cube_single_thread(
+    const std::array<cv::Mat, N_CAMERAS> &images)
+{
+    ScopedTimer timer("CubeDetector/detect_cube");
+
+    std::array<std::vector<FaceColor>, N_CAMERAS> dominant_colors;
+    std::array<std::vector<cv::Mat>, N_CAMERAS> masks;
+
+    for (int i = 0; i < N_CAMERAS; i++)
+    {
+        line_detectors_[i].detect_colors(images[i]);
+
+        dominant_colors[i] = line_detectors_[i].get_dominant_colors();
+        for (FaceColor color : dominant_colors[i])
+        {
+            masks[i].push_back(line_detectors_[i].get_mask(color));
+        }
+    }
+
+    return pose_detector_.find_pose(dominant_colors, masks);
+}
+
 cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
 {
     cv::Mat image0 = line_detectors_[0].get_image();

@@ -29,6 +29,9 @@ public:
                  const std::array<trifinger_cameras::CameraParameters,
                                   N_CAMERAS> &camera_params);
 
+    Pose detect_cube_single_thread(
+        const std::array<cv::Mat, N_CAMERAS> &images);
+
     /**
      * @brief Detect cube in the given images
      *
