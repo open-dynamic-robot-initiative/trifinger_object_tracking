@@ -85,8 +85,8 @@ PoseDetector::MasksPixels sample_masks_pixels_proportionally(
 
     double sampling_ratio = double(num_samples) / double(num_pixels);
 
-    std::cout << "num_pixels: " << num_pixels
-              << " ; sampling_ratio: " << sampling_ratio << std::endl;
+    // std::cout << "num_pixels: " << num_pixels
+    //          << " ; sampling_ratio: " << sampling_ratio << std::endl;
 
     PoseDetector::MasksPixels sampled_masks_pixels;
     for (int camera_idx = 0; camera_idx < PoseDetector::N_CAMERAS; camera_idx++)
@@ -275,7 +275,7 @@ void PoseDetector::optimize_using_optim(
     const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
     const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
 {
-    ScopedTimer timer("PoseDetector/optim");
+    //ScopedTimer timer("PoseDetector/optim");
 
     std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS> masks_pixels;
     for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
@@ -354,24 +354,20 @@ void PoseDetector::optimize_using_optim(
 
     pose2position_and_orientation(pose, &position_.mean, &orientation_.mean);
 
-    int num_misclassified_pixels;
     cost_function(position_.mean,
                   orientation_.mean,
                   dominant_colors,
                   sampled_masks_pixels,
                   distance_cost_scaling,
                   invisibility_cost_scaling,
-                  &num_misclassified_pixels);
-
-    info_ =
-        "num_misclassified_pixels: " + std::to_string(num_misclassified_pixels);
+                  &num_misclassified_pixels_);
 }
 
 Pose PoseDetector::find_pose(
     const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
     const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
 {
-    ScopedTimer timer("PoseDetector/find_pose");
+    //ScopedTimer timer("PoseDetector/find_pose");
 
     // calculates mean_position and mean_orientation
     optimize_using_optim(dominant_colors, masks);
