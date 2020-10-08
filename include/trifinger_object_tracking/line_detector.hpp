@@ -61,7 +61,6 @@ private:
 
     void get_line_between_colors(FaceColor color1, FaceColor color2);
 
-
 public:
     // constructor
     LineDetector(const CubeModel &cube_model,
@@ -82,7 +81,7 @@ public:
      *
      * @param image_bgr
      *
-     * @return 
+     * @return
      */
     ColorEdgeLineList detect_lines(const cv::Mat &image_bgr);
 

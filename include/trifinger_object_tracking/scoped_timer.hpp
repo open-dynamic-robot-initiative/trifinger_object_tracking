@@ -21,8 +21,8 @@ public:
         auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
             end_time - start_time_);
 
-        std::cout << "Duration " << name_ << ": " << duration.count() / 1000000. << " ms."
-                  << std::endl;
+        std::cout << "Duration " << name_ << ": " << duration.count() / 1000000.
+                  << " ms." << std::endl;
 #endif
     }
 

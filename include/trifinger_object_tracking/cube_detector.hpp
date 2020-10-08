@@ -11,7 +11,6 @@
 #include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
 
-
 namespace trifinger_object_tracking
 {
 /**
@@ -54,4 +53,3 @@ private:
     PoseDetector pose_detector_;
 };
 }  // namespace trifinger_object_tracking
-

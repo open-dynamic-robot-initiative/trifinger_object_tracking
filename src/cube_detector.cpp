@@ -115,4 +115,3 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
 }
 
 }  // namespace trifinger_object_tracking
-

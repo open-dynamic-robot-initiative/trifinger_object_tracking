@@ -5,8 +5,8 @@
 
 #include <trifinger_cameras/parse_yml.h>
 
-#include <trifinger_object_tracking/utils.hpp>
 #include <trifinger_object_tracking/cube_detector.hpp>
+#include <trifinger_object_tracking/utils.hpp>
 
 int debug = 1;
 int cols_plot = 5;
@@ -55,7 +55,6 @@ int main(int argc, char **argv)
 
     trifinger_object_tracking::CubeDetector cube_detector("../data",
                                                           camera_params);
-
 
     // for saving to a video file
     int frame_width = 1815;
