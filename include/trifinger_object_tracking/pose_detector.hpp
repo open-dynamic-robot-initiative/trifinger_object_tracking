@@ -95,7 +95,10 @@ private:
         const cv::Vec3f &position,
         const cv::Vec3f &orientation,
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
-        const MasksPixels &masks_pixels);
+        const MasksPixels &masks_pixels,
+        const float &distance_cost_scaling,
+        const float &invisibility_cost_scaling,
+        int *num_misclassified_pixels);
 
     bool compute_color_visibility(
         const FaceColor &color,

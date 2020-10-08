@@ -119,12 +119,12 @@ PoseDetector::MasksPixels sample_masks_pixels(
     PoseDetector::MasksPixels sampled_masks_pixels;
     for (int camera_idx = 0; camera_idx < PoseDetector::N_CAMERAS; camera_idx++)
     {
-        for (size_t col_idx = 0; col_idx < masks_pixels[camera_idx].size();
-             col_idx++)
+        for (size_t color_idx = 0; color_idx < masks_pixels[camera_idx].size();
+             color_idx++)
         {
             std::vector<cv::Point> sampled_pixels(num_samples_per_mask);
-            std::sample(masks_pixels[camera_idx][col_idx].begin(),
-                        masks_pixels[camera_idx][col_idx].end(),
+            std::sample(masks_pixels[camera_idx][color_idx].begin(),
+                        masks_pixels[camera_idx][color_idx].end(),
                         sampled_pixels.begin(),
                         num_samples_per_mask,
                         std::mt19937{std::random_device{}()});
@@ -140,13 +140,13 @@ float PoseDetector::cost_function(
     const cv::Vec3f &position,
     const cv::Vec3f &orientation,
     const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
-    const MasksPixels &masks_pixels)
+    const MasksPixels &masks_pixels,
+    const float &distance_cost_scaling,
+    const float &invisibility_cost_scaling,
+    int *num_misclassified_pixels)
 {
-    ////////////////////////////////////////////////////////////////////////
-    // todo: what is the best value here?
-    constexpr float PIXEL_DIST_SCALE_FACTOR = 5 * 1e-2;
-    constexpr float FACE_INVISIBLE_SCALE_FACTOR = 1.0;
     float cost = 0.;
+    *num_misclassified_pixels = 0;
 
     cv::Affine3f cube_pose_world = cv::Affine3f(orientation, position);
 
@@ -176,10 +176,11 @@ float PoseDetector::cost_function(
         compute_face_normals_and_corners(
             camera_idx, cube_pose_world, &face_normals, &cube_corners);
 
-        for (size_t col_idx = 0; col_idx < dominant_colors[camera_idx].size();
-             col_idx++)
+        for (size_t color_idx = 0;
+             color_idx < dominant_colors[camera_idx].size();
+             color_idx++)
         {
-            FaceColor color = dominant_colors[camera_idx][col_idx];
+            FaceColor color = dominant_colors[camera_idx][color_idx];
 
             bool face_is_visible;
             float face_normal_dot_camera_direction;
@@ -189,7 +190,7 @@ float PoseDetector::cost_function(
                                      &face_is_visible,
                                      &face_normal_dot_camera_direction);
 
-            int num_neglected_pixels_in_segment = 0;
+            int num_misclassified_pixels_in_segment = 0;
 
             float distance_cost = 0;
             {
@@ -202,18 +203,19 @@ float PoseDetector::cost_function(
                                                   imgpoints[corner_indices[3]]};
 
                 int counter = 0;
-                for (const cv::Point &pixel : masks_pixels[camera_idx][col_idx])
+                for (const cv::Point &pixel :
+                     masks_pixels[camera_idx][color_idx])
                 {
                     double dist = cv::pointPolygonTest(corners, pixel, true);
 
                     // negative distance means the point is outside
                     if (dist < 0)
                     {
-                        num_neglected_pixels_in_segment++;
+                        num_misclassified_pixels_in_segment++;
                         distance_cost += -dist;
                     }
                 }
-                distance_cost *= PIXEL_DIST_SCALE_FACTOR;
+                distance_cost *= distance_cost_scaling;
                 // std::cout << "cost (visible): " << cost << std::endl;
             }
 
@@ -225,19 +227,20 @@ float PoseDetector::cost_function(
 
                 if (!face_is_visible)
                 {
-                    int num_pixels = masks_pixels[camera_idx][col_idx].size();
+                    int num_pixels = masks_pixels[camera_idx][color_idx].size();
 
                     invisibility_cost =
                         face_normal_dot_camera_direction * num_pixels;
 
-                    num_neglected_pixels_in_segment = num_pixels;
+                    num_misclassified_pixels_in_segment = num_pixels;
                 }
 
-                invisibility_cost *= FACE_INVISIBLE_SCALE_FACTOR;
+                invisibility_cost *= invisibility_cost_scaling;
             }
 
             cost += distance_cost;
             cost += invisibility_cost;
+            *num_misclassified_pixels += num_misclassified_pixels_in_segment;
         }
     }
 
@@ -274,8 +277,6 @@ void PoseDetector::optimize_using_optim(
 {
     ScopedTimer timer("PoseDetector/optim");
 
-    info_ = "no info";
-
     std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS> masks_pixels;
     for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
     {
@@ -295,6 +296,10 @@ void PoseDetector::optimize_using_optim(
     MasksPixels sampled_masks_pixels =
         sample_masks_pixels_proportionally(masks_pixels, num_samples);
 
+    // todo: what is the best value here?
+    float distance_cost_scaling = 5 * 1e-2;
+    float invisibility_cost_scaling = 1.0;
+
     optim::algo_settings_t settings;
     settings.de_settings.n_gen = 50;
     settings.de_settings.n_pop = 40;
@@ -309,16 +314,25 @@ void PoseDetector::optimize_using_optim(
     arma::vec pose = (lower_bound + upper_bound) / 2.0;
     bool success = optim::de(
         pose,
-        [this, &dominant_colors, &masks, &sampled_masks_pixels](
-            const arma::vec &pose,
-            arma::vec *grad_out,
-            void *opt_data) -> double {
+        [this,
+         &dominant_colors,
+         &sampled_masks_pixels,
+         &distance_cost_scaling,
+         &invisibility_cost_scaling](const arma::vec &pose,
+                                     arma::vec *grad_out,
+                                     void *opt_data) -> double {
             cv::Vec3f position;
             cv::Vec3f orientation;
             pose2position_and_orientation(pose, &position, &orientation);
+            int num_misclassified_pixels;
 
-            float cost = this->cost_function(
-                position, orientation, dominant_colors, sampled_masks_pixels);
+            float cost = this->cost_function(position,
+                                             orientation,
+                                             dominant_colors,
+                                             sampled_masks_pixels,
+                                             distance_cost_scaling,
+                                             invisibility_cost_scaling,
+                                             &num_misclassified_pixels);
 
             return cost;
         },
@@ -326,6 +340,18 @@ void PoseDetector::optimize_using_optim(
         settings);
 
     pose2position_and_orientation(pose, &position_.mean, &orientation_.mean);
+
+    int num_misclassified_pixels;
+    cost_function(position_.mean,
+                  orientation_.mean,
+                  dominant_colors,
+                  sampled_masks_pixels,
+                  distance_cost_scaling,
+                  invisibility_cost_scaling,
+                  &num_misclassified_pixels);
+
+    info_ =
+        "num_misclassified_pixels: " + std::to_string(num_misclassified_pixels);
 }
 
 Pose PoseDetector::find_pose(
