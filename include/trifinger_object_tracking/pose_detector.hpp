@@ -97,8 +97,8 @@ private:
     Stats orientation_;
 
     //! @brief Number of misclassified pixels in the last call of find_pose().
-    unsigned int num_misclassified_pixels_;
-    float confidence_;
+    unsigned int num_misclassified_pixels_ = 0;
+    float confidence_ = 0.0;
 
     void optimize_using_optim(
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
