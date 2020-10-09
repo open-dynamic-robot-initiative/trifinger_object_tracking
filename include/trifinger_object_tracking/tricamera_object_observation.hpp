@@ -18,11 +18,12 @@ struct TriCameraObjectObservation
     std::array<trifinger_cameras::CameraObservation, 3> cameras;
 
     trifinger_object_tracking::ObjectPose object_pose;
+    trifinger_object_tracking::ObjectPose filtered_object_pose;
 
     template <class Archive>
     void serialize(Archive& archive)
     {
-        archive(cameras, object_pose);
+        archive(cameras, object_pose, filtered_object_pose);
     }
 };
 
