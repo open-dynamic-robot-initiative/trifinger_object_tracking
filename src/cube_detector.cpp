@@ -15,7 +15,7 @@ CubeDetector::CubeDetector(const std::string &segmentation_model_dir,
 
 Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
 {
-    ScopedTimer timer("CubeDetector/detect_cube");
+    // ScopedTimer timer("CubeDetector/detect_cube");
 
     std::array<std::vector<FaceColor>, N_CAMERAS> dominant_colors;
     std::array<std::vector<cv::Mat>, N_CAMERAS> masks;
@@ -138,8 +138,12 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
 
     complete_image_with_text_field.push_back(complete_image);
 
+    std::string text =
+        "num_misclassified_pixels: " +
+        std::to_string(pose_detector_.get_num_misclassified_pixels());
+
     cv::putText(complete_image_with_text_field,
-                pose_detector_.info_,
+                text,
                 cv::Point(80, 80),          // Coordinates
                 cv::FONT_HERSHEY_PLAIN,     // Font
                 3.0,                        // Scale. 2.0 = 2x bigger

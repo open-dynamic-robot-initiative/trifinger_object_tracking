@@ -56,7 +56,7 @@ void LineDetector::load_segmentation_models(const std::string &model_directory)
 
 void LineDetector::detect_colors(const cv::Mat &image_bgr)
 {
-    ScopedTimer timer("LineDetector/detect_colors");
+    // ScopedTimer timer("LineDetector/detect_colors");
 
     // TODO better solution than class members for images
 
@@ -70,7 +70,7 @@ void LineDetector::detect_colors(const cv::Mat &image_bgr)
 
 ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
 {
-    ScopedTimer timer("LineDetector/detect_lines");
+    // ScopedTimer timer("LineDetector/detect_lines");
 
     detect_colors(image_bgr);
 
@@ -86,7 +86,7 @@ ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
 
 void LineDetector::xgboost_mask()
 {
-    ScopedTimer timer("LineDetector/xgboost_mask");
+    // ScopedTimer timer("LineDetector/xgboost_mask");
 
     // map label index of the xgboost model to color
     constexpr std::array<FaceColor, FaceColor::N_COLORS> map_label_to_color = {
@@ -155,7 +155,7 @@ void LineDetector::xgboost_mask()
 
 void LineDetector::gmm_mask()
 {
-    ScopedTimer timer("LineDetector/gmm_mask");
+    // ScopedTimer timer("LineDetector/gmm_mask");
 
     const size_t n_pixels = image_bgr_.total();
 
@@ -364,7 +364,7 @@ void LineDetector::clean_mask(
 
 void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
 {
-    ScopedTimer timer("LineDetector/find_dominant_colors");
+    // ScopedTimer timer("LineDetector/find_dominant_colors");
 
     // TODO this method can probably be optimized
 
@@ -416,7 +416,7 @@ void LineDetector::find_dominant_colors(const unsigned int N_dominant_colors)
 
 void LineDetector::deflate_masks_of_dominant_colors()
 {
-    ScopedTimer timer("LineDetector/deflate_masks_of_dominant_colors");
+    // ScopedTimer timer("LineDetector/deflate_masks_of_dominant_colors");
 
     // TODO: what is a good value?
     constexpr unsigned DEFLATION_RADIUS = 7;
@@ -541,7 +541,7 @@ std::array<std::vector<cv::Point>, 2> LineDetector::get_front_line_pixels(
 
 void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
 {
-    ScopedTimer timer("LineDetector/get_line_between_colors");
+    // ScopedTimer timer("LineDetector/get_line_between_colors");
 
     constexpr float LINE_ACCURACY_THRESHOLD = 90.0;
 
@@ -642,7 +642,7 @@ void LineDetector::get_line_between_colors(FaceColor c1, FaceColor c2)
 
             cv::Ptr<cv::ml::SVM> svm = cv::ml::SVM::create();
             {
-                ScopedTimer timer("SVM");
+                // ScopedTimer timer("SVM");
                 svm->setType(cv::ml::SVM::C_SVC);
                 svm->setC(0.1);
                 svm->setKernel(cv::ml::SVM::LINEAR);

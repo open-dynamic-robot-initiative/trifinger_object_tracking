@@ -27,6 +27,10 @@ public:
     //! Number of cameras
     static constexpr unsigned int N_CAMERAS = 3;
 
+    typedef std::array<std::vector<std::vector<cv::Point>>,
+                       PoseDetector::N_CAMERAS>
+        MasksPixels;
+
     PoseDetector(const CubeModel &cube_model,
                  const std::array<trifinger_cameras::CameraParameters,
                                   N_CAMERAS> &camera_parameters);
@@ -68,11 +72,15 @@ public:
     std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>>
     get_visible_faces(unsigned int camera_idx) const;
 
-    typedef std::array<std::vector<std::vector<cv::Point>>,
-                       PoseDetector::N_CAMERAS>
-        MasksPixels;
+    unsigned int get_num_misclassified_pixels() const
+    {
+        return num_misclassified_pixels_;
+    }
 
-    std::string info_;
+    float get_confidence() const
+    {
+        return confidence_;
+    }
 
 private:
     CubeModel cube_model_;
@@ -88,6 +96,10 @@ private:
     Stats position_;
     Stats orientation_;
 
+    //! @brief Number of misclassified pixels in the last call of find_pose().
+    unsigned int num_misclassified_pixels_ = 0;
+    float confidence_ = 0.0;
+
     void optimize_using_optim(
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
         const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks);
@@ -99,7 +111,7 @@ private:
         const MasksPixels &masks_pixels,
         const float &distance_cost_scaling,
         const float &invisibility_cost_scaling,
-        int *num_misclassified_pixels);
+        unsigned int *num_misclassified_pixels);
 
     bool compute_color_visibility(
         const FaceColor &color,

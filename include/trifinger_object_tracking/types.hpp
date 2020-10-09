@@ -39,8 +39,14 @@ struct Pose
     //! rotation vector
     cv::Vec3f rotation;
 
-    Pose(const cv::Vec3f &translation, const cv::Vec3f &rotation)
-        : translation(translation), rotation(rotation)
+    float confidence = 0.0;
+
+    Pose(const cv::Vec3f &translation,
+         const cv::Vec3f &rotation,
+         float confidence = 0.0)
+        : translation(translation),
+          rotation(rotation),
+          confidence(confidence)
     {
     }
 };
