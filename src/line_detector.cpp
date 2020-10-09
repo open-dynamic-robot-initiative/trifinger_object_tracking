@@ -49,9 +49,9 @@ void LineDetector::set_color_bounds()
 
 void LineDetector::load_segmentation_models(const std::string &model_directory)
 {
-    std::string model_file = model_directory + "/gmm_weights_from_python.yml";
-    segmentation_models_ =
-        trifinger_object_tracking::load_gmm_models_from_file(model_file);
+    // std::string model_file = model_directory + "/gmm_weights_from_python.yml";
+    // segmentation_models_ =
+    //     trifinger_object_tracking::load_gmm_models_from_file(model_file);
 }
 
 void LineDetector::detect_colors(const cv::Mat &image_bgr)
@@ -110,9 +110,9 @@ void LineDetector::xgboost_mask()
             cv::Mat(image_bgr_.rows, image_bgr_.cols, CV_8UC1, cv::Scalar(0));
     }
 
-    for (int r = 0; r < image_bgr_.rows; r++)
+    for (int r = 0; r < image_bgr_.rows; r += 3)
     {
-        for (int c = 0; c < image_bgr_.cols; c++)
+        for (int c = 0; c < image_bgr_.cols; c += 3)
         {
             std::array<float, XGB_NUM_FEATURES> features;
 
@@ -144,9 +144,9 @@ void LineDetector::xgboost_mask()
     // post-process masks
     for (FaceColor color : cube_model_.get_colors())
     {
-        // "open" image to get rid of single-pixel noise
-        cv::morphologyEx(
-            masks_[color], masks_[color], cv::MORPH_OPEN, open_kernel);
+        // // "open" image to get rid of single-pixel noise
+        // cv::morphologyEx(
+        //     masks_[color], masks_[color], cv::MORPH_OPEN, open_kernel);
 
         // count number of pixels of each color
         color_count_[color] = cv::countNonZero(masks_[color]);

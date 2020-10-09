@@ -89,7 +89,8 @@ int main(int argc, char **argv)
     trifinger_object_tracking::CubeDetector cube_detector(model_directory,
                                                           camera_params);
 
-    trifinger_object_tracking::Pose pose = cube_detector.detect_cube(frames);
+    trifinger_object_tracking::Pose pose =
+        cube_detector.detect_cube_single_thread(frames);
 
     std::cout << "Cube Position: " << pose.translation << std::endl;
 
