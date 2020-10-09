@@ -83,6 +83,7 @@ PoseDetector::MasksPixels sample_masks_pixels_proportionally(
         }
     }
 
+    // todo: we should probably handle the special case when there are no pixels
     double sampling_ratio = double(num_samples) / double(num_pixels);
 
     // std::cout << "num_pixels: " << num_pixels
@@ -100,11 +101,15 @@ PoseDetector::MasksPixels sample_masks_pixels_proportionally(
                 sampling_ratio * num_pixels_in_mask;
 
             std::vector<cv::Point> sampled_pixels(num_samples_in_mask);
-            std::sample(masks_pixels[camera_idx][color_idx].begin(),
-                        masks_pixels[camera_idx][color_idx].end(),
-                        sampled_pixels.begin(),
-                        num_samples_in_mask,
-                        std::mt19937{std::random_device{}()});
+
+            if (num_samples_in_mask > 0)
+            {
+                std::sample(masks_pixels[camera_idx][color_idx].begin(),
+                            masks_pixels[camera_idx][color_idx].end(),
+                            sampled_pixels.begin(),
+                            num_samples_in_mask,
+                            std::mt19937{std::random_device{}()});
+            }
 
             sampled_masks_pixels[camera_idx].push_back(sampled_pixels);
         }
@@ -180,6 +185,12 @@ float PoseDetector::cost_function(
              color_idx < dominant_colors[camera_idx].size();
              color_idx++)
         {
+            unsigned int num_pixels = masks_pixels[camera_idx][color_idx].size();
+            if(num_pixels == 0)
+            {
+                continue;
+            }
+
             FaceColor color = dominant_colors[camera_idx][color_idx];
 
             bool face_is_visible;
@@ -202,7 +213,6 @@ float PoseDetector::cost_function(
                                                   imgpoints[corner_indices[2]],
                                                   imgpoints[corner_indices[3]]};
 
-                int counter = 0;
                 for (const cv::Point &pixel :
                      masks_pixels[camera_idx][color_idx])
                 {
@@ -227,8 +237,6 @@ float PoseDetector::cost_function(
 
                 if (!face_is_visible)
                 {
-                    int num_pixels = masks_pixels[camera_idx][color_idx].size();
-
                     invisibility_cost =
                         face_normal_dot_camera_direction * num_pixels;
 

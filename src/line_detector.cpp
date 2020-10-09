@@ -1,7 +1,10 @@
 #include <math.h>
 #include <trifinger_object_tracking/xgboost_classifier.h>
+
+#include <algorithm>  // std::sort, std::stable_sort
 #include <chrono>
 #include <iostream>
+#include <numeric>  // std::iota
 #include <thread>
 #include <trifinger_object_tracking/gmm_params.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
@@ -65,7 +68,7 @@ void LineDetector::detect_colors(const cv::Mat &image_bgr)
     cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
 
     xgboost_mask();
-    find_dominant_colors(3);
+    // find_dominant_colors(3);
 }
 
 ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
@@ -141,15 +144,34 @@ void LineDetector::xgboost_mask()
         }
     }
 
+    std::array<unsigned int, FaceColor::N_COLORS> color_counts;
     // post-process masks
     for (FaceColor color : cube_model_.get_colors())
     {
+        // todo: would be good to add this back
         // // "open" image to get rid of single-pixel noise
         // cv::morphologyEx(
         //     masks_[color], masks_[color], cv::MORPH_OPEN, open_kernel);
 
         // count number of pixels of each color
         color_count_[color] = cv::countNonZero(masks_[color]);
+        color_counts[color] = cv::countNonZero(masks_[color]);
+    }
+
+    // we store the 3 colors with most pixels in dominant_colors_
+    std::vector<unsigned int> colors_sorted_descending(FaceColor::N_COLORS);
+    std::iota(
+        colors_sorted_descending.begin(), colors_sorted_descending.end(), 0);
+    std::sort(colors_sorted_descending.begin(),
+              colors_sorted_descending.end(),
+              [&color_counts](size_t i1, size_t i2) {
+                  return color_counts[i1] > color_counts[i2];
+              });
+
+    dominant_colors_.resize(3);
+    for (size_t i = 0; i < dominant_colors_.size(); i++)
+    {
+        dominant_colors_[i] = FaceColor(colors_sorted_descending[i]);
     }
 }
 
