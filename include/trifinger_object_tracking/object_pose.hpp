@@ -16,7 +16,7 @@ struct ObjectPose
 public:
     Eigen::Vector3d position;
     Eigen::Vector4d orientation;
-    double confidence;
+    double confidence = 0.0;
 
     //! For serialization with cereal.
     template <class Archive>

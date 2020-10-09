@@ -98,9 +98,8 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
     {
         observation.cameras[i] = cameras_[i].get_observation();
 
-        cv::cvtColor(observation.cameras[i].image,
-                     images_bgr[i],
-                     cv::COLOR_BayerBG2BGR);
+        cv::cvtColor(
+            observation.cameras[i].image, images_bgr[i], cv::COLOR_BayerBG2BGR);
     }
 
     Pose cube_pose = cube_detector_->detect_cube_single_thread(images_bgr);
@@ -124,6 +123,18 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
                  observation.object_pose.position);
     cv::cv2eigen(quaternion, observation.object_pose.orientation);
     observation.object_pose.confidence = cube_pose.confidence;
+
+    constexpr float FILTER_CONFIDENCE_THRESHOLD = 0.9;
+    if (previous_pose_.confidence > 0 &&
+        observation.object_pose.confidence < FILTER_CONFIDENCE_THRESHOLD)
+    {
+        observation.filtered_object_pose = previous_pose_;
+    }
+    else
+    {
+        observation.filtered_object_pose = observation.object_pose;
+        previous_pose_ = observation.object_pose;
+    }
 
     return observation;
 }

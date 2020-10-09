@@ -51,6 +51,8 @@ private:
     std::array<trifinger_cameras::PylonDriver, N_CAMERAS> cameras_;
     bool downsample_images_;
     std::unique_ptr<trifinger_object_tracking::CubeDetector> cube_detector_;
+
+    ObjectPose previous_pose_;
 };
 
 }  // namespace trifinger_object_tracking
