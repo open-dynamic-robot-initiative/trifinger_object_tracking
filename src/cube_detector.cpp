@@ -51,7 +51,7 @@ Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
 Pose CubeDetector::detect_cube_single_thread(
     const std::array<cv::Mat, N_CAMERAS> &images)
 {
-    ScopedTimer timer("CubeDetector/detect_cube");
+    //ScopedTimer timer("CubeDetector/detect_cube");
 
     std::array<std::vector<FaceColor>, N_CAMERAS> dominant_colors;
     std::array<std::vector<cv::Mat>, N_CAMERAS> masks;
