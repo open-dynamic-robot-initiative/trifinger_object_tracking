@@ -212,7 +212,7 @@ float PoseDetector::cost_function(
                     if (dist < 0)
                     {
                         num_misclassified_pixels_in_segment++;
-                        distance_cost += -dist;
+                        distance_cost += pow(-dist, 0.5);
                     }
                 }
                 distance_cost *= distance_cost_scaling;
@@ -372,7 +372,7 @@ Pose PoseDetector::find_pose(
     const std::array<std::vector<cv::Mat>, N_CAMERAS> &masks)
 {
     ScopedTimer timer("PoseDetector/find_pose");
-    
+
     // calculates mean_position and mean_orientation
     optimize_using_optim(dominant_colors, masks);
 
