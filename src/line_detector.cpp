@@ -61,14 +61,46 @@ void LineDetector::detect_colors(const cv::Mat &image_bgr)
 {
     // ScopedTimer timer("LineDetector/detect_colors");
 
+    // downsample --------------------------------------------
+    // here we downsample, and in the end we upsample, since
+    // externally the non-downsampled images are used. if we 
+    // were to receive actually downsampled images directly, we could
+    // just remove these two steps
+    float downsampling_factor = 0.33;
+    cv::resize(image_bgr,
+               image_bgr_,
+               cv::Size(),
+               downsampling_factor,
+               downsampling_factor,
+               CV_INTER_NN);
+    // --------------------------------------------------------
     // TODO better solution than class members for images
 
     // blur the image to make colour classification easier
-    cv::medianBlur(image_bgr, image_bgr_, 5);
+    cv::medianBlur(image_bgr_, image_bgr_, 5);
     cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
 
     xgboost_mask();
     // find_dominant_colors(3);
+
+    // upsample -------------------------------------------------
+    cv::resize(image_bgr_,
+               image_bgr_,
+               cv::Size(),
+               1 / downsampling_factor,
+               1 / downsampling_factor,
+               CV_INTER_NN);
+
+    for (size_t color = 0; color < FaceColor::N_COLORS; color++)
+    {
+        cv::resize(masks_[color],
+                   masks_[color],
+                   cv::Size(),
+                   1 / downsampling_factor,
+                   1 / downsampling_factor,
+                   CV_INTER_NN);
+    }
+    // -------------------------------------------------------------
 }
 
 ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
@@ -113,9 +145,9 @@ void LineDetector::xgboost_mask()
             cv::Mat(image_bgr_.rows, image_bgr_.cols, CV_8UC1, cv::Scalar(0));
     }
 
-    for (int r = 0; r < image_bgr_.rows; r += 3)
+    for (int r = 0; r < image_bgr_.rows; r += 1)
     {
-        for (int c = 0; c < image_bgr_.cols; c += 3)
+        for (int c = 0; c < image_bgr_.cols; c += 1)
         {
             std::array<float, XGB_NUM_FEATURES> features;
 
@@ -149,9 +181,9 @@ void LineDetector::xgboost_mask()
     for (FaceColor color : cube_model_.get_colors())
     {
         // todo: would be good to add this back
-        // // "open" image to get rid of single-pixel noise
-        // cv::morphologyEx(
-        //     masks_[color], masks_[color], cv::MORPH_OPEN, open_kernel);
+        // "open" image to get rid of single-pixel noise
+        cv::morphologyEx(
+            masks_[color], masks_[color], cv::MORPH_OPEN, open_kernel);
 
         // count number of pixels of each color
         color_count_[color] = cv::countNonZero(masks_[color]);
