@@ -14,7 +14,6 @@ namespace trifinger_object_tracking
 struct ObjectPose
 {
 public:
-    double timestamp;
     Eigen::Vector3d position;
     Eigen::Vector4d orientation;
     double confidence;
@@ -23,8 +22,7 @@ public:
     template <class Archive>
     void serialize(Archive& archive)
     {
-        archive(cereal::make_nvp("t", timestamp),
-                cereal::make_nvp("px", position[0]),
+        archive(cereal::make_nvp("px", position[0]),
                 cereal::make_nvp("py", position[1]),
                 cereal::make_nvp("pz", position[2]),
                 cereal::make_nvp("qx", orientation[0]),
