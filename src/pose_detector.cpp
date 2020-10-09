@@ -362,6 +362,7 @@ void PoseDetector::optimize_using_optim(
                   invisibility_cost_scaling,
                   &num_misclassified_pixels_);
 
+    // TODO: Consider number of pixels in the segmentation
     confidence_ = 1 - num_misclassified_pixels_ / num_samples;
 }
 
