@@ -77,6 +77,11 @@ public:
         return num_misclassified_pixels_;
     }
 
+    float get_confidence() const
+    {
+        return confidence_;
+    }
+
 private:
     CubeModel cube_model_;
 
@@ -93,6 +98,7 @@ private:
 
     //! @brief Number of misclassified pixels in the last call of find_pose().
     unsigned int num_misclassified_pixels_;
+    float confidence_;
 
     void optimize_using_optim(
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,

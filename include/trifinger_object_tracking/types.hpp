@@ -39,14 +39,14 @@ struct Pose
     //! rotation vector
     cv::Vec3f rotation;
 
-    unsigned int num_misclassified_pixels = 0;
+    float confidence = 0.0;
 
     Pose(const cv::Vec3f &translation,
          const cv::Vec3f &rotation,
-         unsigned int num_misclassified_pixels = 0)
+         float confidence = 0.0)
         : translation(translation),
           rotation(rotation),
-          num_misclassified_pixels(num_misclassified_pixels)
+          confidence(confidence)
     {
     }
 };

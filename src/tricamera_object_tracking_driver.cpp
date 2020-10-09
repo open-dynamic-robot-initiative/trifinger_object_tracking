@@ -131,9 +131,7 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
     cv::cv2eigen(static_cast<cv::Vec3d>(cube_pose.translation),
                  observation.object_pose.position);
     cv::cv2eigen(quaternion, observation.object_pose.orientation);
-
-    // FIXME
-    observation.object_pose.confidence = cube_pose.num_misclassified_pixels;
+    observation.object_pose.confidence = cube_pose.confidence;
 
     return observation;
 }
