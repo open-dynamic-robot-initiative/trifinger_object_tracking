@@ -8,6 +8,7 @@
 #include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
+#include <pybind11/stl.h>
 
 #include <trifinger_object_tracking/pybullet_tricamera_object_tracker_driver.hpp>
 #ifdef Pylon_FOUND
@@ -16,6 +17,7 @@
 
 #include <robot_interfaces/sensors/pybind_sensors.hpp>
 #include <robot_interfaces/sensors/sensor_driver.hpp>
+#include <trifinger_object_tracking/cube_visualizer.hpp>
 
 using namespace robot_interfaces;
 using namespace trifinger_object_tracking;
@@ -67,4 +69,8 @@ PYBIND11_MODULE(py_tricamera_types, m)
                             bool>())
         .def("get_observation",
              &PyBulletTriCameraObjectTrackerDriver::get_observation);
+
+    pybind11::class_<CubeVisualizer>(m, "CubeVisualizer")
+        .def(pybind11::init<std::array<std::string, 3>>())
+        .def("draw_cube", &CubeVisualizer::draw_cube);
 }

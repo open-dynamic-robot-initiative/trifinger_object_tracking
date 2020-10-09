@@ -521,4 +521,11 @@ PoseDetector::get_visible_faces(unsigned int camera_idx) const
     return get_visible_faces(camera_idx, cube_pose_world);
 }
 
+void PoseDetector::set_pose(const Pose &pose)
+{
+    position_.mean = pose.translation;
+    orientation_.mean = pose.rotation;
+    confidence_ = pose.confidence;
+}
+
 }  // namespace trifinger_object_tracking
