@@ -101,6 +101,13 @@ target_link_libraries(cube_detector
     cv_sub_images
 )
 
+add_library(cube_visualizer
+    src/cube_visualizer.cpp
+)
+target_link_libraries(cube_visualizer
+    ${catkin_LIBRARIES}
+    cube_detector
+)
 
 add_executable(object_pose src/main.cpp)
 target_link_libraries(object_pose
@@ -155,6 +162,7 @@ catkin_add_pybind11_module(py_object_tracker
 catkin_add_pybind11_module(py_tricamera_types
     ${tricamera_object_tracking_driver}
     pybullet_tricamera_object_tracker_driver
+    cube_visualizer
 )
 
 

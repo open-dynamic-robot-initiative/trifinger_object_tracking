@@ -82,6 +82,8 @@ public:
         return confidence_;
     }
 
+    void set_pose(const Pose &pose);
+
 private:
     CubeModel cube_model_;
 
