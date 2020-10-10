@@ -57,24 +57,76 @@ void LineDetector::load_segmentation_models(const std::string &model_directory)
     //     trifinger_object_tracking::load_gmm_models_from_file(model_file);
 }
 
+cv::Mat BGR2BayerBG(const cv::Mat &bgr_image)
+{
+    // ported from python
+    //
+    // This can be used to generate simulated raw camera data in Bayer format.
+    // Note that there will be some loss in image quality.  It is mostly meant
+    // for testing the full software pipeline with the same conditions as on the
+    // real robot.  It is not optimized of realistic images.
+
+    // Args:
+    //     image: RGB image.
+
+    // Returns:
+    //     Bayer pattern based on the input image.  Height and width are the
+    //     same as of the input image.  The image can be converted using
+    //     OpenCV's `COLOR_BAYER_BG2*`.
+
+    // channel names, assuming input is BGR
+    int CHANNEL_RED = 2;
+    int CHANNEL_GREEN = 1;
+    int CHANNEL_BLUE = 0;
+
+    // channel map to get the following pattern (called "BG" in OpenCV):
+    //
+    //   R G
+    //   G B
+    //
+    arma::imat channel_map = {{CHANNEL_RED, CHANNEL_GREEN},
+                              {CHANNEL_GREEN, CHANNEL_BLUE}};
+
+    cv::Mat bayer_img(bgr_image.rows, bgr_image.cols, CV_8UC1);
+    for (int r = 0; r < bgr_image.rows; r++)
+    {
+        for (int c = 0; c < bgr_image.cols; c++)
+        {
+            int channel = channel_map(r % 2, c % 2);
+
+            bayer_img.at<uint8_t>(r, c) =
+                bgr_image.at<cv::Vec3b>(r, c)[channel];
+        }
+    }
+
+    return bayer_img;
+}
+
 void LineDetector::detect_colors(const cv::Mat &image_bgr)
 {
-    // ScopedTimer timer("LineDetector/detect_colors");
+    // TODO better solution than class members for images
+    image_bgr_ = image_bgr;
 
-    // downsample --------------------------------------------
-    // here we downsample, and in the end we upsample, since
-    // externally the non-downsampled images are used. if we 
-    // were to receive actually downsampled images directly, we could
-    // just remove these two steps
-    float downsampling_factor = 0.33;
-    cv::resize(image_bgr,
+    // ----------------------------------------------------------
+    // this part here should be done in the camera driver
+
+    cv::Mat bayer_image;
+    cv::medianBlur(image_bgr_, image_bgr_, 3); // remove a bit of noise
+
+    float downsampling_factor = 0.5;
+    cv::resize(image_bgr_,
                image_bgr_,
                cv::Size(),
                downsampling_factor,
                downsampling_factor,
-               CV_INTER_NN);
-    // --------------------------------------------------------
-    // TODO better solution than class members for images
+               CV_INTER_LINEAR);
+
+    bayer_image = BGR2BayerBG(image_bgr_);
+
+    // -----------> image is passed through robot interface ---------->
+
+    // receive image and debayer
+    cv::cvtColor(bayer_image, image_bgr_, cv::COLOR_BayerBG2BGR);
 
     // blur the image to make colour classification easier
     cv::medianBlur(image_bgr_, image_bgr_, 5);
@@ -84,6 +136,8 @@ void LineDetector::detect_colors(const cv::Mat &image_bgr)
     // find_dominant_colors(3);
 
     // upsample -------------------------------------------------
+    // this hack can be removed once we receive the downsampled images
+    // through the driver
     cv::resize(image_bgr_,
                image_bgr_,
                cv::Size(),
