@@ -1,7 +1,10 @@
 #include <math.h>
 #include <trifinger_object_tracking/xgboost_classifier.h>
+
+#include <algorithm>  // std::sort, std::stable_sort
 #include <chrono>
 #include <iostream>
+#include <numeric>  // std::iota
 #include <thread>
 #include <trifinger_object_tracking/gmm_params.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
@@ -54,18 +57,104 @@ void LineDetector::load_segmentation_models(const std::string &model_directory)
     //     trifinger_object_tracking::load_gmm_models_from_file(model_file);
 }
 
+cv::Mat BGR2BayerBG(const cv::Mat &bgr_image)
+{
+    // ported from python
+    //
+    // This can be used to generate simulated raw camera data in Bayer format.
+    // Note that there will be some loss in image quality.  It is mostly meant
+    // for testing the full software pipeline with the same conditions as on the
+    // real robot.  It is not optimized of realistic images.
+
+    // Args:
+    //     image: RGB image.
+
+    // Returns:
+    //     Bayer pattern based on the input image.  Height and width are the
+    //     same as of the input image.  The image can be converted using
+    //     OpenCV's `COLOR_BAYER_BG2*`.
+
+    // channel names, assuming input is BGR
+    int CHANNEL_RED = 2;
+    int CHANNEL_GREEN = 1;
+    int CHANNEL_BLUE = 0;
+
+    // channel map to get the following pattern (called "BG" in OpenCV):
+    //
+    //   R G
+    //   G B
+    //
+    arma::imat channel_map = {{CHANNEL_RED, CHANNEL_GREEN},
+                              {CHANNEL_GREEN, CHANNEL_BLUE}};
+
+    cv::Mat bayer_img(bgr_image.rows, bgr_image.cols, CV_8UC1);
+    for (int r = 0; r < bgr_image.rows; r++)
+    {
+        for (int c = 0; c < bgr_image.cols; c++)
+        {
+            int channel = channel_map(r % 2, c % 2);
+
+            bayer_img.at<uint8_t>(r, c) =
+                bgr_image.at<cv::Vec3b>(r, c)[channel];
+        }
+    }
+
+    return bayer_img;
+}
+
 void LineDetector::detect_colors(const cv::Mat &image_bgr)
 {
-    // ScopedTimer timer("LineDetector/detect_colors");
-
     // TODO better solution than class members for images
+    image_bgr_ = image_bgr;
+
+    // ----------------------------------------------------------
+    // this part here should be done in the camera driver
+
+    cv::Mat bayer_image;
+    cv::medianBlur(image_bgr_, image_bgr_, 3); // remove a bit of noise
+
+    float downsampling_factor = 0.5;
+    cv::resize(image_bgr_,
+               image_bgr_,
+               cv::Size(),
+               downsampling_factor,
+               downsampling_factor,
+               CV_INTER_LINEAR);
+
+    bayer_image = BGR2BayerBG(image_bgr_);
+
+    // -----------> image is passed through robot interface ---------->
+
+    // receive image and debayer
+    cv::cvtColor(bayer_image, image_bgr_, cv::COLOR_BayerBG2BGR);
 
     // blur the image to make colour classification easier
-    cv::medianBlur(image_bgr, image_bgr_, 5);
+    cv::medianBlur(image_bgr_, image_bgr_, 5);
     cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
 
     xgboost_mask();
-    find_dominant_colors(3);
+    // find_dominant_colors(3);
+
+    // upsample -------------------------------------------------
+    // this hack can be removed once we receive the downsampled images
+    // through the driver
+    cv::resize(image_bgr_,
+               image_bgr_,
+               cv::Size(),
+               1 / downsampling_factor,
+               1 / downsampling_factor,
+               CV_INTER_NN);
+
+    for (size_t color = 0; color < FaceColor::N_COLORS; color++)
+    {
+        cv::resize(masks_[color],
+                   masks_[color],
+                   cv::Size(),
+                   1 / downsampling_factor,
+                   1 / downsampling_factor,
+                   CV_INTER_NN);
+    }
+    // -------------------------------------------------------------
 }
 
 ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
@@ -110,9 +199,9 @@ void LineDetector::xgboost_mask()
             cv::Mat(image_bgr_.rows, image_bgr_.cols, CV_8UC1, cv::Scalar(0));
     }
 
-    for (int r = 0; r < image_bgr_.rows; r += 3)
+    for (int r = 0; r < image_bgr_.rows; r += 1)
     {
-        for (int c = 0; c < image_bgr_.cols; c += 3)
+        for (int c = 0; c < image_bgr_.cols; c += 1)
         {
             std::array<float, XGB_NUM_FEATURES> features;
 
@@ -141,15 +230,34 @@ void LineDetector::xgboost_mask()
         }
     }
 
+    std::array<unsigned int, FaceColor::N_COLORS> color_counts;
     // post-process masks
     for (FaceColor color : cube_model_.get_colors())
     {
-        // // "open" image to get rid of single-pixel noise
-        // cv::morphologyEx(
-        //     masks_[color], masks_[color], cv::MORPH_OPEN, open_kernel);
+        // todo: would be good to add this back
+        // "open" image to get rid of single-pixel noise
+        cv::morphologyEx(
+            masks_[color], masks_[color], cv::MORPH_OPEN, open_kernel);
 
         // count number of pixels of each color
         color_count_[color] = cv::countNonZero(masks_[color]);
+        color_counts[color] = cv::countNonZero(masks_[color]);
+    }
+
+    // we store the 3 colors with most pixels in dominant_colors_
+    std::vector<unsigned int> colors_sorted_descending(FaceColor::N_COLORS);
+    std::iota(
+        colors_sorted_descending.begin(), colors_sorted_descending.end(), 0);
+    std::sort(colors_sorted_descending.begin(),
+              colors_sorted_descending.end(),
+              [&color_counts](size_t i1, size_t i2) {
+                  return color_counts[i1] > color_counts[i2];
+              });
+
+    dominant_colors_.resize(3);
+    for (size_t i = 0; i < dominant_colors_.size(); i++)
+    {
+        dominant_colors_[i] = FaceColor(colors_sorted_descending[i]);
     }
 }
 
