@@ -105,56 +105,12 @@ cv::Mat BGR2BayerBG(const cv::Mat &bgr_image)
 void LineDetector::detect_colors(const cv::Mat &image_bgr)
 {
     // TODO better solution than class members for images
-    image_bgr_ = image_bgr;
-
-    // ----------------------------------------------------------
-    // this part here should be done in the camera driver
-
-    cv::Mat bayer_image;
-    cv::medianBlur(image_bgr_, image_bgr_, 3); // remove a bit of noise
-
-    float downsampling_factor = 0.5;
-    cv::resize(image_bgr_,
-               image_bgr_,
-               cv::Size(),
-               downsampling_factor,
-               downsampling_factor,
-               CV_INTER_LINEAR);
-
-    bayer_image = BGR2BayerBG(image_bgr_);
-
-    // -----------> image is passed through robot interface ---------->
-
-    // receive image and debayer
-    cv::cvtColor(bayer_image, image_bgr_, cv::COLOR_BayerBG2BGR);
 
     // blur the image to make colour classification easier
-    cv::medianBlur(image_bgr_, image_bgr_, 5);
+    cv::medianBlur(image_bgr, image_bgr_, 5);
     cv::cvtColor(image_bgr_, image_hsv_, cv::COLOR_BGR2HSV);
 
     xgboost_mask();
-    // find_dominant_colors(3);
-
-    // upsample -------------------------------------------------
-    // this hack can be removed once we receive the downsampled images
-    // through the driver
-    cv::resize(image_bgr_,
-               image_bgr_,
-               cv::Size(),
-               1 / downsampling_factor,
-               1 / downsampling_factor,
-               CV_INTER_NN);
-
-    for (size_t color = 0; color < FaceColor::N_COLORS; color++)
-    {
-        cv::resize(masks_[color],
-                   masks_[color],
-                   cv::Size(),
-                   1 / downsampling_factor,
-                   1 / downsampling_factor,
-                   CV_INTER_NN);
-    }
-    // -------------------------------------------------------------
 }
 
 ColorEdgeLineList LineDetector::detect_lines(const cv::Mat &image_bgr)
