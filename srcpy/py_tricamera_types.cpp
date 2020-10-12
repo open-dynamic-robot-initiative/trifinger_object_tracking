@@ -42,7 +42,10 @@ PYBIND11_MODULE(py_tricamera_types, m)
             "'camera60', 'camera180' and 'camera300' (in this order)")
         .def_readwrite("object_pose",
                        &TriCameraObjectObservation::object_pose,
-                       "ObjectPose: Estimated object pose.");
+                       "ObjectPose: Estimated object pose.")
+        .def_readwrite("filtered_object_pose",
+                       &TriCameraObjectObservation::filtered_object_pose,
+                       "ObjectPose: Filtered estimated object pose.");
 
 #ifdef Pylon_FOUND
     pybind11::class_<TriCameraObjectTrackerDriver,

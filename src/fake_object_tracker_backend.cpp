@@ -19,9 +19,9 @@ ObjectPose FakeObjectTrackerBackend::update_pose()
     pose.position << x, x * 2, x * 3;
     pose.orientation << x / 2, x / 3, x / 4, x / 5;
 
-    auto current_time = std::chrono::system_clock::now();
-    pose.timestamp =
-        std::chrono::duration<double>(current_time.time_since_epoch()).count();
+    //auto current_time = std::chrono::system_clock::now();
+    //pose.timestamp =
+    //    std::chrono::duration<double>(current_time.time_since_epoch()).count();
 
     // These are nonesense values, so confidence is zero :)
     pose.confidence = 0.0;

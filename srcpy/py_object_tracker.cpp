@@ -20,8 +20,7 @@ using namespace trifinger_object_tracking;
 PYBIND11_MODULE(py_object_tracker, m)
 {
     pybind11::class_<ObjectPose>(m, "ObjectPose")
-        .def(pybind11::init<size_t>())
-        .def_readwrite("timestamp", &ObjectPose::timestamp)
+        .def(pybind11::init<>())
         .def_readwrite("position",
                        &ObjectPose::position,
                        "Position (x, y, z) in the world frame.")
