@@ -35,6 +35,11 @@ def main():
         action="store_true",
         help="Print the object pose confidence in the images.",
     )
+    parser.add_argument(
+        "--unfiltered",
+        action="store_true",
+        help="Use the unfiltered object pose.",
+    )
     args = parser.parse_args()
 
     log_file_path = pathlib.Path(args.filename)
@@ -72,16 +77,20 @@ def main():
     for observation in log_reader.data:
         images = [utils.convert_image(camera.image) for camera in observation.cameras]
 
+        if args.unfiltered:
+            object_pose = observation.object_pose
+        else:
+            object_pose = observation.filtered_object_pose
+
         if args.visualize_object_pose:
             cvmats = [trifinger_cameras.camera.cvMat(img) for img in images]
-            images = cube_visualizer.draw_cube(cvmats, observation.object_pose,
-                                               False)
+            images = cube_visualizer.draw_cube(cvmats, object_pose, False)
             images = [np.array(img) for img in images]
 
         if args.show_confidence:
             images = [cv2.putText(
                 image,
-                "confidence: %.2f" % observation.object_pose.confidence,
+                "confidence: %.2f" % object_pose.confidence,
                 (0, image.shape[0] - 10),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
@@ -94,6 +103,10 @@ def main():
         # stop if either "q" or ESC is pressed
         if cv2.waitKey(interval) in [ord("q"), 27]:  # 27 = ESC
             break
+
+        # for testing
+        # if object_pose.confidence < 0.9:
+        #     cv2.waitKey(0)
 
 
 if __name__ == "__main__":
