@@ -30,6 +30,11 @@ def main():
         directory as the given camera log file.
         """,
     )
+    parser.add_argument(
+        "--show-confidence",
+        action="store_true",
+        help="Print the object pose confidence in the images.",
+    )
     args = parser.parse_args()
 
     log_file_path = pathlib.Path(args.filename)
@@ -72,6 +77,16 @@ def main():
             images = cube_visualizer.draw_cube(cvmats, observation.object_pose,
                                                False)
             images = [np.array(img) for img in images]
+
+        if args.show_confidence:
+            images = [cv2.putText(
+                image,
+                "confidence: %.2f" % observation.object_pose.confidence,
+                (0, image.shape[0] - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (255, 255, 0)
+            ) for image in images]
 
         for i, name in enumerate(["camera60", "camera180", "camera300"]):
             cv2.imshow(name, images[i])

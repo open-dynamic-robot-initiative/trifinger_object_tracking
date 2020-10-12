@@ -27,9 +27,9 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     bool downsample_images)
     : last_update_time_(std::chrono::system_clock::now()),
       downsample_images_(downsample_images),
-      cameras_{trifinger_cameras::PylonDriver(device_id_1, false),
-               trifinger_cameras::PylonDriver(device_id_2, false),
-               trifinger_cameras::PylonDriver(device_id_3, false)}
+      cameras_{trifinger_cameras::PylonDriver(device_id_1, downsample_images),
+               trifinger_cameras::PylonDriver(device_id_2, downsample_images),
+               trifinger_cameras::PylonDriver(device_id_3, downsample_images)}
 {
     std::string model_directory =
         ros::package::getPath("trifinger_object_tracking") + "/data";
@@ -38,7 +38,7 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     std::string camera_name;
     bool success;
     success = trifinger_cameras::readCalibrationYml(
-        "/etc/trifingerpro/camera60_cropped.yml",
+        "/etc/trifingerpro/camera60_cropped_and_downsampled.yml",
         camera_name,
         camera_params[0]);
     if (!success)
@@ -53,7 +53,7 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     }
 
     success = trifinger_cameras::readCalibrationYml(
-        "/etc/trifingerpro/camera180_cropped.yml",
+        "/etc/trifingerpro/camera180_cropped_and_downsampled.yml",
         camera_name,
         camera_params[1]);
     if (!success)
@@ -68,7 +68,7 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     }
 
     success = trifinger_cameras::readCalibrationYml(
-        "/etc/trifingerpro/camera300_cropped.yml",
+        "/etc/trifingerpro/camera300_cropped_and_downsampled.yml",
         camera_name,
         camera_params[2]);
     if (!success)
@@ -91,7 +91,7 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
     last_update_time_ += this->rate;
     std::this_thread::sleep_until(last_update_time_);
 
-    std::array<cv::Mat, N_CAMERAS> full_res_images;
+    std::array<cv::Mat, N_CAMERAS> images_bgr;
     TriCameraObjectObservation observation;
 
     for (size_t i = 0; i < N_CAMERAS; i++)
@@ -99,19 +99,11 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
         observation.cameras[i] = cameras_[i].get_observation();
 
         cv::cvtColor(observation.cameras[i].image,
-                     full_res_images[i],
+                     images_bgr[i],
                      cv::COLOR_BayerBG2BGR);
-
-        // downsample observation
-        if (downsample_images_)
-        {
-            observation.cameras[i].image =
-                trifinger_cameras::PylonDriver::downsample_raw_image(
-                    observation.cameras[i].image);
-        }
     }
 
-    Pose cube_pose = cube_detector_->detect_cube_single_thread(full_res_images);
+    Pose cube_pose = cube_detector_->detect_cube_single_thread(images_bgr);
 
     // convert rotation vector to quaternion
     // http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/
