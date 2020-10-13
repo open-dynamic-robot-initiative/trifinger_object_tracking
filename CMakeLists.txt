@@ -116,6 +116,12 @@ target_link_libraries(single_observation
     pthread
 )
 
+add_executable(run_on_logfile src/run_on_logfile.cpp)
+target_link_libraries(run_on_logfile
+    ${catkin_LIBRARIES}
+    cube_detector
+)
+
 
 # TODO frontend should be in separate library
 
