@@ -137,21 +137,30 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
 
     complete_image_with_text_field.push_back(complete_image);
 
-    std::string text =
+    std::string text_misclassied_pixels =
         "num_misclassified_pixels: " +
         std::to_string(pose_detector_.get_num_misclassified_pixels());
+    std::string text_confidence =
+        "confidence: " + std::to_string(pose_detector_.get_confidence());
 
     cv::putText(complete_image_with_text_field,
-                text,
-                cv::Point(80, 80),          // Coordinates
+                text_misclassied_pixels,
+                cv::Point(80, 40),          // Coordinates
                 cv::FONT_HERSHEY_PLAIN,     // Font
-                3.0,                        // Scale. 2.0 = 2x bigger
+                2.0,                        // Scale. 2.0 = 2x bigger
                 cv::Scalar(255, 255, 255),  // BGR Color
                 2,                          // Line Thickness (Optional)
                 cv::LINE_AA                 // Anti-alias (Optional)
     );
-
-    int bla = 21321;
+    cv::putText(complete_image_with_text_field,
+                text_confidence,
+                cv::Point(80, 80),          // Coordinates
+                cv::FONT_HERSHEY_PLAIN,     // Font
+                2.0,                        // Scale. 2.0 = 2x bigger
+                cv::Scalar(255, 255, 255),  // BGR Color
+                2,                          // Line Thickness (Optional)
+                cv::LINE_AA                 // Anti-alias (Optional)
+    );
 
     return complete_image_with_text_field;
 }
