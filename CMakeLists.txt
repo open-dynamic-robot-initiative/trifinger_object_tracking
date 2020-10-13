@@ -109,13 +109,6 @@ target_link_libraries(cube_visualizer
     cube_detector
 )
 
-add_executable(object_pose src/main.cpp)
-target_link_libraries(object_pose
-    cube_detector
-    cv_sub_images
-    pthread
-)
-
 add_executable(single_observation src/single_observation.cpp)
 target_link_libraries(single_observation
     cube_detector
