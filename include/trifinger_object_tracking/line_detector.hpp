@@ -63,8 +63,7 @@ private:
 
 public:
     // constructor
-    LineDetector(const CubeModel &cube_model,
-                 const std::string &model_directory);
+    LineDetector(const CubeModel &cube_model);
 
     /**
      * @brief Detect colours in the image and create segmentation masks.

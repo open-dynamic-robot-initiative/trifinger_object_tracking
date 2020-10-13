@@ -35,28 +35,13 @@ std::array<cv::Mat, 3> load_images(const std::string &directory)
 
 int main(int argc, char **argv)
 {
-    if (argc != 2 && argc != 3)
+    if (argc != 2)
     {
         std::cout << "Invalid number of arguments." << std::endl;
-        std::cout << "Usage: " << argv[0]
-                  << " image_directory [segmentation_model_directory]"
-                  << std::endl;
+        std::cout << "Usage: " << argv[0] << " image_directory" << std::endl;
         return 1;
     }
     const std::string data_dir = argv[1];
-
-    // if no path is provided, load the segmentation model from
-    // trifinger_object_tracking/data.
-    std::string model_directory;
-    if (argc < 3)
-    {
-        model_directory =
-            ros::package::getPath("trifinger_object_tracking") + "/data";
-    }
-    else
-    {
-        model_directory = argv[2];
-    }
 
     auto frames = load_images(data_dir);
 
@@ -86,8 +71,7 @@ int main(int argc, char **argv)
         throw std::runtime_error("Failed to load parameters of camera60");
     }
 
-    trifinger_object_tracking::CubeDetector cube_detector(model_directory,
-                                                          camera_params);
+    trifinger_object_tracking::CubeDetector cube_detector(camera_params);
 
     trifinger_object_tracking::Pose pose =
         cube_detector.detect_cube_single_thread(frames);

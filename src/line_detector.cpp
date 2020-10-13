@@ -22,12 +22,11 @@ static float calculateAccuracyPercent(const cv::Mat &original,
     return 100 * (float)countNonZero(original == predicted) / predicted.rows;
 }
 
-LineDetector::LineDetector(const CubeModel &cube_model,
-                           const std::string &model_directory)
+LineDetector::LineDetector(const CubeModel &cube_model)
     : cube_model_(cube_model)
 {
     set_color_bounds();
-    load_segmentation_models(model_directory);
+    //load_segmentation_models(model_directory);
 }
 
 void LineDetector::set_color_bounds()
