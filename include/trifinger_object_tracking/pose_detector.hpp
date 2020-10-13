@@ -77,6 +77,11 @@ public:
         return num_misclassified_pixels_;
     }
 
+    float get_segmented_pixels_ratio() const
+    {
+        return segmented_pixels_ratio_;
+    }
+
     float get_confidence() const
     {
         return confidence_;
@@ -98,8 +103,12 @@ private:
     Stats position_;
     Stats orientation_;
 
+    //! Total number of pixels in one image (i.e. width*height).
+    const unsigned int num_total_pixels_in_image_;
+
     //! @brief Number of misclassified pixels in the last call of find_pose().
     unsigned int num_misclassified_pixels_ = 0;
+    float segmented_pixels_ratio_ = 0;
     float confidence_ = 0.0;
 
     void optimize_using_optim(

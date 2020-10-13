@@ -140,27 +140,39 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
     std::string text_misclassied_pixels =
         "num_misclassified_pixels: " +
         std::to_string(pose_detector_.get_num_misclassified_pixels());
+    std::string text_segmented_pixels = "segmented_pixels_ratio: " +
+        std::to_string(pose_detector_.get_segmented_pixels_ratio());
     std::string text_confidence =
         "confidence: " + std::to_string(pose_detector_.get_confidence());
 
     cv::putText(complete_image_with_text_field,
                 text_misclassied_pixels,
-                cv::Point(80, 40),          // Coordinates
+                cv::Point(20, 30),          // Coordinates
                 cv::FONT_HERSHEY_PLAIN,     // Font
-                2.0,                        // Scale. 2.0 = 2x bigger
+                1.5,                        // Scale. 2.0 = 2x bigger
+                cv::Scalar(255, 255, 255),  // BGR Color
+                2,                          // Line Thickness (Optional)
+                cv::LINE_AA                 // Anti-alias (Optional)
+    );
+    cv::putText(complete_image_with_text_field,
+                text_segmented_pixels,
+                cv::Point(20, 60),          // Coordinates
+                cv::FONT_HERSHEY_PLAIN,     // Font
+                1.5,                        // Scale. 2.0 = 2x bigger
                 cv::Scalar(255, 255, 255),  // BGR Color
                 2,                          // Line Thickness (Optional)
                 cv::LINE_AA                 // Anti-alias (Optional)
     );
     cv::putText(complete_image_with_text_field,
                 text_confidence,
-                cv::Point(80, 80),          // Coordinates
+                cv::Point(20, 90),          // Coordinates
                 cv::FONT_HERSHEY_PLAIN,     // Font
-                2.0,                        // Scale. 2.0 = 2x bigger
+                1.5,                        // Scale. 2.0 = 2x bigger
                 cv::Scalar(255, 255, 255),  // BGR Color
                 2,                          // Line Thickness (Optional)
                 cv::LINE_AA                 // Anti-alias (Optional)
     );
+
 
     return complete_image_with_text_field;
 }
