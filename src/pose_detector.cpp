@@ -19,7 +19,9 @@ cv::Mat getPoseMatrix(const cv::Vec3f &rvec, const cv::Vec3f &tvec)
 PoseDetector::PoseDetector(const CubeModel &cube_model,
                            const std::array<trifinger_cameras::CameraParameters,
                                             N_CAMERAS> &camera_parameters)
-    : cube_model_(cube_model)
+    : cube_model_(cube_model),
+      num_total_pixels_in_image_(camera_parameters[0].image_width *
+                                 camera_parameters[0].image_height)
 {
     // convert camera parameters to cv types
     for (int i = 0; i < N_CAMERAS; i++)
@@ -286,6 +288,9 @@ void PoseDetector::optimize_using_optim(
 {
     // ScopedTimer timer("PoseDetector/optim");
 
+    constexpr float SEGMENTED_PIXEL_RATIO_THRESHOLD = 0.0004;
+
+    segmented_pixels_ratio_ = 0.0;
     std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS> masks_pixels;
     for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
     {
@@ -294,8 +299,24 @@ void PoseDetector::optimize_using_optim(
             std::vector<cv::Point> pixels;
             cv::findNonZero(mask, pixels);
             masks_pixels[camera_idx].push_back(pixels);
+
+            segmented_pixels_ratio_ += static_cast<float>(pixels.size());
         }
     }
+
+    segmented_pixels_ratio_ /=
+        static_cast<float>(num_total_pixels_in_image_ * N_CAMERAS);
+
+    if (segmented_pixels_ratio_ < SEGMENTED_PIXEL_RATIO_THRESHOLD)
+    {
+        // If the number of segmented pixels is too low, don't even run the
+        // optimization.
+        confidence_ = 0;
+
+        // std::cout << "SKIP | " << segmented_pixels_ratio_ << std::endl;
+        return;
+    }
+
     // downsample mask for computational efficiency
     // todo: which is the right way of sampling?
     // unsigned int num_pixels_per_mask = 15;
