@@ -10,7 +10,6 @@
 #include <cmath>
 #include <thread>
 
-#include <ros/package.h>
 #include <opencv2/core/eigen.hpp>
 
 #include <trifinger_cameras/parse_yml.h>
@@ -31,9 +30,6 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
                trifinger_cameras::PylonDriver(device_id_2, downsample_images),
                trifinger_cameras::PylonDriver(device_id_3, downsample_images)}
 {
-    std::string model_directory =
-        ros::package::getPath("trifinger_object_tracking") + "/data";
-
     std::array<trifinger_cameras::CameraParameters, 3> camera_params;
     std::string camera_name;
     bool success;
@@ -83,7 +79,7 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     }
 
     cube_detector_ = std::make_unique<trifinger_object_tracking::CubeDetector>(
-        model_directory, camera_params);
+        camera_params);
 }
 
 TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()

@@ -3,12 +3,11 @@
 
 namespace trifinger_object_tracking
 {
-CubeDetector::CubeDetector(const std::string &segmentation_model_dir,
-                           const std::array<trifinger_cameras::CameraParameters,
+CubeDetector::CubeDetector(const std::array<trifinger_cameras::CameraParameters,
                                             N_CAMERAS> &camera_params)
-    : line_detectors_{LineDetector(cube_model_, segmentation_model_dir),
-                      LineDetector(cube_model_, segmentation_model_dir),
-                      LineDetector(cube_model_, segmentation_model_dir)},
+    : line_detectors_{LineDetector(cube_model_),
+                      LineDetector(cube_model_),
+                      LineDetector(cube_model_)},
       pose_detector_(cube_model_, camera_params)
 {
 }

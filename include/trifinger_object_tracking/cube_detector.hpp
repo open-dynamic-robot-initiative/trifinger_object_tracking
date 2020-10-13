@@ -22,11 +22,9 @@ public:
     static constexpr unsigned int N_CAMERAS = 3;
 
     /**
-     * @param segmentation_model_dir Directory containing the segmentation model
      * @param camera_params Calibration parameters of the cameras.
      */
-    CubeDetector(const std::string &segmentation_model_dir,
-                 const std::array<trifinger_cameras::CameraParameters,
+    CubeDetector(const std::array<trifinger_cameras::CameraParameters,
                                   N_CAMERAS> &camera_params);
 
     Pose detect_cube_single_thread(

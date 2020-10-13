@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <trifinger_object_tracking/cube_detector.hpp>
+#include <trifinger_object_tracking/utils.hpp>
 
 #define VISUALIZE
 
@@ -35,59 +36,26 @@ std::array<cv::Mat, 3> load_images(const std::string &directory)
 
 int main(int argc, char **argv)
 {
-    if (argc != 2 && argc != 3)
+    if (argc != 2)
     {
         std::cout << "Invalid number of arguments." << std::endl;
-        std::cout << "Usage: " << argv[0]
-                  << " image_directory [segmentation_model_directory]"
-                  << std::endl;
+        std::cout << "Usage: " << argv[0] << " image_directory" << std::endl;
         return 1;
     }
     const std::string data_dir = argv[1];
 
-    // if no path is provided, load the segmentation model from
-    // trifinger_object_tracking/data.
-    std::string model_directory;
-    if (argc < 3)
-    {
-        model_directory =
-            ros::package::getPath("trifinger_object_tracking") + "/data";
-    }
-    else
-    {
-        model_directory = argv[2];
-    }
-
     auto frames = load_images(data_dir);
 
-    std::array<trifinger_cameras::CameraParameters, 3> camera_params;
     // FIXME: This is a bit of a hack but for now just expect calibration files
     // with fixed names on level above data_dir
-    std::string camera_name;
-    bool success;
-    success = trifinger_cameras::readCalibrationYml(
-        data_dir + "/../camera_calib_60.yml", camera_name, camera_params[0]);
-    if (!success || camera_name != "camera60")
-    {
-        throw std::runtime_error("Failed to load parameters of camera60 ");
-    }
+    std::array<trifinger_cameras::CameraParameters, 3> camera_params =
+        trifinger_object_tracking::load_camera_parameters({
+            data_dir + "/../camera_calib_60.yml",
+            data_dir + "/../camera_calib_180.yml",
+            data_dir + "/../camera_calib_300.yml",
+        });
 
-    success = trifinger_cameras::readCalibrationYml(
-        data_dir + "/../camera_calib_180.yml", camera_name, camera_params[1]);
-    if (!success || camera_name != "camera180")
-    {
-        throw std::runtime_error("Failed to load parameters of camera60");
-    }
-
-    success = trifinger_cameras::readCalibrationYml(
-        data_dir + "/../camera_calib_300.yml", camera_name, camera_params[2]);
-    if (!success || camera_name != "camera300")
-    {
-        throw std::runtime_error("Failed to load parameters of camera60");
-    }
-
-    trifinger_object_tracking::CubeDetector cube_detector(model_directory,
-                                                          camera_params);
+    trifinger_object_tracking::CubeDetector cube_detector(camera_params);
 
     trifinger_object_tracking::Pose pose =
         cube_detector.detect_cube_single_thread(frames);
@@ -108,15 +76,15 @@ int main(int argc, char **argv)
     char buffer[80];
     strftime(buffer, 80, "%s", now);
 
-    cv::imwrite("./results/temp/" +
-                    data_dir.substr(data_dir.find_last_of("/\\") + 1, 4) +
-                    "__" + std::string(buffer) + ".jpg",
-                rescaled_debug_img);
+    // cv::imwrite("./results/temp/" +
+    //                 data_dir.substr(data_dir.find_last_of("/\\") + 1, 4) +
+    //                 "__" + std::string(buffer) + ".jpg",
+    //             rescaled_debug_img);
 
-    // cv::namedWindow("debug", cv::WINDOW_NORMAL);
-    // cv::resizeWindow("debug", rescaled_debug_img.cols,
-    // rescaled_debug_img.rows); cv::imshow("debug", rescaled_debug_img);
-    // cv::waitKey(0);
+    cv::namedWindow("debug", cv::WINDOW_NORMAL);
+    cv::resizeWindow("debug", rescaled_debug_img.cols,
+    rescaled_debug_img.rows); cv::imshow("debug", rescaled_debug_img);
+    cv::waitKey(0);
 #endif
 
     return 0;
