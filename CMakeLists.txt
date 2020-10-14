@@ -8,7 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 # stop build on first error
 string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors")
 
-string(APPEND CMAKE_CXX_FLAGS_RELEASE " -O3")
+# always enable optimization, otherwise object tracking is too slow
+string(APPEND CMAKE_CXX_FLAGS " -O3")
 
 # Specify for which cube version to build the object tracker
 set(CUBE_VERSION 2)
