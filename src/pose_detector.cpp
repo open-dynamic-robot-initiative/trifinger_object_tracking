@@ -43,15 +43,10 @@ PoseDetector::PoseDetector(const CubeModel &cube_model,
 
     // unfortunately, there is no real const cv::Mat, so we cannot wrap it
     // around the const array but need to copy the data
-    corners_at_origin_in_world_frame_ = cv::Mat(8, 4, CV_32F);
-    // std::memcpy(corners_at_origin_in_world_frame_.data,
-    //            cube_model_.corners_at_origin_in_world_frame,
-    //            corners_at_origin_in_world_frame_.total() * sizeof(float));
-    std::memcpy(corners_at_origin_in_world_frame_.data,
+    corners_in_cube_frame_ = cv::Mat(8, 4, CV_32F);
+    std::memcpy(corners_in_cube_frame_.data,
                 cube_model_.cube_corners,
-                corners_at_origin_in_world_frame_.total() * sizeof(float));
-    // transform from cube frame to world frame
-    corners_at_origin_in_world_frame_.col(2) += CubeModel::HALF_WIDTH;
+                corners_in_cube_frame_.total() * sizeof(float));
 
     reference_vector_normals_ = cv::Mat(6, 3, CV_32F);
     std::memcpy(reference_vector_normals_.data,
@@ -157,8 +152,8 @@ float PoseDetector::cost_function(
 
     cv::Affine3f cube_pose_world = cv::Affine3f(orientation, position);
 
-    cv::Mat cube_corners_world = (cv::Mat(cube_pose_world.matrix) *
-                                  corners_at_origin_in_world_frame_.t());
+    cv::Mat cube_corners_world =
+        (cv::Mat(cube_pose_world.matrix) * corners_in_cube_frame_.t());
 
     std::vector<cv::Point3f> cube_corners_world_vec;
     for (int j = 0; j < 8; j++)
@@ -416,8 +411,7 @@ std::vector<std::vector<cv::Point2f>> PoseDetector::get_projected_points() const
     cv::Mat pose = getPoseMatrix(orientation_.mean, position_.mean);
 
     // FIXME store differently to avoid transposing here
-    cv::Mat proposed_new_cube_pts_w =
-        pose * corners_at_origin_in_world_frame_.t();
+    cv::Mat proposed_new_cube_pts_w = pose * corners_in_cube_frame_.t();
     proposed_new_cube_pts_w = proposed_new_cube_pts_w.t();  // 8x4
     proposed_new_cube_pts_w = proposed_new_cube_pts_w.colRange(
         0, proposed_new_cube_pts_w.cols - 1);  // 8x3
@@ -490,8 +484,7 @@ bool PoseDetector::compute_face_normals_and_corners(
     *normals = cv::Mat(cube_pose_camera.rotation()) * reference_vector_normals_;
 
     // transform all cube corners according to the cube pose (4x8)
-    *corners = cv::Mat(cube_pose_camera.matrix) *
-               corners_at_origin_in_world_frame_.t();
+    *corners = cv::Mat(cube_pose_camera.matrix) * corners_in_cube_frame_.t();
 }
 
 bool PoseDetector::compute_color_visibility(

@@ -97,7 +97,7 @@ private:
     std::array<cv::Vec3d, N_CAMERAS> camera_orientations_;
     std::array<cv::Vec3d, N_CAMERAS> camera_translations_;
 
-    cv::Mat corners_at_origin_in_world_frame_;
+    cv::Mat corners_in_cube_frame_;
     cv::Mat reference_vector_normals_;
 
     Stats position_;
