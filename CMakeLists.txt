@@ -89,7 +89,6 @@ add_library(cube_detector
     src/pose_detector.cpp
     src/utils.cpp
     src/cube_model.cpp
-    src/gmm_params.cpp
     ${cube_model_dir}/xgboost_classifier.cpp
 )
 target_link_libraries(cube_detector

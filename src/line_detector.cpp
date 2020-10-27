@@ -6,7 +6,6 @@
 #include <iostream>
 #include <numeric>  // std::iota
 #include <thread>
-#include <trifinger_object_tracking/gmm_params.hpp>
 #include <trifinger_object_tracking/line_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
 #include <typeinfo>
