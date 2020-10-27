@@ -44,14 +44,9 @@ PoseDetector::PoseDetector(const CubeModel &cube_model,
     // unfortunately, there is no real const cv::Mat, so we cannot wrap it
     // around the const array but need to copy the data
     corners_at_origin_in_world_frame_ = cv::Mat(8, 4, CV_32F);
-    // std::memcpy(corners_at_origin_in_world_frame_.data,
-    //            cube_model_.corners_at_origin_in_world_frame,
-    //            corners_at_origin_in_world_frame_.total() * sizeof(float));
     std::memcpy(corners_at_origin_in_world_frame_.data,
                 cube_model_.cube_corners,
                 corners_at_origin_in_world_frame_.total() * sizeof(float));
-    // transform from cube frame to world frame
-    corners_at_origin_in_world_frame_.col(2) += CubeModel::HALF_WIDTH;
 
     reference_vector_normals_ = cv::Mat(6, 3, CV_32F);
     std::memcpy(reference_vector_normals_.data,
