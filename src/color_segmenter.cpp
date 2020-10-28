@@ -6,18 +6,18 @@
 #include <iostream>
 #include <numeric>  // std::iota
 #include <thread>
-#include <trifinger_object_tracking/line_detector.hpp>
+#include <trifinger_object_tracking/color_segmenter.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
 #include <typeinfo>
 
 namespace trifinger_object_tracking
 {
-LineDetector::LineDetector(const CubeModel &cube_model)
+ColorSegmenter::ColorSegmenter(const CubeModel &cube_model)
     : cube_model_(cube_model)
 {
 }
 
-void LineDetector::detect_colors(const cv::Mat &image_bgr)
+void ColorSegmenter::detect_colors(const cv::Mat &image_bgr)
 {
     // TODO better solution than class members for images
 
@@ -28,7 +28,7 @@ void LineDetector::detect_colors(const cv::Mat &image_bgr)
     xgboost_mask();
 }
 
-void LineDetector::xgboost_mask()
+void ColorSegmenter::xgboost_mask()
 {
     // map label index of the xgboost model to color
     constexpr std::array<FaceColor, FaceColor::N_COLORS> map_label_to_color = {
@@ -113,7 +113,7 @@ void LineDetector::xgboost_mask()
     }
 }
 
-cv::Mat LineDetector::get_segmented_image() const
+cv::Mat ColorSegmenter::get_segmented_image() const
 {
     cv::Mat segmentation(
         image_bgr_.rows, image_bgr_.cols, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -128,17 +128,17 @@ cv::Mat LineDetector::get_segmented_image() const
     return segmentation.clone();
 }
 
-cv::Mat LineDetector::get_image() const
+cv::Mat ColorSegmenter::get_image() const
 {
     return image_bgr_.clone();
 }
 
-cv::Mat LineDetector::get_mask(FaceColor color) const
+cv::Mat ColorSegmenter::get_mask(FaceColor color) const
 {
     return masks_[color];
 }
 
-std::vector<FaceColor> LineDetector::get_dominant_colors() const
+std::vector<FaceColor> ColorSegmenter::get_dominant_colors() const
 {
     return dominant_colors_;
 }

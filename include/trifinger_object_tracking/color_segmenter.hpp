@@ -9,7 +9,7 @@
 
 namespace trifinger_object_tracking
 {
-class LineDetector
+class ColorSegmenter
 {
 private:
     CubeModel cube_model_;
@@ -24,7 +24,7 @@ private:
 
 public:
     // constructor
-    LineDetector(const CubeModel &cube_model);
+    ColorSegmenter(const CubeModel &cube_model);
 
     /**
      * @brief Detect colours in the image and create segmentation masks.
