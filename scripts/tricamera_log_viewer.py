@@ -3,11 +3,16 @@
 Play back TriCameraObjectObservations from a log file.
 """
 import argparse
+import copy
 import pathlib
 import sys
 
 import numpy as np
+from scipy.spatial.transform import Rotation
 import cv2
+
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 import trifinger_cameras
 import trifinger_object_tracking.py_tricamera_types as tricamera
@@ -39,6 +44,17 @@ def main():
         "--unfiltered",
         action="store_true",
         help="Use the unfiltered object pose.",
+    )
+    parser.add_argument(
+        "--plot-cube-position",
+        "-p",
+        action="store_true",
+        help="Plot cube position",
+    )
+    parser.add_argument(
+        "--compensate-cube-offset",
+        action="store_true",
+        help="Compensate cube position offset in old logfiles.",
     )
     args = parser.parse_args()
 
@@ -82,6 +98,19 @@ def main():
         else:
             object_pose = observation.filtered_object_pose
 
+        if args.compensate_cube_offset:
+            # object_pose is read-only and unforutnatly copy.copy does not work
+            # for this type
+            object_pose_cpy = type(object_pose)()
+            object_pose_cpy.position = np.array(object_pose.position)
+            object_pose_cpy.orientation = np.array(object_pose.orientation)
+            object_pose_cpy.confidence = object_pose.confidence
+            object_pose = object_pose_cpy
+
+            offset = np.array([0, 0, 0.0325])
+            cube_rot = Rotation.from_quat(object_pose.orientation)
+            object_pose.position = object_pose.position + cube_rot.apply(offset)
+
         if args.visualize_object_pose:
             cvmats = [trifinger_cameras.camera.cvMat(img) for img in images]
             images = cube_visualizer.draw_cube(cvmats, object_pose, False)
@@ -103,6 +132,24 @@ def main():
         # stop if either "q" or ESC is pressed
         if cv2.waitKey(interval) in [ord("q"), 27]:  # 27 = ESC
             break
+
+        if args.plot_cube_position:
+            plt.scatter(observation.cameras[0].timestamp, object_pose.position[0],
+                        color="red")
+            plt.scatter(observation.cameras[0].timestamp, object_pose.position[1],
+                        color="green")
+            plt.scatter(observation.cameras[0].timestamp, object_pose.position[2],
+                        color="blue")
+
+            plt.title("Cube Position")
+            legend_elements = [
+                Line2D([0], [0], marker='o', color='w', label='x', markerfacecolor='r'),
+                Line2D([0], [0], marker='o', color='w', label='y', markerfacecolor='g'),
+                Line2D([0], [0], marker='o', color='w', label='z', markerfacecolor='b'),
+            ]
+            plt.legend(handles=legend_elements, loc="upper right")
+
+            plt.pause(0.01)
 
         # for testing
         # if object_pose.confidence < 0.9:
