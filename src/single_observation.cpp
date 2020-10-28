@@ -65,12 +65,6 @@ int main(int argc, char **argv)
 #ifdef VISUALIZE
     cv::Mat debug_img = cube_detector.create_debug_image(false);
 
-    // scale down debug image by factor 2, otherwise it is too big
-    cv::Mat rescaled_debug_img;
-    cv::resize(debug_img,
-               rescaled_debug_img,
-               cv::Size(debug_img.cols / 2, debug_img.rows / 2));
-
     time_t t = time(0);  // get time now
     struct tm *now = localtime(&t);
     char buffer[80];
@@ -79,11 +73,11 @@ int main(int argc, char **argv)
     // cv::imwrite("./results/temp/" +
     //                 data_dir.substr(data_dir.find_last_of("/\\") + 1, 4) +
     //                 "__" + std::string(buffer) + ".jpg",
-    //             rescaled_debug_img);
+    //             debug_img);
 
     cv::namedWindow("debug", cv::WINDOW_NORMAL);
-    cv::resizeWindow("debug", rescaled_debug_img.cols,
-    rescaled_debug_img.rows); cv::imshow("debug", rescaled_debug_img);
+    cv::resizeWindow("debug", debug_img.cols, debug_img.rows);
+    cv::imshow("debug", debug_img);
     cv::waitKey(0);
 #endif
 

@@ -46,8 +46,40 @@ public:
 
     static constexpr unsigned int N_FACES = 6;
 
+#if CUBE_VERSION == 1 || CUBE_VERSION == 2
     static constexpr float WIDTH = 0.0652;
     static constexpr float HALF_WIDTH = WIDTH / 2.0;
+
+    //! Cube corner positions in cube frame
+    static constexpr float cube_corners[8][4] = {
+        {+HALF_WIDTH, -HALF_WIDTH, +HALF_WIDTH, 1},
+        {+HALF_WIDTH, +HALF_WIDTH, +HALF_WIDTH, 1},
+        {-HALF_WIDTH, +HALF_WIDTH, +HALF_WIDTH, 1},
+        {-HALF_WIDTH, -HALF_WIDTH, +HALF_WIDTH, 1},
+        {+HALF_WIDTH, -HALF_WIDTH, -HALF_WIDTH, 1},
+        {+HALF_WIDTH, +HALF_WIDTH, -HALF_WIDTH, 1},
+        {-HALF_WIDTH, +HALF_WIDTH, -HALF_WIDTH, 1},
+        {-HALF_WIDTH, -HALF_WIDTH, -HALF_WIDTH, 1}};
+
+#elif CUBE_VERSION == 3
+
+    static constexpr float LENGTH = 0.08;
+    static constexpr float LONG_HALF_WIDTH = LENGTH / 2.0;
+    static constexpr float WIDTH = 0.02;
+    static constexpr float SHORT_HALF_WIDTH = WIDTH / 2.0;
+
+    //! Cube corner positions in cube frame
+    static constexpr float cube_corners[8][4] = {
+        {+SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
+        {+SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
+        {-SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
+        {-SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
+        {+SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1},
+        {+SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1},
+        {-SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1},
+        {-SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1}};
+
+#endif
 
 #if CUBE_VERSION == 1
     // Colour mapping of cube v1.  Red, green, blue faces are pointing in x, y,
@@ -60,7 +92,7 @@ public:
         CubeFace::FACE_4,  // MAGENTA
         CubeFace::FACE_3   // YELLOW
     };
-#elif CUBE_VERSION == 2
+#elif CUBE_VERSION == 2  || CUBE_VERSION == 3
     // Colour mapping of cube v2.  Red, green, blue faces are pointing in x, y,
     // z directions.
     static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {
@@ -83,17 +115,6 @@ public:
                                 {6, 7, 3, 2},
                                 {7, 4, 0, 3},
                                 {7, 6, 5, 4}}};
-
-    //! Cube corner positions in cube frame
-    static constexpr float cube_corners[8][4] = {
-        {+HALF_WIDTH, -HALF_WIDTH, +HALF_WIDTH, 1},
-        {+HALF_WIDTH, +HALF_WIDTH, +HALF_WIDTH, 1},
-        {-HALF_WIDTH, +HALF_WIDTH, +HALF_WIDTH, 1},
-        {-HALF_WIDTH, -HALF_WIDTH, +HALF_WIDTH, 1},
-        {+HALF_WIDTH, -HALF_WIDTH, -HALF_WIDTH, 1},
-        {+HALF_WIDTH, +HALF_WIDTH, -HALF_WIDTH, 1},
-        {-HALF_WIDTH, +HALF_WIDTH, -HALF_WIDTH, 1},
-        {-HALF_WIDTH, -HALF_WIDTH, -HALF_WIDTH, 1}};
 
     static constexpr float face_normal_vectors[6][3] = {
         {0, 0, 1}, {1, 0, 0}, {0, 1, 0}, {-1, 0, 0}, {0, -1, 0}, {0, 0, -1}};
