@@ -9,7 +9,7 @@
 #include <memory>
 #include <opencv2/opencv.hpp>
 
-#include <trifinger_object_tracking/line_detector.hpp>
+#include <trifinger_object_tracking/color_segmenter.hpp>
 
 using namespace trifinger_object_tracking;
 

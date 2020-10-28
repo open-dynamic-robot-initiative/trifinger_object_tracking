@@ -7,7 +7,7 @@
 
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
-#include <trifinger_object_tracking/line_detector.hpp>
+#include <trifinger_object_tracking/color_segmenter.hpp>
 #include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
 
@@ -50,7 +50,7 @@ public:
 
 private:
     CubeModel cube_model_;
-    std::array<LineDetector, N_CAMERAS> line_detectors_;
+    std::array<ColorSegmenter, N_CAMERAS> color_segmenters_;
     PoseDetector pose_detector_;
 };
 }  // namespace trifinger_object_tracking

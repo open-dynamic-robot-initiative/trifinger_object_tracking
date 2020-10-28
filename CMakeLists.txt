@@ -85,7 +85,7 @@ target_link_libraries(cv_sub_images ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 add_library(cube_detector
     src/cube_detector.cpp
-    src/line_detector.cpp
+    src/color_segmenter.cpp
     src/pose_detector.cpp
     src/utils.cpp
     src/cube_model.cpp
