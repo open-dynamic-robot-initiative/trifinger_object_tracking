@@ -72,7 +72,7 @@ include_directories(
 add_definitions(-DCUBE_VERSION=${CUBE_VERSION})
 if (${CUBE_VERSION} EQUAL 1)
     set(cube_model_dir src/cube_v1/)
-elseif(${CUBE_VERSION} EQUAL 2)
+elseif(${CUBE_VERSION} EQUAL 2 OR ${CUBE_VERSION} EQUAL 3)
     set(cube_model_dir src/cube_v2/)
 else()
     message(FATAL_ERROR "Invalid CUBE_VERSION '${CUBE_VERSION}'")
