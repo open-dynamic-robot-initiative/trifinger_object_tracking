@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.3)
 project(trifinger_object_tracking)
 
 # Specify C++ Standard
@@ -12,7 +12,14 @@ string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors")
 string(APPEND CMAKE_CXX_FLAGS " -O3")
 
 # Specify for which cube version to build the object tracker
-set(CUBE_VERSION 2)
+#
+# Currently supported object versions:
+#  - 1: CUBE_V1
+#  - 2: CUBE_V2
+#  - 3: CUBE_V3
+#  - 4: CUBOID_2x2x8
+
+set(OBJECT_VERSION 2)
 
 find_package(catkin REQUIRED COMPONENTS
     mpi_cmake_modules
@@ -69,13 +76,16 @@ include_directories(
 )
 
 
-add_definitions(-DCUBE_VERSION=${CUBE_VERSION})
-if (${CUBE_VERSION} EQUAL 1)
+# list of object versions that have same colours as cube v2
+set(CUBE_v2_COMPATIBLE 2 4)
+
+add_definitions(-DOBJECT_VERSION=${OBJECT_VERSION})
+if (${OBJECT_VERSION} EQUAL 1)
     set(cube_model_dir src/cube_v1/)
-elseif(${CUBE_VERSION} EQUAL 2 OR ${CUBE_VERSION} EQUAL 3)
+elseif(${OBJECT_VERSION} IN_LIST CUBE_v2_COMPATIBLE)
     set(cube_model_dir src/cube_v2/)
 else()
-    message(FATAL_ERROR "Invalid CUBE_VERSION '${CUBE_VERSION}'")
+    message(FATAL_ERROR "Invalid OBJECT_VERSION '${OBJECT_VERSION}'")
 endif()
 
 

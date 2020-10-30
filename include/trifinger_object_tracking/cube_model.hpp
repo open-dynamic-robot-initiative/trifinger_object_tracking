@@ -8,6 +8,12 @@
 #include <cstdint>
 #include <map>
 
+// Give names to cube versions fore more clarity in the code below
+#define CUBE_V1 1
+#define CUBE_V2 2
+#define CUBE_V3 3
+#define CUBOID_2x2x8 4
+
 namespace trifinger_object_tracking
 {
 enum CubeFace
@@ -46,7 +52,10 @@ public:
 
     static constexpr unsigned int N_FACES = 6;
 
-#if CUBE_VERSION == 1 || CUBE_VERSION == 2
+    /*
+     * Define geometry (via corner positions) depending on the object version
+     */
+#if OBJECT_VERSION == CUBE_V1 || OBJECT_VERSION == CUBE_V2 || OBJECT_VERSION == CUBE_V3
     static constexpr float WIDTH = 0.0652;
     static constexpr float HALF_WIDTH = WIDTH / 2.0;
 
@@ -61,7 +70,7 @@ public:
         {-HALF_WIDTH, +HALF_WIDTH, -HALF_WIDTH, 1},
         {-HALF_WIDTH, -HALF_WIDTH, -HALF_WIDTH, 1}};
 
-#elif CUBE_VERSION == 3
+#elif OBJECT_VERSION == CUBOID_2x2x8
 
     static constexpr float LENGTH = 0.08;
     static constexpr float LONG_HALF_WIDTH = LENGTH / 2.0;
@@ -81,7 +90,10 @@ public:
 
 #endif
 
-#if CUBE_VERSION == 1
+    /*
+     * Define colour-to-face mapping depending on the object version
+     */
+#if OBJECT_VERSION == CUBE_V1
     // Colour mapping of cube v1.  Red, green, blue faces are pointing in x, y,
     // z directions.
     static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {
@@ -92,7 +104,7 @@ public:
         CubeFace::FACE_4,  // MAGENTA
         CubeFace::FACE_3   // YELLOW
     };
-#elif CUBE_VERSION == 2  || CUBE_VERSION == 3
+#elif OBJECT_VERSION == CUBE_V2 || OBJECT_VERSION == CUBE_V3 || OBJECT_VERSION == CUBOID_2x2x8
     // Colour mapping of cube v2.  Red, green, blue faces are pointing in x, y,
     // z directions.
     static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {
