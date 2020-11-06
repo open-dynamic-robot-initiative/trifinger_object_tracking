@@ -25,15 +25,34 @@
 
 constexpr unsigned N_CAMERAS = 3;
 
+bool open_video_writer(cv::VideoWriter &writer,
+                       const std::string &filename,
+                       int fourcc,
+                       double fps,
+                       cv::Size frame_size)
+{
+    writer.open(filename, fourcc, fps, frame_size);
+    if (!writer.isOpened())
+    {
+        std::cerr << "Could not open the output video for write: " << filename
+                  << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
 int main(int argc, char **argv)
 {
-    if (argc != 2)
+    if (argc != 2 && argc != 3)
     {
         std::cout << "Invalid number of arguments." << std::endl;
-        std::cout << "Usage: " << argv[0] << " data_directory" << std::endl;
+        std::cout << "Usage: " << argv[0] << " data_directory [out_video]"
+                  << std::endl;
         return 1;
     }
     const std::string data_dir = argv[1];
+    const std::string debug_video_file = argc > 2 ? argv[2] : "";
 
     std::array<trifinger_cameras::CameraParameters, 3> camera_params =
         trifinger_object_tracking::load_camera_parameters({
@@ -48,6 +67,7 @@ int main(int argc, char **argv)
         trifinger_object_tracking::TriCameraObjectObservation>
         log_reader(data_dir + "/camera_data.dat");
 
+    cv::VideoWriter debug_video;
     cv::namedWindow("Object Tracking", cv::WINDOW_NORMAL);
     bool first_iteration = true;
     for (const auto &observation : log_reader.data)
@@ -68,10 +88,28 @@ int main(int argc, char **argv)
         if (first_iteration)
         {
             first_iteration = false;
-            cv::resizeWindow("Object Tracking",
-                             debug_img.cols,
-                             debug_img.rows);
+            cv::resizeWindow("Object Tracking", debug_img.cols, debug_img.rows);
+
+            if (!debug_video_file.empty())
+            {
+                constexpr double FPS = 10.0;
+                bool ok = open_video_writer(debug_video,
+                                            debug_video_file,
+                                            CV_FOURCC('X', 'V', 'I', 'D'),
+                                            FPS,
+                                            debug_img.size());
+                if (!ok)
+                {
+                    return 1;
+                }
+            }
         }
+
+        if (!debug_video_file.empty())
+        {
+            debug_video.write(debug_img);
+        }
+
         cv::imshow("Object Tracking", debug_img);
         char key = cv::waitKey(3);
         if (key == 'q')
