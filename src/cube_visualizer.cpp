@@ -14,7 +14,16 @@ namespace trifinger_object_tracking
 
         // convert quaternion to rotvec
         double theta = 2 * std::acos(object_pose.orientation[3]);
-        Eigen::Vector3d eigen_rotvec = theta / std::sin(theta / 2) * object_pose.orientation.head<3>();
+        Eigen::Vector3d eigen_rotvec;
+        if (theta == 0)
+        {
+            eigen_rotvec << 0, 0, 0;
+        }
+        else
+        {
+            eigen_rotvec =
+                theta / std::sin(theta / 2) * object_pose.orientation.head<3>();
+        }
         cv::eigen2cv(eigen_rotvec, rotvec);
 
         Pose pose(position, rotvec, object_pose.confidence);
