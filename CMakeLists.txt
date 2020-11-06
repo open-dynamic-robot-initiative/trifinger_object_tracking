@@ -76,14 +76,13 @@ include_directories(
 )
 
 
-# list of object versions that have same colours as cube v2
-set(CUBE_v2_COMPATIBLE 2 4)
-
 add_definitions(-DOBJECT_VERSION=${OBJECT_VERSION})
 if (${OBJECT_VERSION} EQUAL 1)
     set(cube_model_dir src/cube_v1/)
-elseif(${OBJECT_VERSION} IN_LIST CUBE_v2_COMPATIBLE)
+elseif(${OBJECT_VERSION} EQUAL 2)
     set(cube_model_dir src/cube_v2/)
+elseif(${OBJECT_VERSION} EQUAL 4)
+    set(cube_model_dir src/cuboid_2x2x8/)
 else()
     message(FATAL_ERROR "Invalid OBJECT_VERSION '${OBJECT_VERSION}'")
 endif()
