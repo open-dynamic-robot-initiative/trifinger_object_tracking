@@ -41,7 +41,7 @@ void ColorSegmenter::xgboost_mask()
     };
 
     // structuring element for denoising
-    constexpr unsigned OPEN_RADIUS = 2;
+    constexpr unsigned OPEN_RADIUS = 1;
     static const cv::Mat open_kernel = cv::getStructuringElement(
         cv::MORPH_ELLIPSE, cv::Size(2 * OPEN_RADIUS + 1, 2 * OPEN_RADIUS + 1));
 
@@ -87,7 +87,6 @@ void ColorSegmenter::xgboost_mask()
     // post-process masks
     for (FaceColor color : cube_model_.get_colors())
     {
-        // todo: would be good to add this back
         // "open" image to get rid of single-pixel noise
         cv::morphologyEx(
             masks_[color], masks_[color], cv::MORPH_OPEN, open_kernel);
