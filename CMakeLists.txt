@@ -19,7 +19,7 @@ string(APPEND CMAKE_CXX_FLAGS " -O3")
 #  - 3: CUBE_V3
 #  - 4: CUBOID_2x2x8
 
-set(OBJECT_VERSION 2)
+set(OBJECT_VERSION 4)
 
 find_package(catkin REQUIRED COMPONENTS
     mpi_cmake_modules
