@@ -81,10 +81,12 @@ int main(int argc, char **argv)
     }
     else
     {
-        cv::imwrite(debug_out_dir +
-                        data_dir.substr(data_dir.find_last_of("/\\") + 1, 4) +
-                        "__" + std::string(buffer) + ".jpg",
-                    debug_img);
+        std::string out_file =
+            debug_out_dir + "/" +
+            data_dir.substr(data_dir.find_last_of("/\\") + 1, 4) + "__" +
+            std::string(buffer) + ".jpg";
+        std::cout << "Write to " << out_file << std::endl;
+        cv::imwrite(out_file, debug_img);
     }
 #endif
 
