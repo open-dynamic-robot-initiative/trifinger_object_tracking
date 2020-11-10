@@ -36,13 +36,15 @@ std::array<cv::Mat, 3> load_images(const std::string &directory)
 
 int main(int argc, char **argv)
 {
-    if (argc != 2)
+    if (argc != 2 && argc != 3)
     {
         std::cout << "Invalid number of arguments." << std::endl;
-        std::cout << "Usage: " << argv[0] << " image_directory" << std::endl;
+        std::cout << "Usage: " << argv[0]
+                  << " image_directory [output_directory]" << std::endl;
         return 1;
     }
     const std::string data_dir = argv[1];
+    const std::string debug_out_dir = argc > 2 ? argv[2] : "";
 
     auto frames = load_images(data_dir);
 
@@ -70,15 +72,20 @@ int main(int argc, char **argv)
     char buffer[80];
     strftime(buffer, 80, "%s", now);
 
-    // cv::imwrite("./results/temp/" +
-    //                 data_dir.substr(data_dir.find_last_of("/\\") + 1, 4) +
-    //                 "__" + std::string(buffer) + ".jpg",
-    //             debug_img);
-
-    cv::namedWindow("debug", cv::WINDOW_NORMAL);
-    cv::resizeWindow("debug", debug_img.cols, debug_img.rows);
-    cv::imshow("debug", debug_img);
-    cv::waitKey(0);
+    if (debug_out_dir.empty())
+    {
+        cv::namedWindow("debug", cv::WINDOW_NORMAL);
+        cv::resizeWindow("debug", debug_img.cols, debug_img.rows);
+        cv::imshow("debug", debug_img);
+        cv::waitKey(0);
+    }
+    else
+    {
+        cv::imwrite(debug_out_dir +
+                        data_dir.substr(data_dir.find_last_of("/\\") + 1, 4) +
+                        "__" + std::string(buffer) + ".jpg",
+                    debug_img);
+    }
 #endif
 
     return 0;
