@@ -3,7 +3,7 @@
 Play back TriCameraObjectObservations from a log file.
 """
 import argparse
-import copy
+import json
 import pathlib
 import sys
 
@@ -15,8 +15,12 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 import trifinger_cameras
+import trifinger_object_tracking.py_object_tracker
 import trifinger_object_tracking.py_tricamera_types as tricamera
 from trifinger_cameras import utils
+
+
+CAMERA_NAMES = ["camera60", "camera180", "camera300"]
 
 
 def main():
@@ -34,6 +38,13 @@ def main():
         camera{60,180,300}.yml with calibration parameters to exist in the same
         directory as the given camera log file.
         """,
+    )
+    parser.add_argument(
+        "--visualize-goal-pose",
+        "-g",
+        type=pathlib.Path,
+        metavar="GOAL_FILE",
+        help="Visualize goal from the specified JSON file.",
     )
     parser.add_argument(
         "--show-confidence",
@@ -56,6 +67,20 @@ def main():
         action="store_true",
         help="Compensate cube position offset in old logfiles.",
     )
+    parser.add_argument(
+        "--save-video",
+        type=str,
+        metavar="VIDEO_FILE",
+        help="""Save the images of the camera selected by --camera to a AVI
+        video file.  Expects as argument the output path.
+        """,
+    )
+    parser.add_argument(
+        "--camera",
+        "-c",
+        choices=CAMERA_NAMES,
+        help="Name of the camera.  Used by --save-video.",
+    )
     args = parser.parse_args()
 
     log_file_path = pathlib.Path(args.filename)
@@ -64,9 +89,21 @@ def main():
         print("{} does not exist.".format(log_file_path))
         sys.exit(1)
 
+    if args.visualize_goal_pose:
+        if not args.visualize_goal_pose.exists():
+            print("{} does not exist.".format(args.visualize_goal_pose))
+            sys.exit(1)
+
+        with open(args.visualize_goal_pose, "r") as fh:
+            goal_dict = json.load(fh)
+
+        goal_pose = trifinger_object_tracking.py_object_tracker.ObjectPose()
+        goal_pose.position = goal_dict["goal"]["position"]
+        goal_pose.orientation = goal_dict["goal"]["orientation"]
+
     calib_files = []
-    if args.visualize_object_pose:
-        for name in ("camera60", "camera180", "camera300"):
+    if args.visualize_object_pose or args.visualize_goal_pose:
+        for name in CAMERA_NAMES:
             calib_file = log_file_path.parent / (name + ".yml")
             if calib_file.exists():
                 calib_files.append(str(calib_file))
@@ -81,12 +118,23 @@ def main():
     start_time = log_reader.data[0].cameras[0].timestamp
     end_time = log_reader.data[-1].cameras[0].timestamp
     interval = (end_time - start_time) / len(log_reader.data)
+    fps = 1 / interval
     # convert to ms
     interval = int(interval * 1000)
 
+    if args.save_video:
+        if not args.camera:
+            print("--camera is required for saving video.")
+            sys.exit(1)
+
+        camera_index = CAMERA_NAMES.index(args.camera)
+        first_img = utils.convert_image(log_reader.data[0].cameras[0].image)
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        video_writer = cv2.VideoWriter(args.save_video, fourcc, fps, first_img.shape[:2])
+
     print(
         "Loaded {} frames at an average interval of {} ms ({:.1f} fps)".format(
-            len(log_reader.data), interval, 1000 / interval
+            len(log_reader.data), interval, fps
         )
     )
 
@@ -99,8 +147,8 @@ def main():
             object_pose = observation.filtered_object_pose
 
         if args.compensate_cube_offset:
-            # object_pose is read-only and unforutnatly copy.copy does not work
-            # for this type
+            # object_pose is read-only and unfortunately copy.copy does not
+            # work for this type
             object_pose_cpy = type(object_pose)()
             object_pose_cpy.position = np.array(object_pose.position)
             object_pose_cpy.orientation = np.array(object_pose.orientation)
@@ -110,6 +158,11 @@ def main():
             offset = np.array([0, 0, 0.0325])
             cube_rot = Rotation.from_quat(object_pose.orientation)
             object_pose.position = object_pose.position + cube_rot.apply(offset)
+
+        if args.visualize_goal_pose:
+            cvmats = [trifinger_cameras.camera.cvMat(img) for img in images]
+            images = cube_visualizer.draw_cube(cvmats, goal_pose, True)
+            images = [np.array(img) for img in images]
 
         if args.visualize_object_pose:
             cvmats = [trifinger_cameras.camera.cvMat(img) for img in images]
@@ -126,12 +179,15 @@ def main():
                 (255, 255, 0)
             ) for image in images]
 
-        for i, name in enumerate(["camera60", "camera180", "camera300"]):
-            cv2.imshow(name, images[i])
+        if args.save_video:
+            video_writer.write(images[camera_index])
+        else:
+            for i, name in enumerate(CAMERA_NAMES):
+                cv2.imshow(name, images[i])
 
-        # stop if either "q" or ESC is pressed
-        if cv2.waitKey(interval) in [ord("q"), 27]:  # 27 = ESC
-            break
+            # stop if either "q" or ESC is pressed
+            if cv2.waitKey(interval) in [ord("q"), 27]:  # 27 = ESC
+                break
 
         if args.plot_cube_position:
             plt.scatter(observation.cameras[0].timestamp, object_pose.position[0],
