@@ -202,6 +202,7 @@ float PoseDetector::cost_function(
             int num_misclassified_pixels_in_segment = 0;
 
             float distance_cost = 0;
+            float empty_cost = 0;
             {
                 auto corner_indices =
                     cube_model_.get_face_corner_indices(color);
@@ -222,9 +223,26 @@ float PoseDetector::cost_function(
                         num_misclassified_pixels_in_segment++;
                         distance_cost += pow(-dist, 0.5);
                     }
+                    else
+                    {
+                        // we would like the borders to be close to some
+                        // pixels. under the assumption that some parts of the
+                        // object boundaries are visible this should help
+                        // resolve ambiguities
+                        distance_cost += 0.05 * pow(dist, 0.5);
+                    }
                 }
                 distance_cost *= distance_cost_scaling;
-                // std::cout << "cost (visible): " << cost << std::endl;
+                //std::cout << "cost (visible): " << cost << std::endl;
+
+
+                if (face_is_visible)
+                {
+                    // check how much of the face polygon is filled by actually
+                    // pixels of that colour
+                    double face_area = cv::contourArea(corners);
+                    empty_cost = face_area * 0.001;
+                }
             }
 
             float invisibility_cost = 0.;
@@ -247,8 +265,13 @@ float PoseDetector::cost_function(
             *num_misclassified_pixels += num_misclassified_pixels_in_segment;
             cost += distance_cost;
             cost += invisibility_cost;
+            //cost += empty_cost;
         }
     }
+
+    // simple height cost (assume that it is more likely that the object is
+    // further down
+    cost += position[2] * 10;
 
     return cost;
 }
