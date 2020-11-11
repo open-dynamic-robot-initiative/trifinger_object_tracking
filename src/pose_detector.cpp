@@ -202,6 +202,7 @@ float PoseDetector::cost_function(
             int num_misclassified_pixels_in_segment = 0;
 
             float distance_cost = 0;
+            float empty_cost = 0;
             {
                 auto corner_indices =
                     cube_model_.get_face_corner_indices(color);
@@ -224,7 +225,24 @@ float PoseDetector::cost_function(
                     }
                 }
                 distance_cost *= distance_cost_scaling;
-                // std::cout << "cost (visible): " << cost << std::endl;
+                //std::cout << "cost (visible): " << cost << std::endl;
+
+
+                if (face_is_visible)
+                {
+                    // check how much of the face polygon is filled by actually
+                    // pixels of that colour
+                    double face_area = cv::contourArea(corners);
+                    if (face_area > 0)
+                    {
+                        int num_pixels_in_face = num_pixels - num_misclassified_pixels_in_segment;
+                        double empty_face_area = std::max(0.0, face_area - num_pixels_in_face);
+                        double empty_face_ratio = empty_face_area / face_area;
+
+                        empty_cost = num_pixels * empty_face_ratio * 0.01;
+                        //std::cout << "empty cost: " << empty_cost << std::endl;
+                    }
+                }
             }
 
             float invisibility_cost = 0.;
@@ -247,8 +265,14 @@ float PoseDetector::cost_function(
             *num_misclassified_pixels += num_misclassified_pixels_in_segment;
             cost += distance_cost;
             cost += invisibility_cost;
+            cost += empty_cost;
         }
     }
+
+    // simple height cost (assume that it is more likely that the object is
+    // further down
+    //std::cout << "height: " << position[2] << std::endl;
+    //cost += position[2] * 10;
 
     return cost;
 }
