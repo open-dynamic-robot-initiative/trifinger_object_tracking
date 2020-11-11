@@ -223,6 +223,14 @@ float PoseDetector::cost_function(
                         num_misclassified_pixels_in_segment++;
                         distance_cost += pow(-dist, 0.5);
                     }
+                    else
+                    {
+                        // we would like the borders to be close to some
+                        // pixels. under the assumption that some parts of the
+                        // object boundaries are visible this should help
+                        // resolve ambiguities
+                        distance_cost += 0.05 * pow(dist, 0.5);
+                    }
                 }
                 distance_cost *= distance_cost_scaling;
                 //std::cout << "cost (visible): " << cost << std::endl;
@@ -233,15 +241,7 @@ float PoseDetector::cost_function(
                     // check how much of the face polygon is filled by actually
                     // pixels of that colour
                     double face_area = cv::contourArea(corners);
-                    if (face_area > 0)
-                    {
-                        int num_pixels_in_face = num_pixels - num_misclassified_pixels_in_segment;
-                        double empty_face_area = std::max(0.0, face_area - num_pixels_in_face);
-                        double empty_face_ratio = empty_face_area / face_area;
-
-                        empty_cost = num_pixels * empty_face_ratio * 0.01;
-                        //std::cout << "empty cost: " << empty_cost << std::endl;
-                    }
+                    empty_cost = face_area * 0.001;
                 }
             }
 
