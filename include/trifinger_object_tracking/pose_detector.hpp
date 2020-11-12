@@ -130,14 +130,14 @@ private:
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
         const MasksPixels &masks_pixels);
 
-    bool compute_color_visibility(
+    void compute_color_visibility(
         const FaceColor &color,
         const cv::Mat &face_normals,
         const cv::Mat &cube_corners,
         bool *is_visible,
         float *face_normal_dot_camera_direction) const;
 
-    bool compute_face_normals_and_corners(const unsigned int camera_idx,
+    void compute_face_normals_and_corners(const unsigned int camera_idx,
                                           const cv::Affine3f &cube_pose_world,
                                           cv::Mat *normals,
                                           cv::Mat *corners) const;

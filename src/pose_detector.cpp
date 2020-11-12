@@ -24,7 +24,7 @@ PoseDetector::PoseDetector(const CubeModel &cube_model,
                                  camera_parameters[0].image_height)
 {
     // convert camera parameters to cv types
-    for (int i = 0; i < N_CAMERAS; i++)
+    for (unsigned int i = 0; i < N_CAMERAS; i++)
     {
         cv::eigen2cv(camera_parameters[i].camera_matrix, camera_matrices_[i]);
         cv::eigen2cv(camera_parameters[i].distortion_coefficients,
@@ -71,7 +71,8 @@ PoseDetector::MasksPixels sample_masks_pixels_proportionally(
     const unsigned int &num_samples)
 {
     unsigned int num_pixels = 0;
-    for (int camera_idx = 0; camera_idx < PoseDetector::N_CAMERAS; camera_idx++)
+    for (unsigned int camera_idx = 0; camera_idx < PoseDetector::N_CAMERAS;
+         camera_idx++)
     {
         for (size_t color_idx = 0; color_idx < masks_pixels[camera_idx].size();
              color_idx++)
@@ -87,7 +88,8 @@ PoseDetector::MasksPixels sample_masks_pixels_proportionally(
     //          << " ; sampling_ratio: " << sampling_ratio << std::endl;
 
     PoseDetector::MasksPixels sampled_masks_pixels;
-    for (int camera_idx = 0; camera_idx < PoseDetector::N_CAMERAS; camera_idx++)
+    for (unsigned int camera_idx = 0; camera_idx < PoseDetector::N_CAMERAS;
+         camera_idx++)
     {
         for (size_t color_idx = 0; color_idx < masks_pixels[camera_idx].size();
              color_idx++)
@@ -119,7 +121,8 @@ PoseDetector::MasksPixels sample_masks_pixels(
     const unsigned int &num_samples_per_mask)
 {
     PoseDetector::MasksPixels sampled_masks_pixels;
-    for (int camera_idx = 0; camera_idx < PoseDetector::N_CAMERAS; camera_idx++)
+    for (unsigned int camera_idx = 0; camera_idx < PoseDetector::N_CAMERAS;
+         camera_idx++)
     {
         for (size_t color_idx = 0; color_idx < masks_pixels[camera_idx].size();
              color_idx++)
@@ -163,7 +166,7 @@ float PoseDetector::cost_function(
         cube_corners_world_vec.push_back(cube_corner);
     }
 
-    for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
+    for (unsigned int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
     {
         std::vector<cv::Point2f> imgpoints;
         cv::projectPoints(cube_corners_world_vec,
@@ -297,7 +300,7 @@ float PoseDetector::compute_confidence(
         cube_corners_world_vec.push_back(cube_corner);
     }
 
-    for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
+    for (unsigned int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
     {
         std::vector<cv::Point2f> imgpoints;
         cv::projectPoints(cube_corners_world_vec,
@@ -420,7 +423,7 @@ void PoseDetector::optimize_using_optim(
 
     segmented_pixels_ratio_ = 0.0;
     std::array<std::vector<std::vector<cv::Point>>, N_CAMERAS> masks_pixels;
-    for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
+    for (unsigned int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
     {
         for (const cv::Mat &mask : masks[camera_idx])
         {
@@ -483,7 +486,7 @@ void PoseDetector::optimize_using_optim(
     // std::cout << "settings.de_settings.initial_ub "
     //           << settings.de_settings.initial_ub.t() << std::endl;
 
-    bool success = optim::de(
+    optim::de(
         pose,
         [this,
          &dominant_colors,
@@ -563,7 +566,7 @@ std::vector<std::vector<cv::Point2f>> PoseDetector::get_projected_points() const
                         proposed_new_cube_pts_w.at<float>(i, 2)));
     }
 
-    for (int i = 0; i < N_CAMERAS; i++)
+    for (unsigned int i = 0; i < N_CAMERAS; i++)
     {  // range (r_vecs)
         std::vector<cv::Point2f> imgpoints;
         cv::projectPoints(_new_pts,
@@ -605,7 +608,7 @@ bool PoseDetector::is_face_visible(FaceColor color,
     return is_visible;
 }
 
-bool PoseDetector::compute_face_normals_and_corners(
+void PoseDetector::compute_face_normals_and_corners(
     const unsigned int camera_idx,
     const cv::Affine3f &cube_pose_world,
     cv::Mat *normals,
@@ -625,7 +628,7 @@ bool PoseDetector::compute_face_normals_and_corners(
     *corners = cv::Mat(cube_pose_camera.matrix) * corners_in_cube_frame_.t();
 }
 
-bool PoseDetector::compute_color_visibility(
+void PoseDetector::compute_color_visibility(
     const FaceColor &color,
     const cv::Mat &face_normals,
     const cv::Mat &cube_corners,
