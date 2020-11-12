@@ -120,10 +120,13 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
     cv::cv2eigen(quaternion, observation.object_pose.orientation);
     observation.object_pose.confidence = cube_pose.confidence;
 
-    constexpr float FILTER_CONFIDENCE_THRESHOLD = 0.9;
+    constexpr float FILTER_CONFIDENCE_THRESHOLD = 0.7;
+    constexpr float FILTER_CONFIDENCE_DEGRADATION = 0.9;
     if (previous_pose_.confidence > 0 &&
         observation.object_pose.confidence < FILTER_CONFIDENCE_THRESHOLD)
     {
+        // every time a pose is reused, degrade its confidence a bit
+        previous_pose_.confidence *= FILTER_CONFIDENCE_DEGRADATION;
         observation.filtered_object_pose = previous_pose_;
     }
     else
