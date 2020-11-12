@@ -236,8 +236,7 @@ float PoseDetector::cost_function(
                     }
                 }
                 distance_cost *= distance_cost_scaling;
-                //std::cout << "cost (visible): " << cost << std::endl;
-
+                // std::cout << "cost (visible): " << cost << std::endl;
 
                 if (face_is_visible)
                 {
@@ -268,7 +267,7 @@ float PoseDetector::cost_function(
             *num_misclassified_pixels += num_misclassified_pixels_in_segment;
             cost += distance_cost;
             cost += invisibility_cost;
-            //cost += empty_cost;
+            // cost += empty_cost;
         }
     }
 
@@ -285,6 +284,8 @@ float PoseDetector::compute_confidence(
     const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
     const MasksPixels &masks_pixels)
 {
+    // ScopedTimer timer("compute_confidence");
+
     unsigned int num_misclassified_pixels = 0;
 
     cv::Affine3f cube_pose_world = cv::Affine3f(orientation, position);
@@ -296,9 +297,13 @@ float PoseDetector::compute_confidence(
     for (int j = 0; j < 8; j++)
     {
         cv::Vec3f cube_corner(cube_corners_world.col(j).rowRange(0, 3));
-        // std::cout << "  corner: " << cube_corner << std::endl;
         cube_corners_world_vec.push_back(cube_corner);
     }
+
+    unsigned int total_num_pixels = 0;
+    double total_filled_visible_face_area = 0.0;
+    double total_visible_face_area = 0.0;
+    unsigned int num_cameras_with_pixels = 0;
 
     for (unsigned int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
     {
@@ -315,16 +320,16 @@ float PoseDetector::compute_confidence(
         compute_face_normals_and_corners(
             camera_idx, cube_pose_world, &face_normals, &cube_corners);
 
+        unsigned int camera_num_pixels = 0;
+
         for (size_t color_idx = 0;
              color_idx < dominant_colors[camera_idx].size();
              color_idx++)
         {
             unsigned int num_pixels =
                 masks_pixels[camera_idx][color_idx].size();
-            if (num_pixels == 0)
-            {
-                continue;
-            }
+            total_num_pixels += num_pixels;
+            camera_num_pixels += num_pixels;
 
             FaceColor color = dominant_colors[camera_idx][color_idx];
 
@@ -338,7 +343,6 @@ float PoseDetector::compute_confidence(
 
             int num_misclassified_pixels_in_segment = 0;
 
-            std::cout << "is visible: " << face_is_visible << std::endl;
             if (face_is_visible)
             {
                 auto corner_indices =
@@ -360,6 +364,12 @@ float PoseDetector::compute_confidence(
                         num_misclassified_pixels_in_segment++;
                     }
                 }
+                int num_pixels_in_face =
+                    num_pixels - num_misclassified_pixels_in_segment;
+                total_filled_visible_face_area += num_pixels_in_face;
+
+                double face_area = cv::contourArea(corners);
+                total_visible_face_area += face_area;
             }
             else
             {
@@ -371,20 +381,29 @@ float PoseDetector::compute_confidence(
 
             num_misclassified_pixels += num_misclassified_pixels_in_segment;
         }
-    }
 
-    unsigned int num_pixels = 0;
-    for (const auto &masks : masks_pixels)
-    {
-        for (const auto &mask : masks)
+        // FIXME magic number
+        if (camera_num_pixels > 10)
         {
-            num_pixels += mask.size();
+            num_cameras_with_pixels++;
         }
     }
 
-    std::cout << "num miss " << num_misclassified_pixels << std::endl;
-    float confidence = 1 - static_cast<float>(num_misclassified_pixels) /
-                               static_cast<float>(num_pixels);
+    float cameras_with_pixels_ratio =
+        static_cast<float>(num_cameras_with_pixels) / 3.0;
+
+    float good_pixel_ratio = 1 - static_cast<float>(num_misclassified_pixels) /
+                                     static_cast<float>(total_num_pixels);
+
+    float filled_face_ratio = static_cast<float>(
+        total_filled_visible_face_area / total_visible_face_area);
+
+    // std::cout << "camera ratio: " << cameras_with_pixels_ratio << std::endl;
+    // std::cout << "good ratio: " << good_pixel_ratio << std::endl;
+    // std::cout << "filled ratio: " << filled_face_ratio << std::endl;
+
+    float confidence = 0.4 * good_pixel_ratio + 0.3 * filled_face_ratio +
+                       0.3 * cameras_with_pixels_ratio;
 
     return confidence;
 }
@@ -486,51 +505,36 @@ void PoseDetector::optimize_using_optim(
     // std::cout << "settings.de_settings.initial_ub "
     //           << settings.de_settings.initial_ub.t() << std::endl;
 
-    optim::de(
-        pose,
-        [this,
-         &dominant_colors,
-         &sampled_masks_pixels,
-         &distance_cost_scaling,
-         &invisibility_cost_scaling](const arma::vec &pose,
-                                     arma::vec *grad_out,
-                                     void *opt_data) -> double {
-            cv::Vec3f position;
-            cv::Vec3f orientation;
-            pose2position_and_orientation(pose, &position, &orientation);
-            unsigned int num_misclassified_pixels;
+    optim::de(pose,
+              [this,
+               &dominant_colors,
+               &sampled_masks_pixels,
+               &distance_cost_scaling,
+               &invisibility_cost_scaling](const arma::vec &pose,
+                                           arma::vec *grad_out,
+                                           void *opt_data) -> double {
+                  cv::Vec3f position;
+                  cv::Vec3f orientation;
+                  pose2position_and_orientation(pose, &position, &orientation);
+                  unsigned int num_misclassified_pixels;
 
-            float cost = this->cost_function(position,
-                                             orientation,
-                                             dominant_colors,
-                                             sampled_masks_pixels,
-                                             distance_cost_scaling,
-                                             invisibility_cost_scaling,
-                                             &num_misclassified_pixels);
+                  float cost = this->cost_function(position,
+                                                   orientation,
+                                                   dominant_colors,
+                                                   sampled_masks_pixels,
+                                                   distance_cost_scaling,
+                                                   invisibility_cost_scaling,
+                                                   &num_misclassified_pixels);
 
-            return cost;
-        },
-        nullptr,
-        settings);
+                  return cost;
+              },
+              nullptr,
+              settings);
 
     pose2position_and_orientation(pose, &position_.mean, &orientation_.mean);
 
-    //cost_function(position_.mean,
-    //              orientation_.mean,
-    //              dominant_colors,
-    //              sampled_masks_pixels,
-    //              distance_cost_scaling,
-    //              invisibility_cost_scaling,
-    //              &num_misclassified_pixels_);
-
-    // TODO: Consider number of pixels in the segmentation
-    //confidence_ = 1 - static_cast<float>(num_misclassified_pixels_) /
-    //                      static_cast<float>(num_samples);
-
-    confidence_ = compute_confidence(position_.mean,
-                  orientation_.mean,
-                  dominant_colors,
-                  sampled_masks_pixels);
+    confidence_ = compute_confidence(
+        position_.mean, orientation_.mean, dominant_colors, masks_pixels);
 }
 
 Pose PoseDetector::find_pose(
