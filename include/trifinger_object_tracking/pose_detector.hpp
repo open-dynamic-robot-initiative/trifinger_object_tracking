@@ -124,6 +124,12 @@ private:
         const float &invisibility_cost_scaling,
         unsigned int *num_misclassified_pixels);
 
+    float compute_confidence(
+        const cv::Vec3f &position,
+        const cv::Vec3f &orientation,
+        const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+        const MasksPixels &masks_pixels);
+
     bool compute_color_visibility(
         const FaceColor &color,
         const cv::Mat &face_normals,

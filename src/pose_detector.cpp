@@ -276,6 +276,116 @@ float PoseDetector::cost_function(
     return cost;
 }
 
+float PoseDetector::compute_confidence(
+    const cv::Vec3f &position,
+    const cv::Vec3f &orientation,
+    const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
+    const MasksPixels &masks_pixels)
+{
+    unsigned int num_misclassified_pixels = 0;
+
+    cv::Affine3f cube_pose_world = cv::Affine3f(orientation, position);
+
+    cv::Mat cube_corners_world =
+        (cv::Mat(cube_pose_world.matrix) * corners_in_cube_frame_.t());
+
+    std::vector<cv::Point3f> cube_corners_world_vec;
+    for (int j = 0; j < 8; j++)
+    {
+        cv::Vec3f cube_corner(cube_corners_world.col(j).rowRange(0, 3));
+        // std::cout << "  corner: " << cube_corner << std::endl;
+        cube_corners_world_vec.push_back(cube_corner);
+    }
+
+    for (int camera_idx = 0; camera_idx < N_CAMERAS; camera_idx++)
+    {
+        std::vector<cv::Point2f> imgpoints;
+        cv::projectPoints(cube_corners_world_vec,
+                          camera_orientations_[camera_idx],
+                          camera_translations_[camera_idx],
+                          camera_matrices_[camera_idx],
+                          distortion_coeffs_[camera_idx],
+                          imgpoints);
+
+        cv::Mat face_normals;
+        cv::Mat cube_corners;
+        compute_face_normals_and_corners(
+            camera_idx, cube_pose_world, &face_normals, &cube_corners);
+
+        for (size_t color_idx = 0;
+             color_idx < dominant_colors[camera_idx].size();
+             color_idx++)
+        {
+            unsigned int num_pixels =
+                masks_pixels[camera_idx][color_idx].size();
+            if (num_pixels == 0)
+            {
+                continue;
+            }
+
+            FaceColor color = dominant_colors[camera_idx][color_idx];
+
+            bool face_is_visible;
+            float face_normal_dot_camera_direction;
+            compute_color_visibility(color,
+                                     face_normals,
+                                     cube_corners,
+                                     &face_is_visible,
+                                     &face_normal_dot_camera_direction);
+
+            int num_misclassified_pixels_in_segment = 0;
+
+            std::cout << "is visible: " << face_is_visible << std::endl;
+            if (face_is_visible)
+            {
+                auto corner_indices =
+                    cube_model_.get_face_corner_indices(color);
+
+                std::vector<cv::Point> corners = {imgpoints[corner_indices[0]],
+                                                  imgpoints[corner_indices[1]],
+                                                  imgpoints[corner_indices[2]],
+                                                  imgpoints[corner_indices[3]]};
+
+                for (const cv::Point &pixel :
+                     masks_pixels[camera_idx][color_idx])
+                {
+                    double dist = cv::pointPolygonTest(corners, pixel, true);
+
+                    // negative distance means the point is outside
+                    if (dist < 0)
+                    {
+                        num_misclassified_pixels_in_segment++;
+                    }
+                }
+            }
+            else
+            {
+                // if the face of the current color is not pointing towards
+                // the camera, penalize it with a cost base on the dot
+                // product of the face normal and the camera-to-face vector.
+                num_misclassified_pixels_in_segment = num_pixels;
+            }
+
+            num_misclassified_pixels += num_misclassified_pixels_in_segment;
+        }
+    }
+
+    unsigned int num_pixels = 0;
+    for (const auto &masks : masks_pixels)
+    {
+        for (const auto &mask : masks)
+        {
+            num_pixels += mask.size();
+        }
+    }
+
+    std::cout << "num miss " << num_misclassified_pixels << std::endl;
+    float confidence = 1 - static_cast<float>(num_misclassified_pixels) /
+                               static_cast<float>(num_pixels);
+
+    return confidence;
+}
+
 void pose2position_and_orientation(const arma::vec &pose,
                                    cv::Vec3f *position,
                                    cv::Vec3f *orientation)
@@ -402,17 +512,22 @@ void PoseDetector::optimize_using_optim(
 
     pose2position_and_orientation(pose, &position_.mean, &orientation_.mean);
 
-    cost_function(position_.mean,
-                  orientation_.mean,
-                  dominant_colors,
-                  sampled_masks_pixels,
-                  distance_cost_scaling,
-                  invisibility_cost_scaling,
-                  &num_misclassified_pixels_);
+    //cost_function(position_.mean,
+    //              orientation_.mean,
+    //              dominant_colors,
+    //              sampled_masks_pixels,
+    //              distance_cost_scaling,
+    //              invisibility_cost_scaling,
+    //              &num_misclassified_pixels_);
 
     // TODO: Consider number of pixels in the segmentation
-    confidence_ = 1 - static_cast<float>(num_misclassified_pixels_) /
-                          static_cast<float>(num_samples);
+    //confidence_ = 1 - static_cast<float>(num_misclassified_pixels_) /
+    //                      static_cast<float>(num_samples);
+
+    confidence_ = compute_confidence(position_.mean,
+                  orientation_.mean,
+                  dominant_colors,
+                  sampled_masks_pixels);
 }
 
 Pose PoseDetector::find_pose(
