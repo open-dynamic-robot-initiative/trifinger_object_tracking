@@ -146,12 +146,11 @@ float PoseDetector::cost_function(
     const cv::Vec3f &orientation,
     const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
     const MasksPixels &masks_pixels,
-    const float &distance_cost_scaling,
-    const float &invisibility_cost_scaling,
-    unsigned int *num_misclassified_pixels)
+    const float distance_cost_scaling,
+    const float invisibility_cost_scaling,
+    const float height_cost_scaling)
 {
     float cost = 0.;
-    *num_misclassified_pixels = 0;
 
     cv::Affine3f cube_pose_world = cv::Affine3f(orientation, position);
 
@@ -202,8 +201,6 @@ float PoseDetector::cost_function(
                                      &face_is_visible,
                                      &face_normal_dot_camera_direction);
 
-            int num_misclassified_pixels_in_segment = 0;
-
             float distance_cost = 0;
             float empty_cost = 0;
             {
@@ -223,7 +220,6 @@ float PoseDetector::cost_function(
                     // negative distance means the point is outside
                     if (dist < 0)
                     {
-                        num_misclassified_pixels_in_segment++;
                         distance_cost += pow(-dist, 0.5);
                     }
                     else
@@ -237,14 +233,6 @@ float PoseDetector::cost_function(
                 }
                 distance_cost *= distance_cost_scaling;
                 // std::cout << "cost (visible): " << cost << std::endl;
-
-                if (face_is_visible)
-                {
-                    // check how much of the face polygon is filled by actually
-                    // pixels of that colour
-                    double face_area = cv::contourArea(corners);
-                    empty_cost = face_area * 0.001;
-                }
             }
 
             float invisibility_cost = 0.;
@@ -257,23 +245,19 @@ float PoseDetector::cost_function(
                 {
                     invisibility_cost =
                         face_normal_dot_camera_direction * num_pixels;
-
-                    num_misclassified_pixels_in_segment = num_pixels;
                 }
 
                 invisibility_cost *= invisibility_cost_scaling;
             }
 
-            *num_misclassified_pixels += num_misclassified_pixels_in_segment;
             cost += distance_cost;
             cost += invisibility_cost;
-            // cost += empty_cost;
         }
     }
 
     // simple height cost (assume that it is more likely that the object is
     // further down
-    cost += position[2] * 10;
+    cost += position[2] * height_cost_scaling;
 
     return cost;
 }
@@ -479,6 +463,7 @@ void PoseDetector::optimize_using_optim(
     // todo: what is the best value here?
     float distance_cost_scaling = 5 * 1e-2;
     float invisibility_cost_scaling = 1.0;
+    float height_cost_scaling = 10.0;
 
     optim::algo_settings_t settings;
     settings.de_settings.n_gen = 50;
@@ -510,13 +495,13 @@ void PoseDetector::optimize_using_optim(
                &dominant_colors,
                &sampled_masks_pixels,
                &distance_cost_scaling,
-               &invisibility_cost_scaling](const arma::vec &pose,
+               &invisibility_cost_scaling,
+               &height_cost_scaling](const arma::vec &pose,
                                            arma::vec *grad_out,
                                            void *opt_data) -> double {
                   cv::Vec3f position;
                   cv::Vec3f orientation;
                   pose2position_and_orientation(pose, &position, &orientation);
-                  unsigned int num_misclassified_pixels;
 
                   float cost = this->cost_function(position,
                                                    orientation,
@@ -524,7 +509,7 @@ void PoseDetector::optimize_using_optim(
                                                    sampled_masks_pixels,
                                                    distance_cost_scaling,
                                                    invisibility_cost_scaling,
-                                                   &num_misclassified_pixels);
+                                                   height_cost_scaling);
 
                   return cost;
               },

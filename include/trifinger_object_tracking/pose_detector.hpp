@@ -120,9 +120,9 @@ private:
         const cv::Vec3f &orientation,
         const std::array<std::vector<FaceColor>, N_CAMERAS> &dominant_colors,
         const MasksPixels &masks_pixels,
-        const float &distance_cost_scaling,
-        const float &invisibility_cost_scaling,
-        unsigned int *num_misclassified_pixels);
+        const float distance_cost_scaling,
+        const float invisibility_cost_scaling,
+        const float height_cost_scaling);
 
     float compute_confidence(
         const cv::Vec3f &position,
