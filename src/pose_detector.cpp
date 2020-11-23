@@ -389,6 +389,8 @@ float PoseDetector::compute_confidence(
     float confidence = 0.4 * good_pixel_ratio + 0.3 * filled_face_ratio +
                        0.3 * cameras_with_pixels_ratio;
 
+    num_misclassified_pixels_ = num_misclassified_pixels;
+
     return confidence;
 }
 
