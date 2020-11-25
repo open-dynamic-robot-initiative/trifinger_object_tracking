@@ -187,14 +187,11 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
 
 CubeDetector create_trifingerpro_cube_detector()
 {
-    std::array<trifinger_cameras::CameraParameters, 3> camera_params =
-        trifinger_object_tracking::load_camera_parameters({
-            "/etc/trifingerpro/camera60_cropped_and_downsampled.yml",
-            "/etc/trifingerpro/camera180_cropped_and_downsampled.yml",
-            "/etc/trifingerpro/camera300_cropped_and_downsampled.yml",
-        });
-
-    return CubeDetector(camera_params);
+    return CubeDetector({
+        "/etc/trifingerpro/camera60_cropped_and_downsampled.yml",
+        "/etc/trifingerpro/camera180_cropped_and_downsampled.yml",
+        "/etc/trifingerpro/camera300_cropped_and_downsampled.yml",
+    });
 }
 
 }  // namespace trifinger_object_tracking
