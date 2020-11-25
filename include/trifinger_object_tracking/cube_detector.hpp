@@ -53,4 +53,14 @@ private:
     std::array<ColorSegmenter, N_CAMERAS> color_segmenters_;
     PoseDetector pose_detector_;
 };
+
+
+/**
+ * @brief Create cube detector for a TriFingerPro robot.
+ *
+ * Loads the camera calibration of the robot on which it is executed and creates
+ * a CubeDetector instance for it.
+ */
+CubeDetector create_trifingerpro_cube_detector();
+
 }  // namespace trifinger_object_tracking

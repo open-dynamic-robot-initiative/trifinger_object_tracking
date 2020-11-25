@@ -1,5 +1,6 @@
 #include <thread>
 #include <trifinger_object_tracking/cube_detector.hpp>
+#include <trifinger_object_tracking/utils.hpp>
 
 namespace trifinger_object_tracking
 {
@@ -176,5 +177,19 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
 
     return complete_image_with_text_field;
 }
+
+
+CubeDetector create_trifingerpro_cube_detector()
+{
+    std::array<trifinger_cameras::CameraParameters, 3> camera_params =
+        trifinger_object_tracking::load_camera_parameters({
+            "/etc/trifingerpro/camera60_cropped_and_downsampled.yml",
+            "/etc/trifingerpro/camera180_cropped_and_downsampled.yml",
+            "/etc/trifingerpro/camera300_cropped_and_downsampled.yml",
+        });
+
+    return CubeDetector(camera_params);
+}
+
 
 }  // namespace trifinger_object_tracking
