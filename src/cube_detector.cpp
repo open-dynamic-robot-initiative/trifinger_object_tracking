@@ -7,9 +7,16 @@ namespace trifinger_object_tracking
 CubeDetector::CubeDetector(const std::array<trifinger_cameras::CameraParameters,
                                             N_CAMERAS> &camera_params)
     : color_segmenters_{ColorSegmenter(cube_model_),
-                      ColorSegmenter(cube_model_),
-                      ColorSegmenter(cube_model_)},
+                        ColorSegmenter(cube_model_),
+                        ColorSegmenter(cube_model_)},
       pose_detector_(cube_model_, camera_params)
+{
+}
+
+CubeDetector::CubeDetector(
+    const std::array<std::string, N_CAMERAS> &camera_param_files)
+    : CubeDetector(
+          trifinger_object_tracking::load_camera_parameters(camera_param_files))
 {
 }
 
@@ -51,7 +58,7 @@ Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
 Pose CubeDetector::detect_cube_single_thread(
     const std::array<cv::Mat, N_CAMERAS> &images)
 {
-    //ScopedTimer timer("CubeDetector/detect_cube");
+    // ScopedTimer timer("CubeDetector/detect_cube");
 
     std::array<std::vector<FaceColor>, N_CAMERAS> dominant_colors;
     std::array<std::vector<cv::Mat>, N_CAMERAS> masks;
@@ -141,7 +148,8 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
     std::string text_misclassied_pixels =
         "num_misclassified_pixels: " +
         std::to_string(pose_detector_.get_num_misclassified_pixels());
-    std::string text_segmented_pixels = "segmented_pixels_ratio: " +
+    std::string text_segmented_pixels =
+        "segmented_pixels_ratio: " +
         std::to_string(pose_detector_.get_segmented_pixels_ratio());
     std::string text_confidence =
         "confidence: " + std::to_string(pose_detector_.get_confidence());
@@ -174,10 +182,8 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
                 cv::LINE_AA                 // Anti-alias (Optional)
     );
 
-
     return complete_image_with_text_field;
 }
-
 
 CubeDetector create_trifingerpro_cube_detector()
 {
@@ -190,6 +196,5 @@ CubeDetector create_trifingerpro_cube_detector()
 
     return CubeDetector(camera_params);
 }
-
 
 }  // namespace trifinger_object_tracking

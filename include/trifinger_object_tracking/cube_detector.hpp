@@ -27,6 +27,11 @@ public:
     CubeDetector(const std::array<trifinger_cameras::CameraParameters,
                                   N_CAMERAS> &camera_params);
 
+    /**
+     * @param camera_param_files Paths to the camera calibration files.
+     */
+    CubeDetector(const std::array<std::string, N_CAMERAS> &camera_param_files);
+
     Pose detect_cube_single_thread(
         const std::array<cv::Mat, N_CAMERAS> &images);
 
