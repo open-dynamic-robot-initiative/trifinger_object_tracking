@@ -28,58 +28,10 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
       downsample_images_(downsample_images),
       cameras_{trifinger_cameras::PylonDriver(device_id_1, downsample_images),
                trifinger_cameras::PylonDriver(device_id_2, downsample_images),
-               trifinger_cameras::PylonDriver(device_id_3, downsample_images)}
+               trifinger_cameras::PylonDriver(device_id_3, downsample_images)},
+      cube_detector_(
+          trifinger_object_tracking::create_trifingerpro_cube_detector())
 {
-    std::array<trifinger_cameras::CameraParameters, 3> camera_params;
-    std::string camera_name;
-    bool success;
-    success = trifinger_cameras::readCalibrationYml(
-        "/etc/trifingerpro/camera60_cropped_and_downsampled.yml",
-        camera_name,
-        camera_params[0]);
-    if (!success)
-    {
-        throw std::runtime_error(
-            "Failed to load calibration parameters of camera60.");
-    }
-    if (camera_name != "camera60")
-    {
-        throw std::runtime_error(
-            "Camera name in calibration file does not match with camera60.");
-    }
-
-    success = trifinger_cameras::readCalibrationYml(
-        "/etc/trifingerpro/camera180_cropped_and_downsampled.yml",
-        camera_name,
-        camera_params[1]);
-    if (!success)
-    {
-        throw std::runtime_error(
-            "Failed to load calibration parameters of camera180.");
-    }
-    if (camera_name != "camera180")
-    {
-        throw std::runtime_error(
-            "Camera name in calibration file does not match with camera180.");
-    }
-
-    success = trifinger_cameras::readCalibrationYml(
-        "/etc/trifingerpro/camera300_cropped_and_downsampled.yml",
-        camera_name,
-        camera_params[2]);
-    if (!success)
-    {
-        throw std::runtime_error(
-            "Failed to load calibration parameters of camera300.");
-    }
-    if (camera_name != "camera300")
-    {
-        throw std::runtime_error(
-            "Camera name in calibration file does not match with camera300.");
-    }
-
-    cube_detector_ = std::make_unique<trifinger_object_tracking::CubeDetector>(
-        camera_params);
 }
 
 TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
@@ -98,7 +50,7 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
             observation.cameras[i].image, images_bgr[i], cv::COLOR_BayerBG2BGR);
     }
 
-    Pose cube_pose = cube_detector_->detect_cube_single_thread(images_bgr);
+    Pose cube_pose = cube_detector_.detect_cube_single_thread(images_bgr);
 
     // convert rotation vector to quaternion
     // http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/

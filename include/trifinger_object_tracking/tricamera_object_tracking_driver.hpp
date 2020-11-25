@@ -50,7 +50,7 @@ private:
     std::chrono::time_point<std::chrono::system_clock> last_update_time_;
     std::array<trifinger_cameras::PylonDriver, N_CAMERAS> cameras_;
     bool downsample_images_;
-    std::unique_ptr<trifinger_object_tracking::CubeDetector> cube_detector_;
+    trifinger_object_tracking::CubeDetector cube_detector_;
 
     ObjectPose previous_pose_;
 };
