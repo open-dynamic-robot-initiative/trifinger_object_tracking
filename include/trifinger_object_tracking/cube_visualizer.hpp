@@ -11,6 +11,7 @@
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/object_pose.hpp>
 #include <trifinger_object_tracking/pose_detector.hpp>
+#include <trifinger_object_tracking/utils.hpp>
 
 namespace trifinger_object_tracking
 {
@@ -26,41 +27,9 @@ public:
     }
 
     CubeVisualizer(const std::array<std::string, N_CAMERAS> &camera_calib_files)
-        : pose_detector_(cube_model_, load_camera_params(camera_calib_files))
+        : pose_detector_(cube_model_,
+                         load_camera_parameters(camera_calib_files))
     {
-    }
-
-    static std::array<trifinger_cameras::CameraParameters, N_CAMERAS>
-    load_camera_params(
-        const std::array<std::string, N_CAMERAS> &camera_calib_files)
-    {
-        std::array<trifinger_cameras::CameraParameters, N_CAMERAS>
-            camera_params;
-        std::string camera_name;
-        bool success;
-
-        success = trifinger_cameras::readCalibrationYml(
-            camera_calib_files[0], camera_name, camera_params[0]);
-        if (!success || camera_name != "camera60")
-        {
-            throw std::runtime_error("Failed to load parameters of camera60 ");
-        }
-
-        success = trifinger_cameras::readCalibrationYml(
-            camera_calib_files[1], camera_name, camera_params[1]);
-        if (!success || camera_name != "camera180")
-        {
-            throw std::runtime_error("Failed to load parameters of camera60");
-        }
-
-        success = trifinger_cameras::readCalibrationYml(
-            camera_calib_files[2], camera_name, camera_params[2]);
-        if (!success || camera_name != "camera300")
-        {
-            throw std::runtime_error("Failed to load parameters of camera60");
-        }
-
-        return camera_params;
     }
 
     std::array<cv::Mat, N_CAMERAS> draw_cube(
