@@ -7,8 +7,6 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <trifinger_object_tracking/cube_model.hpp>
-
 namespace trifinger_object_tracking
 {
 struct Pose

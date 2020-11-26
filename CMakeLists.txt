@@ -204,8 +204,10 @@ target_link_libraries(pybullet_tricamera_object_tracker_driver
 add_pybind11_module(py_object_tracker srcpy/py_object_tracker.cpp
     LINK_LIBRARIES
         Eigen3::Eigen
+        pybind11_opencv::pybind11_opencv
         simulation_object_tracker
         fake_object_tracker
+        cube_detector
 )
 add_pybind11_module(py_tricamera_types srcpy/py_tricamera_types.cpp
     LINK_LIBRARIES
