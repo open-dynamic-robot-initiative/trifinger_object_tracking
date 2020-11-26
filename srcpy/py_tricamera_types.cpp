@@ -10,6 +10,8 @@
 #include <pybind11/stl_bind.h>
 #include <pybind11/stl.h>
 
+#include <pybind11_opencv/cvbind.hpp>
+
 #include <trifinger_object_tracking/pybullet_tricamera_object_tracker_driver.hpp>
 #ifdef Pylon_FOUND
 #include <trifinger_object_tracking/tricamera_object_tracking_driver.hpp>
