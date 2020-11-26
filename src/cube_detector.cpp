@@ -1,5 +1,7 @@
-#include <thread>
 #include <trifinger_object_tracking/cube_detector.hpp>
+
+#include <opencv2/core/eigen.hpp>
+#include <thread>
 #include <trifinger_object_tracking/utils.hpp>
 
 namespace trifinger_object_tracking
@@ -20,7 +22,7 @@ CubeDetector::CubeDetector(
 {
 }
 
-Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
+ObjectPose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
 {
     // ScopedTimer timer("CubeDetector/detect_cube");
 
@@ -52,10 +54,11 @@ Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
         }
     }
 
-    return pose_detector_.find_pose(dominant_colors, masks);
+    Pose pose = pose_detector_.find_pose(dominant_colors, masks);
+    return convert_pose(pose);
 }
 
-Pose CubeDetector::detect_cube_single_thread(
+ObjectPose CubeDetector::detect_cube_single_thread(
     const std::array<cv::Mat, N_CAMERAS> &images)
 {
     // ScopedTimer timer("CubeDetector/detect_cube");
@@ -74,7 +77,8 @@ Pose CubeDetector::detect_cube_single_thread(
         }
     }
 
-    return pose_detector_.find_pose(dominant_colors, masks);
+    Pose pose = pose_detector_.find_pose(dominant_colors, masks);
+    return convert_pose(pose);
 }
 
 cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
@@ -183,6 +187,30 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
     );
 
     return complete_image_with_text_field;
+}
+
+ObjectPose CubeDetector::convert_pose(const Pose &pose)
+{
+    ObjectPose object_pose;
+
+    // convert rotation vector to quaternion
+    // www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/
+    //
+    //     qx = ax * sin(angle/2)
+    //     qy = ay * sin(angle/2)
+    //     qz = az * sin(angle/2)
+    //     qw = cos(angle/2)
+    //
+    float angle = cv::norm(pose.rotation);
+    cv::Vec3f qxyz = pose.rotation * std::sin(angle / 2) / angle;
+    cv::Vec4d quaternion(qxyz[0], qxyz[1], qxyz[2], std::cos(angle / 2));
+
+    cv::cv2eigen(static_cast<cv::Vec3d>(pose.translation),
+                 object_pose.position);
+    cv::cv2eigen(quaternion, object_pose.orientation);
+    object_pose.confidence = pose.confidence;
+
+    return object_pose;
 }
 
 CubeDetector create_trifingerpro_cube_detector()

@@ -10,8 +10,6 @@
 #include <cmath>
 #include <thread>
 
-#include <opencv2/core/eigen.hpp>
-
 #include <trifinger_cameras/parse_yml.h>
 
 namespace trifinger_object_tracking
@@ -50,27 +48,8 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
             observation.cameras[i].image, images_bgr[i], cv::COLOR_BayerBG2BGR);
     }
 
-    Pose cube_pose = cube_detector_.detect_cube_single_thread(images_bgr);
-
-    // convert rotation vector to quaternion
-    // http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/
-    //
-    //     qx = ax * sin(angle/2)
-    //     qy = ay * sin(angle/2)
-    //     qz = az * sin(angle/2)
-    //     qw = cos(angle/2)
-    //
-    float angle = cv::norm(cube_pose.rotation);
-    cube_pose.rotation *= std::sin(angle / 2) / angle;
-    cv::Vec4d quaternion(cube_pose.rotation[0],
-                         cube_pose.rotation[1],
-                         cube_pose.rotation[2],
-                         std::cos(angle / 2));
-
-    cv::cv2eigen(static_cast<cv::Vec3d>(cube_pose.translation),
-                 observation.object_pose.position);
-    cv::cv2eigen(quaternion, observation.object_pose.orientation);
-    observation.object_pose.confidence = cube_pose.confidence;
+    observation.object_pose =
+        cube_detector_.detect_cube_single_thread(images_bgr);
 
     constexpr float FILTER_CONFIDENCE_THRESHOLD = 0.75;
     constexpr float FILTER_CONFIDENCE_DEGRADATION = 0.9;

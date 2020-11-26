@@ -10,6 +10,7 @@
 #include <trifinger_object_tracking/color_segmenter.hpp>
 #include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
+#include <trifinger_object_tracking/object_pose.hpp>
 
 namespace trifinger_object_tracking
 {
@@ -32,7 +33,7 @@ public:
      */
     CubeDetector(const std::array<std::string, N_CAMERAS> &camera_param_files);
 
-    Pose detect_cube_single_thread(
+    ObjectPose detect_cube_single_thread(
         const std::array<cv::Mat, N_CAMERAS> &images);
 
     /**
@@ -42,7 +43,7 @@ public:
      *
      * @return Pose of the cube.
      */
-    Pose detect_cube(const std::array<cv::Mat, N_CAMERAS> &images);
+    ObjectPose detect_cube(const std::array<cv::Mat, N_CAMERAS> &images);
 
     /**
      * @brief Create debug image for the last call of detect_cube.
@@ -57,6 +58,9 @@ private:
     CubeModel cube_model_;
     std::array<ColorSegmenter, N_CAMERAS> color_segmenters_;
     PoseDetector pose_detector_;
+
+    //! Convert Pose to ObjectPose
+    static ObjectPose convert_pose(const Pose &pose);
 };
 
 
