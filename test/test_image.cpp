@@ -4,7 +4,7 @@
  * @copyright Copyright (c) 2020, Max Planck Gesellschaft.
  */
 #include <gtest/gtest.h>
-#include <ros/package.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include <memory>
 #include <opencv2/opencv.hpp>
@@ -46,8 +46,8 @@ protected:
         color_names[MAGENTA] = "magenta";
         color_names[YELLOW] = "yellow";
 
-        std::string package_path =
-            ros::package::getPath("trifinger_object_tracking");
+        std::string package_path = ament_index_cpp::get_package_share_directory(
+            "trifinger_object_tracking");
         std::string data_dir = package_path + "/data/";
         std::string test_image_dir = package_path + "/test/images/";
 

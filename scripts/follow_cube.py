@@ -5,15 +5,15 @@ import time
 import os
 
 import numpy as np
-import rospkg
 import cv2
 import yaml
+
+from ament_index_python.packages import get_package_share_directory
 
 import trifinger_simulation
 import trifinger_simulation.collision_objects
 import trifinger_simulation.finger_types_data
 import trifinger_simulation.pinocchio_utils
-
 import robot_interfaces
 import robot_fingers
 
@@ -72,7 +72,7 @@ def real():
     argparser.add_argument("--multi-process", action="store_true")
     args = argparser.parse_args()
 
-    robot_properties_path = rospkg.RosPack().get_path("robot_properties_fingers")
+    robot_properties_path = get_package_share_directory("robot_properties_fingers")
     urdf_file = trifinger_simulation.finger_types_data.get_finger_urdf("trifingerpro")
     finger_urdf_path = os.path.join(robot_properties_path, "urdf", urdf_file)
     kinematics = trifinger_simulation.pinocchio_utils.Kinematics(

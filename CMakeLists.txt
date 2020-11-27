@@ -1,15 +1,20 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.5)
 project(trifinger_object_tracking)
 
 # Specify C++ Standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
+# libraries need to be position independent otherwise building Python modules
+# fails
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # stop build on first error
 string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors")
 
 # always enable optimization, otherwise object tracking is too slow
 string(APPEND CMAKE_CXX_FLAGS " -O3")
+
 
 # Specify for which cube version to build the object tracker
 #
@@ -18,22 +23,19 @@ string(APPEND CMAKE_CXX_FLAGS " -O3")
 #  - 2: CUBE_V2
 #  - 3: CUBE_V3
 #  - 4: CUBOID_2x2x8
-
 set(OBJECT_VERSION 4)
 
-find_package(catkin REQUIRED COMPONENTS
-    mpi_cmake_modules
-    pybind11_catkin
-    serialization_utils
-    time_series
-    roslib
-    trifinger_cameras
-    robot_interfaces
-)
 
-search_for_eigen()
+find_package(ament_cmake REQUIRED)
+find_package(mpi_cmake_modules REQUIRED)
+find_package(pybind11 REQUIRED)
+find_package(serialization_utils REQUIRED)
+find_package(time_series REQUIRED)
+find_package(trifinger_cameras REQUIRED)
+find_package(robot_interfaces REQUIRED)
 
-find_package(LAPACK)
+find_package(Eigen3 REQUIRED)
+find_package(LAPACK REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem)
@@ -42,38 +44,10 @@ find_package(Armadillo REQUIRED)
 
 if (${HAS_PYLON_DRIVERS})
     add_definitions(-DPylon_FOUND)
-
-    # Set library names to variables, so we can use the variable instead of the
-    # direct name below.  In case, Pylon drivers are not built, the variables
-    # will be empty and thus not cause trouble when used for linking etc.
-    set(tricamera_object_tracking_driver tricamera_object_tracking_driver)
 endif()
 
 
-catkin_python_setup()
-
-catkin_package(
-    INCLUDE_DIRS include
-    LIBRARIES
-        cv_sub_images
-        cube_detector
-        simulation_object_tracker
-        fake_object_tracker
-        ${tricamera_object_tracking_driver}
-        pybullet_tricamera_object_tracker_driver
-)
-
-
-include_directories(
-    include
-    ${catkin_INCLUDE_DIRS}
-    ${OPENMP_INCLUDES}
-    ${Boost_INCLUDE_DIRS}
-    ${OpenCV_INCLUDE_DIRS}
-    ${ARMADILLO_INCLUDE_DIRS}
-    ${BLAS_INCLUDE_DIRS}
-    ${XGBOOST_INCLUDE_DIRS}
-)
+ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR python/${PROJECT_NAME})
 
 
 add_definitions(-DOBJECT_VERSION=${OBJECT_VERSION})
@@ -89,7 +63,12 @@ endif()
 
 
 add_library(cv_sub_images src/cv_sub_images.cpp)
-target_link_libraries(cv_sub_images ${catkin_LIBRARIES} ${OpenCV_LIBS})
+target_include_directories(cv_sub_images PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${OpenCV_INCLUDE_DIRS}
+)
+target_link_libraries(cv_sub_images ${OpenCV_LIBS})
 
 
 add_library(cube_detector
@@ -100,34 +79,57 @@ add_library(cube_detector
     src/cube_model.cpp
     ${cube_model_dir}/xgboost_classifier.cpp
 )
+target_include_directories(cube_detector PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${ARMADILLO_INCLUDE_DIRS}
+    ${BLAS_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
+)
 target_link_libraries(cube_detector
-    ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
     ${Boost_LIBRARIES}
     ${ARMADILLO_LIBRARIES}
     ${BLAS_LIBRARIES}
     ${LAPACK_LIBRARIES}
+    pthread
+    Eigen3::Eigen
+    serialization_utils::serialization_utils
     cv_sub_images
+    trifinger_cameras::camera_calibration_parser
 )
+
 
 add_library(cube_visualizer
     src/cube_visualizer.cpp
 )
+target_include_directories(cube_visualizer PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 target_link_libraries(cube_visualizer
-    ${catkin_LIBRARIES}
     cube_detector
 )
+
 
 add_executable(single_observation src/single_observation.cpp)
+target_include_directories(single_observation PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 target_link_libraries(single_observation
     cube_detector
-    cv_sub_images
-    pthread
 )
 
+
 add_executable(run_on_logfile src/run_on_logfile.cpp)
+target_include_directories(run_on_logfile PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${OpenCV_INCLUDE_DIRS}
+)
 target_link_libraries(run_on_logfile
-    ${catkin_LIBRARIES}
+    robot_interfaces::robot_interfaces
     cube_detector
 )
 
@@ -140,7 +142,13 @@ add_library(simulation_object_tracker
     src/simulation_object_tracker_backend.cpp
     src/object_tracker_frontend.cpp
 )
-target_link_libraries(simulation_object_tracker ${catkin_LIBRARIES})
+target_include_directories(simulation_object_tracker PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(simulation_object_tracker
+    robot_interfaces::robot_interfaces
+)
 
 
 add_library(fake_object_tracker
@@ -148,36 +156,128 @@ add_library(fake_object_tracker
     src/base_object_tracker_backend.cpp
     src/fake_object_tracker_backend.cpp
 )
-target_link_libraries(fake_object_tracker ${catkin_LIBRARIES})
+target_include_directories(fake_object_tracker PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(fake_object_tracker
+    robot_interfaces::robot_interfaces
+)
+
 
 if (${HAS_PYLON_DRIVERS})
-    add_library(${tricamera_object_tracking_driver}
+    add_library(tricamera_object_tracking_driver
         src/tricamera_object_tracking_driver.cpp)
-    target_link_libraries(${tricamera_object_tracking_driver}
-        ${catkin_LIBRARIES} cube_detector)
+    target_include_directories(tricamera_object_tracking_driver PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
+    target_link_libraries(tricamera_object_tracking_driver
+        robot_interfaces::robot_interfaces
+        trifinger_cameras::pylon_driver
+        cube_detector
+    )
+
+    # Set library names to variables, so we can use the variable instead of the
+    # direct name below.  In case, Pylon drivers are not built, the variables
+    # will be empty and thus not cause trouble when used for linking etc.
+    set(tricamera_object_tracking_driver tricamera_object_tracking_driver)
 endif()
+
 
 add_library(pybullet_tricamera_object_tracker_driver
     src/pybullet_tricamera_object_tracker_driver.cpp)
+target_include_directories(pybullet_tricamera_object_tracker_driver PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 target_link_libraries(pybullet_tricamera_object_tracker_driver
-    ${catkin_LIBRARIES} cube_detector)
+    pybind11::pybind11
+    robot_interfaces::robot_interfaces
+    serialization_utils::serialization_utils
+    cube_detector
+)
 
 
-catkin_add_pybind11_module(py_object_tracker
+# Python Bindings
+add_pybind11_module(py_object_tracker srcpy/py_object_tracker.cpp
+    LINK_LIBRARIES
+        Eigen3::Eigen
+        simulation_object_tracker
+        fake_object_tracker
+)
+add_pybind11_module(py_tricamera_types srcpy/py_tricamera_types.cpp
+    LINK_LIBRARIES
+        ${tricamera_object_tracking_driver}
+        pybullet_tricamera_object_tracker_driver
+        cube_visualizer
+)
+
+
+# Installation
+
+ament_export_interfaces(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+
+# install headers
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION include/${PROJECT_NAME})
+
+install(
+    TARGETS
+        cv_sub_images
+        cube_detector
+        cube_visualizer
+        simulation_object_tracker
+        fake_object_tracker
+        ${tricamera_object_tracking_driver}
+        pybullet_tricamera_object_tracker_driver
+        single_observation
+        run_on_logfile
+
+    EXPORT export_${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+    PROGRAMS
+        demos/demo_cameras.py
+        scripts/analyze_durations.py
+        scripts/create_background_data.py
+        scripts/debayering_tests.py
+        scripts/follow_cube.py
+        scripts/get_xgb_dump.py
+        scripts/plot_log_timestamps.py
+        scripts/train_xgb_tree.py
+        scripts/tricamera_log_analyzer.py
+        scripts/tricamera_log_converter.py
+        scripts/tricamera_log_extract.py
+        scripts/tricamera_log_viewer.py
+        scripts/view_masks.py
+
+    DESTINATION lib/${PROJECT_NAME}
+)
+
+
+
+if (BUILD_TESTING)
+    find_package(ament_cmake_gtest REQUIRED)
+    find_package(ament_index_cpp REQUIRED)
+
+    # TODO: Fix test
+    #ament_add_gtest(test_image test/test_image.cpp)
+    #target_link_libraries(test_image cube_detector)
+endif()
+
+
+ament_export_include_directories(include)
+ament_export_libraries(
+    cv_sub_images
+    cube_detector
     simulation_object_tracker
     fake_object_tracker
-)
-catkin_add_pybind11_module(py_tricamera_types
     ${tricamera_object_tracking_driver}
     pybullet_tricamera_object_tracker_driver
-    cube_visualizer
 )
-
-
-if (CATKIN_ENABLE_TESTING)
-    find_package(roslib REQUIRED)
-    include_directories(${roslib_INCLUDE_DIRS})
-
-    #catkin_add_gtest(test_image test/test_image.cpp)
-    #target_link_libraries(test_image cube_detector ${roslib_LIBRARIES})
-endif()
+ament_package()

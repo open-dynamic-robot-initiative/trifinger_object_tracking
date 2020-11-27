@@ -10,20 +10,23 @@
 
   <license>mixed</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
-
-  <depend>roslib</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
   <build_depend>mpi_cmake_modules</build_depend>
-  <build_depend>pybind11_catkin</build_depend>
+  <build_depend>pybind11_vendor</build_depend>
+  <build_depend>pybind11</build_depend>
 
+  <depend>ament_index_cpp</depend>
   <depend>serialization_utils</depend>
   <depend>time_series</depend>
   <depend>trifinger_cameras</depend>
   <depend>robot_interfaces</depend>
 
-  <test_depend>roslib</test_depend>
+  <exec_depend>ament_index_python</exec_depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
 
   <export>
+      <build_type>ament_cmake</build_type>
   </export>
 </package>
