@@ -240,21 +240,20 @@ install(
     RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
-install(
-    PROGRAMS
-        demos/demo_cameras.py
-        scripts/analyze_durations.py
-        scripts/create_background_data.py
-        scripts/debayering_tests.py
-        scripts/follow_cube.py
-        scripts/get_xgb_dump.py
-        scripts/plot_log_timestamps.py
-        scripts/train_xgb_tree.py
-        scripts/tricamera_log_analyzer.py
-        scripts/tricamera_log_converter.py
-        scripts/tricamera_log_extract.py
-        scripts/tricamera_log_viewer.py
-        scripts/view_masks.py
+install_scripts(
+    demos/demo_cameras.py
+    scripts/analyze_durations.py
+    scripts/create_background_data.py
+    scripts/debayering_tests.py
+    scripts/follow_cube.py
+    scripts/get_xgb_dump.py
+    scripts/plot_log_timestamps.py
+    scripts/train_xgb_tree.py
+    scripts/tricamera_log_analyzer.py
+    scripts/tricamera_log_converter.py
+    scripts/tricamera_log_extract.py
+    scripts/tricamera_log_viewer.py
+    scripts/view_masks.py
 
     DESTINATION lib/${PROJECT_NAME}
 )
