@@ -4,7 +4,6 @@
  * Load images of the three cameras from files "camera{60,180,300}.png", run the
  * pose detection on them and visualize the result.
  */
-#include <ros/package.h>
 #include <trifinger_cameras/parse_yml.h>
 
 #include <iostream>
