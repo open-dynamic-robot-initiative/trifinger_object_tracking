@@ -292,6 +292,14 @@ if (BUILD_TESTING)
         ament_index_cpp
     )
     install(TARGETS test_color_segmenter DESTINATION lib/${PROJECT_NAME})
+
+    ament_add_gtest(test_pose_detector test/test_pose_detector.cpp)
+    target_link_libraries(test_pose_detector cube_detector)
+    ament_target_dependencies(test_pose_detector
+        ament_index_cpp
+    )
+    install(TARGETS test_pose_detector DESTINATION lib/${PROJECT_NAME})
+
 endif()
 
 
