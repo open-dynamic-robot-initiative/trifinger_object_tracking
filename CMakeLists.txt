@@ -149,6 +149,9 @@ target_include_directories(simulation_object_tracker PUBLIC
 target_link_libraries(simulation_object_tracker
     robot_interfaces::robot_interfaces
 )
+# using pybind11 types, therefore visibility needs to be hidden
+set_target_properties(simulation_object_tracker
+    PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 
 add_library(fake_object_tracker
@@ -197,6 +200,9 @@ target_link_libraries(pybullet_tricamera_object_tracker_driver
     serialization_utils::serialization_utils
     cube_detector
 )
+# using pybind11 types, therefore visibility needs to be hidden
+set_target_properties(pybullet_tricamera_object_tracker_driver
+    PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 
 # Python Bindings
