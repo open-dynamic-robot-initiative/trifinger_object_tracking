@@ -31,7 +31,7 @@ namespace trifinger_object_tracking
         pose_detector_.set_pose(pose);
 
         auto projected_cube_corners = pose_detector_.get_projected_points();
-        for (int i = 0; i < N_CAMERAS; i++)
+        for (size_t i = 0; i < N_CAMERAS; i++)
         {
             out_images[i] = images[i].clone();
 
@@ -70,7 +70,7 @@ namespace trifinger_object_tracking
                 for (auto [color, corner_indices] :
                      pose_detector_.get_visible_faces(i))
                 {
-                    auto rgb = cube_model_.get_rgb(color);
+                    (void)color;  // suppress unused warning
 
                     for (size_t ci = 0; ci < 4; ci++)
                     {
