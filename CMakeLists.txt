@@ -251,7 +251,6 @@ install(
 )
 
 install_scripts(
-    demos/demo_cameras.py
     scripts/analyze_durations.py
     scripts/create_background_data.py
     scripts/debayering_tests.py
@@ -268,6 +267,13 @@ install_scripts(
     DESTINATION lib/${PROJECT_NAME}
 )
 
+install(
+    PROGRAMS
+        demos/demo_cameras.py
+        demos/run_on_logfile.py
+
+    DESTINATION lib/${PROJECT_NAME}
+)
 
 
 if (BUILD_TESTING)
