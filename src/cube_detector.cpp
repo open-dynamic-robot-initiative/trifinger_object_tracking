@@ -21,16 +21,19 @@ Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
 
     // run line detection multi-threaded (one thread per image)
     std::array<std::thread, N_CAMERAS> threads;
-    for (int i = 0; i < N_CAMERAS; i++)
+    for (size_t i = 0; i < N_CAMERAS; i++)
     {
         threads[i] = std::thread(
-            [this, &dominant_colors, &masks](int i, const cv::Mat &image) {
-                color_segmenters_[i].detect_colors(image);
+            [this, &dominant_colors, &masks](int camera_idx,
+                                             const cv::Mat &image) {
+                color_segmenters_[camera_idx].detect_colors(image);
 
-                dominant_colors[i] = color_segmenters_[i].get_dominant_colors();
-                for (FaceColor color : dominant_colors[i])
+                dominant_colors[camera_idx] =
+                    color_segmenters_[camera_idx].get_dominant_colors();
+                for (FaceColor color : dominant_colors[camera_idx])
                 {
-                    masks[i].push_back(color_segmenters_[i].get_mask(color));
+                    masks[camera_idx].push_back(
+                        color_segmenters_[camera_idx].get_mask(color));
                 }
             },
             i,
@@ -55,7 +58,7 @@ Pose CubeDetector::detect_cube_single_thread(
     std::array<std::vector<FaceColor>, N_CAMERAS> dominant_colors;
     std::array<std::vector<cv::Mat>, N_CAMERAS> masks;
 
-    for (int i = 0; i < N_CAMERAS; i++)
+    for (size_t i = 0; i < N_CAMERAS; i++)
     {
         color_segmenters_[i].detect_colors(images[i]);
 
@@ -76,7 +79,7 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
         cv::Size(image0.cols, image0.rows), 3, 3);
 
     auto projected_cube_corners = pose_detector_.get_projected_points();
-    for (int i = 0; i < N_CAMERAS; i++)
+    for (size_t i = 0; i < N_CAMERAS; i++)
     {
         cv::Mat image = color_segmenters_[i].get_image();
         subplot.set_subimg(image, i, 0);
@@ -115,7 +118,7 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
             for (auto [color, corner_indices] :
                  pose_detector_.get_visible_faces(i))
             {
-                auto rgb = cube_model_.get_rgb(color);
+                (void)color;  // suppress unused warning
 
                 for (size_t ci = 0; ci < 4; ci++)
                 {
