@@ -24,6 +24,9 @@ using namespace trifinger_object_tracking;
 
 PYBIND11_MODULE(py_tricamera_types, m)
 {
+    // import for Python bindings of CameraObservation
+    pybind11::module::import("trifinger_cameras");
+
     // import for Python bindings of ObjectPose
     pybind11::module::import("trifinger_object_tracking.py_object_tracker");
 

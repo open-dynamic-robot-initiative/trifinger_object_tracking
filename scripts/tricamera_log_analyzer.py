@@ -7,7 +7,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import trifinger_object_tracking.py_tricamera_types as tricamera
-import trifinger_cameras  # noqa
 
 
 def main():
