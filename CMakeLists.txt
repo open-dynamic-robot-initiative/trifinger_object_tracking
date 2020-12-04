@@ -280,9 +280,18 @@ if (BUILD_TESTING)
     find_package(ament_cmake_gtest REQUIRED)
     find_package(ament_index_cpp REQUIRED)
 
-    # TODO: Fix test
-    #ament_add_gtest(test_image test/test_image.cpp)
-    #target_link_libraries(test_image cube_detector)
+    # install test images
+    install(
+        DIRECTORY test/images
+        DESTINATION share/${PROJECT_NAME}/test
+    )
+
+    ament_add_gtest(test_color_segmenter test/test_color_segmenter.cpp)
+    target_link_libraries(test_color_segmenter cube_detector)
+    ament_target_dependencies(test_color_segmenter
+        ament_index_cpp
+    )
+    install(TARGETS test_color_segmenter DESTINATION lib/${PROJECT_NAME})
 endif()
 
 
