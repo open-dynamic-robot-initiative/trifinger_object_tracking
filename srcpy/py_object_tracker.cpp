@@ -8,6 +8,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 
+#include <pybind11_opencv/cvbind.hpp>
+
+#include <trifinger_object_tracking/cube_detector.hpp>
 #include <trifinger_object_tracking/fake_object_tracker_backend.hpp>
 #include <trifinger_object_tracking/object_pose.hpp>
 #include <trifinger_object_tracking/object_tracker_data.hpp>
@@ -86,4 +89,24 @@ PYBIND11_MODULE(py_object_tracker, m)
         .def("has_observations",
              &ObjectTrackerFrontend::has_observations,
              pybind11::call_guard<pybind11::gil_scoped_release>());
+
+    pybind11::class_<CubeDetector>(m, "CubeDetector")
+        .def(pybind11::init<
+             const std::array<std::string, CubeDetector::N_CAMERAS>>())
+        .def("detect_cube_single_thread",
+             &CubeDetector::detect_cube_single_thread,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("detect_cube",
+             &CubeDetector::detect_cube,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("create_debug_image",
+             &CubeDetector::create_debug_image,
+             "fill_faces"_a = false,
+             pybind11::call_guard<pybind11::gil_scoped_release>());
+
+    m.def("create_trifingerpro_cube_detector",
+          &create_trifingerpro_cube_detector,
+          "Create a CubeDetector for TriFingerPro robot, automatically loading "
+          "the local camera calibration.",
+          pybind11::call_guard<pybind11::gil_scoped_release>());
 }

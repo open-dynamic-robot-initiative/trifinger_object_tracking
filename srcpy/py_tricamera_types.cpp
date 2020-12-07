@@ -7,8 +7,8 @@
 #include <pybind11/eigen.h>
 #include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl_bind.h>
 #include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
 
 #include <pybind11_opencv/cvbind.hpp>
 
@@ -26,6 +26,9 @@ using namespace trifinger_object_tracking;
 
 PYBIND11_MODULE(py_tricamera_types, m)
 {
+    // import for Python bindings of CameraObservation
+    pybind11::module::import("trifinger_cameras");
+
     // import for Python bindings of ObjectPose
     pybind11::module::import("trifinger_object_tracking.py_object_tracker");
 

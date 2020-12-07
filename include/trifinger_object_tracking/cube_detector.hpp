@@ -5,9 +5,10 @@
  */
 #pragma once
 
+#include <trifinger_object_tracking/color_segmenter.hpp>
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
-#include <trifinger_object_tracking/color_segmenter.hpp>
+#include <trifinger_object_tracking/object_pose.hpp>
 #include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
 
@@ -27,7 +28,12 @@ public:
     CubeDetector(const std::array<trifinger_cameras::CameraParameters,
                                   N_CAMERAS> &camera_params);
 
-    Pose detect_cube_single_thread(
+    /**
+     * @param camera_param_files Paths to the camera calibration files.
+     */
+    CubeDetector(const std::array<std::string, N_CAMERAS> &camera_param_files);
+
+    ObjectPose detect_cube_single_thread(
         const std::array<cv::Mat, N_CAMERAS> &images);
 
     /**
@@ -37,7 +43,7 @@ public:
      *
      * @return Pose of the cube.
      */
-    Pose detect_cube(const std::array<cv::Mat, N_CAMERAS> &images);
+    ObjectPose detect_cube(const std::array<cv::Mat, N_CAMERAS> &images);
 
     /**
      * @brief Create debug image for the last call of detect_cube.
@@ -52,5 +58,17 @@ private:
     CubeModel cube_model_;
     std::array<ColorSegmenter, N_CAMERAS> color_segmenters_;
     PoseDetector pose_detector_;
+
+    //! Convert Pose to ObjectPose
+    static ObjectPose convert_pose(const Pose &pose);
 };
+
+/**
+ * @brief Create cube detector for a TriFingerPro robot.
+ *
+ * Loads the camera calibration of the robot on which it is executed and creates
+ * a CubeDetector instance for it.
+ */
+CubeDetector create_trifingerpro_cube_detector();
+
 }  // namespace trifinger_object_tracking

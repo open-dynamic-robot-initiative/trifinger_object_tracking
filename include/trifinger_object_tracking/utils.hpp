@@ -1,14 +1,14 @@
+/**
+ * @file
+ * @copyright 2020, Max Planck Gesellschaft.  All rights reserved.
+ * @license BSD 3-clause
+ */
 #pragma once
-
-#include <boost/filesystem.hpp>
-#include <opencv2/opencv.hpp>
 
 #include <trifinger_cameras/camera_parameters.hpp>
 
-
 namespace trifinger_object_tracking
 {
-
 /**
  * @brief Load camera calibration parameters from YAML files.
  *

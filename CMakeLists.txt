@@ -149,6 +149,9 @@ target_include_directories(simulation_object_tracker PUBLIC
 target_link_libraries(simulation_object_tracker
     robot_interfaces::robot_interfaces
 )
+# using pybind11 types, therefore visibility needs to be hidden
+set_target_properties(simulation_object_tracker
+    PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 
 add_library(fake_object_tracker
@@ -198,14 +201,19 @@ target_link_libraries(pybullet_tricamera_object_tracker_driver
     serialization_utils::serialization_utils
     cube_detector
 )
+# using pybind11 types, therefore visibility needs to be hidden
+set_target_properties(pybullet_tricamera_object_tracker_driver
+    PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 
 # Python Bindings
 add_pybind11_module(py_object_tracker srcpy/py_object_tracker.cpp
     LINK_LIBRARIES
         Eigen3::Eigen
+        pybind11_opencv::pybind11_opencv
         simulation_object_tracker
         fake_object_tracker
+        cube_detector
 )
 add_pybind11_module(py_tricamera_types srcpy/py_tricamera_types.cpp
     LINK_LIBRARIES
@@ -243,7 +251,6 @@ install(
 )
 
 install_scripts(
-    demos/demo_cameras.py
     scripts/analyze_durations.py
     scripts/create_background_data.py
     scripts/debayering_tests.py
@@ -260,6 +267,13 @@ install_scripts(
     DESTINATION lib/${PROJECT_NAME}
 )
 
+install(
+    PROGRAMS
+        demos/demo_cameras.py
+        demos/run_on_logfile.py
+
+    DESTINATION lib/${PROJECT_NAME}
+)
 
 
 if (BUILD_TESTING)

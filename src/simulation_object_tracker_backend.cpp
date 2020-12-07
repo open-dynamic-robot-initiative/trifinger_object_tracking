@@ -26,8 +26,8 @@ ObjectPose SimulationObjectTrackerBackend::update_pose()
         pose.orientation = state[1].cast<Eigen::Vector4d>();
     }
 
-    //auto current_time = std::chrono::system_clock::now();
-    //pose.timestamp =
+    // auto current_time = std::chrono::system_clock::now();
+    // pose.timestamp =
     //    std::chrono::duration<double>(current_time.time_since_epoch()).count();
 
     // we use perfect information from the simulation, so confidence is 1.0

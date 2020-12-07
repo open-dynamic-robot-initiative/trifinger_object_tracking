@@ -1,18 +1,29 @@
-#include <thread>
 #include <trifinger_object_tracking/cube_detector.hpp>
+
+#include <opencv2/core/eigen.hpp>
+#include <thread>
+#include <trifinger_object_tracking/utils.hpp>
 
 namespace trifinger_object_tracking
 {
 CubeDetector::CubeDetector(const std::array<trifinger_cameras::CameraParameters,
                                             N_CAMERAS> &camera_params)
     : color_segmenters_{ColorSegmenter(cube_model_),
-                      ColorSegmenter(cube_model_),
-                      ColorSegmenter(cube_model_)},
+                        ColorSegmenter(cube_model_),
+                        ColorSegmenter(cube_model_)},
       pose_detector_(cube_model_, camera_params)
 {
 }
 
-Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
+CubeDetector::CubeDetector(
+    const std::array<std::string, N_CAMERAS> &camera_param_files)
+    : CubeDetector(
+          trifinger_object_tracking::load_camera_parameters(camera_param_files))
+{
+}
+
+ObjectPose CubeDetector::detect_cube(
+    const std::array<cv::Mat, N_CAMERAS> &images)
 {
     // ScopedTimer timer("CubeDetector/detect_cube");
 
@@ -21,16 +32,19 @@ Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
 
     // run line detection multi-threaded (one thread per image)
     std::array<std::thread, N_CAMERAS> threads;
-    for (int i = 0; i < N_CAMERAS; i++)
+    for (size_t i = 0; i < N_CAMERAS; i++)
     {
         threads[i] = std::thread(
-            [this, &dominant_colors, &masks](int i, const cv::Mat &image) {
-                color_segmenters_[i].detect_colors(image);
+            [this, &dominant_colors, &masks](int camera_idx,
+                                             const cv::Mat &image) {
+                color_segmenters_[camera_idx].detect_colors(image);
 
-                dominant_colors[i] = color_segmenters_[i].get_dominant_colors();
-                for (FaceColor color : dominant_colors[i])
+                dominant_colors[camera_idx] =
+                    color_segmenters_[camera_idx].get_dominant_colors();
+                for (FaceColor color : dominant_colors[camera_idx])
                 {
-                    masks[i].push_back(color_segmenters_[i].get_mask(color));
+                    masks[camera_idx].push_back(
+                        color_segmenters_[camera_idx].get_mask(color));
                 }
             },
             i,
@@ -44,18 +58,19 @@ Pose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
         }
     }
 
-    return pose_detector_.find_pose(dominant_colors, masks);
+    Pose pose = pose_detector_.find_pose(dominant_colors, masks);
+    return convert_pose(pose);
 }
 
-Pose CubeDetector::detect_cube_single_thread(
+ObjectPose CubeDetector::detect_cube_single_thread(
     const std::array<cv::Mat, N_CAMERAS> &images)
 {
-    //ScopedTimer timer("CubeDetector/detect_cube");
+    // ScopedTimer timer("CubeDetector/detect_cube");
 
     std::array<std::vector<FaceColor>, N_CAMERAS> dominant_colors;
     std::array<std::vector<cv::Mat>, N_CAMERAS> masks;
 
-    for (int i = 0; i < N_CAMERAS; i++)
+    for (size_t i = 0; i < N_CAMERAS; i++)
     {
         color_segmenters_[i].detect_colors(images[i]);
 
@@ -66,7 +81,8 @@ Pose CubeDetector::detect_cube_single_thread(
         }
     }
 
-    return pose_detector_.find_pose(dominant_colors, masks);
+    Pose pose = pose_detector_.find_pose(dominant_colors, masks);
+    return convert_pose(pose);
 }
 
 cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
@@ -76,7 +92,7 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
         cv::Size(image0.cols, image0.rows), 3, 3);
 
     auto projected_cube_corners = pose_detector_.get_projected_points();
-    for (int i = 0; i < N_CAMERAS; i++)
+    for (size_t i = 0; i < N_CAMERAS; i++)
     {
         cv::Mat image = color_segmenters_[i].get_image();
         subplot.set_subimg(image, i, 0);
@@ -115,7 +131,7 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
             for (auto [color, corner_indices] :
                  pose_detector_.get_visible_faces(i))
             {
-                auto rgb = cube_model_.get_rgb(color);
+                (void)color;  // suppress unused warning
 
                 for (size_t ci = 0; ci < 4; ci++)
                 {
@@ -140,7 +156,8 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
     std::string text_misclassied_pixels =
         "num_misclassified_pixels: " +
         std::to_string(pose_detector_.get_num_misclassified_pixels());
-    std::string text_segmented_pixels = "segmented_pixels_ratio: " +
+    std::string text_segmented_pixels =
+        "segmented_pixels_ratio: " +
         std::to_string(pose_detector_.get_segmented_pixels_ratio());
     std::string text_confidence =
         "confidence: " + std::to_string(pose_detector_.get_confidence());
@@ -173,8 +190,40 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
                 cv::LINE_AA                 // Anti-alias (Optional)
     );
 
-
     return complete_image_with_text_field;
+}
+
+ObjectPose CubeDetector::convert_pose(const Pose &pose)
+{
+    ObjectPose object_pose;
+
+    // convert rotation vector to quaternion
+    // www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/
+    //
+    //     qx = ax * sin(angle/2)
+    //     qy = ay * sin(angle/2)
+    //     qz = az * sin(angle/2)
+    //     qw = cos(angle/2)
+    //
+    float angle = cv::norm(pose.rotation);
+    cv::Vec3f qxyz = pose.rotation * std::sin(angle / 2) / angle;
+    cv::Vec4d quaternion(qxyz[0], qxyz[1], qxyz[2], std::cos(angle / 2));
+
+    cv::cv2eigen(static_cast<cv::Vec3d>(pose.translation),
+                 object_pose.position);
+    cv::cv2eigen(quaternion, object_pose.orientation);
+    object_pose.confidence = pose.confidence;
+
+    return object_pose;
+}
+
+CubeDetector create_trifingerpro_cube_detector()
+{
+    return CubeDetector({
+        "/etc/trifingerpro/camera60_cropped_and_downsampled.yml",
+        "/etc/trifingerpro/camera180_cropped_and_downsampled.yml",
+        "/etc/trifingerpro/camera300_cropped_and_downsampled.yml",
+    });
 }
 
 }  // namespace trifinger_object_tracking

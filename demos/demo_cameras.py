@@ -24,24 +24,18 @@ def main():
     camera_names = ["camera60", "camera180", "camera300"]
 
     if args.multi_process:
-        camera_data = tricamera.MultiProcessData(
-            "tricamera", False
-        )
+        camera_data = tricamera.MultiProcessData("tricamera", False)
     else:
         camera_data = tricamera.SingleProcessData()
         camera_driver = tricamera.TriCameraDriver(*camera_names)
-        camera_backend = tricamera.Backend(  # noqa
-            camera_driver, camera_data
-        )
+        camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
 
     camera_frontend = tricamera.Frontend(camera_data)
 
     while True:
         observation = camera_frontend.get_latest_observation()
         for i, name in enumerate(camera_names):
-            cv2.imshow(
-                name, convert_image(observation.cameras[i].image)
-            )
+            cv2.imshow(name, convert_image(observation.cameras[i].image))
 
         print("-----")
         print("Object Pose Confidence:", observation.object_pose.confidence)

@@ -7,13 +7,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import trifinger_object_tracking.py_tricamera_types as tricamera
-import trifinger_cameras  # noqa
 
 
 def main():
     argparser = argparse.ArgumentParser(description=__doc__)
     argparser.add_argument(
-        "filename", type=str, help="""Path to the log file.""",
+        "filename",
+        type=str,
+        help="""Path to the log file.""",
     )
     args = argparser.parse_args()
 
@@ -48,7 +49,10 @@ def main():
 
     stamps = [
         np.array(
-            [observation.cameras[c].timestamp for observation in log_reader.data]
+            [
+                observation.cameras[c].timestamp
+                for observation in log_reader.data
+            ]
         )
         for c in range(3)
     ]

@@ -14,8 +14,11 @@ namespace trifinger_object_tracking
 struct ObjectPose
 {
 public:
+    //! Position (x, y, z)
     Eigen::Vector3d position;
+    //! Orientation quaternion (x, y, z, w)
     Eigen::Vector4d orientation;
+    //! Confidence of the accuracy of the given pose.  Ranges from 0 to 1.
     double confidence = 0.0;
 
     //! For serialization with cereal.
