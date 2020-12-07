@@ -104,7 +104,7 @@ protected:
     }
 };
 
-//TEST_F(TestImage, gmm_mask)
+// TEST_F(TestImage, gmm_mask)
 //{
 //    // TODO the number of wrong pixels is pretty high, try to reduce it
 //    constexpr int MAX_WRONG_PIXELS = 3800;
@@ -122,7 +122,8 @@ protected:
 //        {
 //            // std::cout << "color: " << color_names[color] << std::endl;
 //            // cv::imshow("true", masks[i][color]);
-//            // cv::imshow("predicted", image[i]->get_mask(color_names[color]));
+//            // cv::imshow("predicted",
+//            image[i]->get_mask(color_names[color]));
 //            // cv::waitKey();
 //
 //            // then number of wrongly segmented pixels has to be less than

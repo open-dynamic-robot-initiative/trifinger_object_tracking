@@ -17,7 +17,6 @@
 #include <trifinger_object_tracking/object_tracker_frontend.hpp>
 #include <trifinger_object_tracking/simulation_object_tracker_backend.hpp>
 
-
 using namespace pybind11::literals;
 using namespace trifinger_object_tracking;
 

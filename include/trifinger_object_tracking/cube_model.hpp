@@ -55,7 +55,8 @@ public:
     /*
      * Define geometry (via corner positions) depending on the object version
      */
-#if OBJECT_VERSION == CUBE_V1 || OBJECT_VERSION == CUBE_V2 || OBJECT_VERSION == CUBE_V3
+#if OBJECT_VERSION == CUBE_V1 || OBJECT_VERSION == CUBE_V2 || \
+    OBJECT_VERSION == CUBE_V3
     static constexpr float WIDTH = 0.0652;
     static constexpr float HALF_WIDTH = WIDTH / 2.0;
 
@@ -104,7 +105,8 @@ public:
         CubeFace::FACE_4,  // MAGENTA
         CubeFace::FACE_3   // YELLOW
     };
-#elif OBJECT_VERSION == CUBE_V2 || OBJECT_VERSION == CUBE_V3 || OBJECT_VERSION == CUBOID_2x2x8
+#elif OBJECT_VERSION == CUBE_V2 || OBJECT_VERSION == CUBE_V3 || \
+    OBJECT_VERSION == CUBOID_2x2x8
     // Colour mapping of cube v2.  Red, green, blue faces are pointing in x, y,
     // z directions.
     static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {

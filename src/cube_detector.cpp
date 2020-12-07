@@ -22,7 +22,8 @@ CubeDetector::CubeDetector(
 {
 }
 
-ObjectPose CubeDetector::detect_cube(const std::array<cv::Mat, N_CAMERAS> &images)
+ObjectPose CubeDetector::detect_cube(
+    const std::array<cv::Mat, N_CAMERAS> &images)
 {
     // ScopedTimer timer("CubeDetector/detect_cube");
 

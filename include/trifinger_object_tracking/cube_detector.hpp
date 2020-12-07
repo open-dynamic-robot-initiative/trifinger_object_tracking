@@ -5,12 +5,12 @@
  */
 #pragma once
 
+#include <trifinger_object_tracking/color_segmenter.hpp>
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/cv_sub_images.hpp>
-#include <trifinger_object_tracking/color_segmenter.hpp>
+#include <trifinger_object_tracking/object_pose.hpp>
 #include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/scoped_timer.hpp>
-#include <trifinger_object_tracking/object_pose.hpp>
 
 namespace trifinger_object_tracking
 {
@@ -62,7 +62,6 @@ private:
     //! Convert Pose to ObjectPose
     static ObjectPose convert_pose(const Pose &pose);
 };
-
 
 /**
  * @brief Create cube detector for a TriFingerPro robot.
