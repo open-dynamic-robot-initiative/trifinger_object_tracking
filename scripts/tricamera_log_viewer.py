@@ -129,8 +129,10 @@ def main():
 
         camera_index = CAMERA_NAMES.index(args.camera)
         first_img = utils.convert_image(log_reader.data[0].cameras[0].image)
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        video_writer = cv2.VideoWriter(args.save_video, fourcc, fps, first_img.shape[:2])
+        fourcc = cv2.VideoWriter_fourcc(*"XVID")
+        video_writer = cv2.VideoWriter(
+            args.save_video, fourcc, fps, first_img.shape[:2]
+        )
 
     print(
         "Loaded {} frames at an average interval of {} ms ({:.1f} fps)".format(
@@ -139,7 +141,9 @@ def main():
     )
 
     for observation in log_reader.data:
-        images = [utils.convert_image(camera.image) for camera in observation.cameras]
+        images = [
+            utils.convert_image(camera.image) for camera in observation.cameras
+        ]
 
         if args.unfiltered:
             object_pose = observation.object_pose
@@ -157,7 +161,9 @@ def main():
 
             offset = np.array([0, 0, 0.0325])
             cube_rot = Rotation.from_quat(object_pose.orientation)
-            object_pose.position = object_pose.position + cube_rot.apply(offset)
+            object_pose.position = object_pose.position + cube_rot.apply(
+                offset
+            )
 
         if args.visualize_goal_pose:
             images = cube_visualizer.draw_cube(images, goal_pose, True)
@@ -166,14 +172,17 @@ def main():
             images = cube_visualizer.draw_cube(images, object_pose, False)
 
         if args.show_confidence:
-            images = [cv2.putText(
-                image,
-                "confidence: %.2f" % object_pose.confidence,
-                (0, image.shape[0] - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (255, 255, 0)
-            ) for image in images]
+            images = [
+                cv2.putText(
+                    image,
+                    "confidence: %.2f" % object_pose.confidence,
+                    (0, image.shape[0] - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (255, 255, 0),
+                )
+                for image in images
+            ]
 
         if args.save_video:
             video_writer.write(images[camera_index])
@@ -186,18 +195,48 @@ def main():
                 break
 
         if args.plot_cube_position:
-            plt.scatter(observation.cameras[0].timestamp, object_pose.position[0],
-                        color="red")
-            plt.scatter(observation.cameras[0].timestamp, object_pose.position[1],
-                        color="green")
-            plt.scatter(observation.cameras[0].timestamp, object_pose.position[2],
-                        color="blue")
+            plt.scatter(
+                observation.cameras[0].timestamp,
+                object_pose.position[0],
+                color="red",
+            )
+            plt.scatter(
+                observation.cameras[0].timestamp,
+                object_pose.position[1],
+                color="green",
+            )
+            plt.scatter(
+                observation.cameras[0].timestamp,
+                object_pose.position[2],
+                color="blue",
+            )
 
             plt.title("Cube Position")
             legend_elements = [
-                Line2D([0], [0], marker='o', color='w', label='x', markerfacecolor='r'),
-                Line2D([0], [0], marker='o', color='w', label='y', markerfacecolor='g'),
-                Line2D([0], [0], marker='o', color='w', label='z', markerfacecolor='b'),
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    label="x",
+                    markerfacecolor="r",
+                ),
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    label="y",
+                    markerfacecolor="g",
+                ),
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    label="z",
+                    markerfacecolor="b",
+                ),
             ]
             plt.legend(handles=legend_elements, loc="upper right")
 

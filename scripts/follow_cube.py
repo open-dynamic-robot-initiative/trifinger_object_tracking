@@ -23,14 +23,17 @@ from trifinger_cameras.utils import convert_image
 
 
 def to_matrix(data: dict, key: str) -> np.ndarray:
-    return np.array(data[key]["data"]).reshape(data[key]["rows"], data[key]["cols"])
+    return np.array(data[key]["data"]).reshape(
+        data[key]["rows"], data[key]["cols"]
+    )
 
 
 class ArucoDetector:
-
     def __init__(self, calibration_file):
         # ArUco stuff
-        self.marker_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_APRILTAG_16h5)
+        self.marker_dict = cv2.aruco.getPredefinedDictionary(
+            cv2.aruco.DICT_APRILTAG_16h5
+        )
         self.marker_length = 0.04
         self.marker_id = 0
 
@@ -43,14 +46,19 @@ class ArucoDetector:
         self.trans_cam_to_world = np.linalg.inv(self.trans_world_to_cam)
 
     def detect_marker_pose(self, image):
-        marker_corners, ids, _ = cv2.aruco.detectMarkers(image, self.marker_dict)
+        marker_corners, ids, _ = cv2.aruco.detectMarkers(
+            image, self.marker_dict
+        )
         try:
             i = np.where(ids == self.marker_id)[0][0]
         except Exception:
             return None
 
         rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
-            marker_corners, self.marker_length, self.camera_matrix, self.dist_coeffs
+            marker_corners,
+            self.marker_length,
+            self.camera_matrix,
+            self.dist_coeffs,
         )
 
         # transform marker position from camera to world frame
@@ -66,14 +74,19 @@ def real():
 
     argparser = argparse.ArgumentParser(description=__doc__)
     argparser.add_argument("--camera-name", "-c", choices=camera_names)
-    argparser.add_argument("--object-type", choices=["cube", "aruco"],
-                           default="cube")
+    argparser.add_argument(
+        "--object-type", choices=["cube", "aruco"], default="cube"
+    )
     argparser.add_argument("--no-downsample", action="store_true")
     argparser.add_argument("--multi-process", action="store_true")
     args = argparser.parse_args()
 
-    robot_properties_path = get_package_share_directory("robot_properties_fingers")
-    urdf_file = trifinger_simulation.finger_types_data.get_finger_urdf("trifingerpro")
+    robot_properties_path = get_package_share_directory(
+        "robot_properties_fingers"
+    )
+    urdf_file = trifinger_simulation.finger_types_data.get_finger_urdf(
+        "trifingerpro"
+    )
     finger_urdf_path = os.path.join(robot_properties_path, "urdf", urdf_file)
     kinematics = trifinger_simulation.pinocchio_utils.Kinematics(
         finger_urdf_path,
@@ -92,16 +105,16 @@ def real():
         camera_driver = tricamera.TriCameraObjectTrackerDriver(
             *camera_names, downsample_images=(not args.no_downsample)
         )
-        camera_backend = tricamera.Backend(  # noqa
-            camera_driver, camera_data
-        )
+        camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
     camera_frontend = tricamera.Frontend(camera_data)
 
     if args.object_type == "aruco":
         if args.no_downsample:
             calib_file_fmt = "/etc/trifingerpro/camera{}_cropped.yml"
         else:
-            calib_file_fmt = "/etc/trifingerpro/camera{}_cropped_and_downsampled.yml"
+            calib_file_fmt = (
+                "/etc/trifingerpro/camera{}_cropped_and_downsampled.yml"
+            )
 
         detectors = [
             ArucoDetector(calib_file_fmt.format(60)),
@@ -110,8 +123,9 @@ def real():
         ]
 
     if args.multi_process:
-        robot_data = robot_interfaces.trifinger.MultiProcessData("trifinger",
-                                                                 False)
+        robot_data = robot_interfaces.trifinger.MultiProcessData(
+            "trifinger", False
+        )
         frontend = robot_interfaces.trifinger.Frontend(robot_data)
     else:
         robot = robot_fingers.Robot.create_by_name("trifingerpro")
@@ -140,7 +154,9 @@ def real():
         if args.object_type == "aruco":
             if camera_index is not None:
                 img = convert_image(images.cameras[camera_index].image)
-                world_marker_position = detectors[camera_index].detect_marker_pose(img)
+                world_marker_position = detectors[
+                    camera_index
+                ].detect_marker_pose(img)
 
                 if world_marker_position is None:
                     time.sleep(0.1)
@@ -165,7 +181,8 @@ def real():
         goal[2] += 0.08
 
         new_joint_pos, err = kinematics.inverse_kinematics_one_finger(
-            0, goal, obs.position, tolerance=0.002, max_iterations=3000)
+            0, goal, obs.position, tolerance=0.002, max_iterations=3000
+        )
 
         # keep the other two fingers up
         alpha = 0.1

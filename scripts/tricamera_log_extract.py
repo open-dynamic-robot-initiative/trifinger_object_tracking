@@ -40,10 +40,12 @@ def main():
 
     log_reader = tricamera.LogReader(args.filename)
 
-    for i, observation in enumerate(log_reader.data[::args.step]):
+    for i, observation in enumerate(log_reader.data[:: args.step]):
         observation_dir = out_dir / ("%04d" % (i + 1))
         observation_dir.mkdir()
-        for camera_idx, name in enumerate(["camera60", "camera180", "camera300"]):
+        for camera_idx, name in enumerate(
+            ["camera60", "camera180", "camera300"]
+        ):
             image = utils.convert_image(observation.cameras[camera_idx].image)
             img_path = observation_dir / "{}.png".format(name)
             cv2.imwrite(str(img_path), image)

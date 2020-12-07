@@ -12,10 +12,14 @@ from trifinger_cameras import utils
 def main():
     argparser = argparse.ArgumentParser(description=__doc__)
     argparser.add_argument(
-        "logfile", type=str, help="Path to the log file.",
+        "logfile",
+        type=str,
+        help="Path to the log file.",
     )
     argparser.add_argument(
-        "outfile", type=str, help="Path to the output file.",
+        "outfile",
+        type=str,
+        help="Path to the output file.",
     )
     argparser.add_argument(
         "--camera",
@@ -48,7 +52,7 @@ def main():
 
     # Define the codec and create VideoWriter object
     first_img = utils.convert_image(first_obs.image)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    fourcc = cv2.VideoWriter_fourcc(*"XVID")
     writer = cv2.VideoWriter(args.outfile, fourcc, fps, first_img.shape[:2])
 
     print(
