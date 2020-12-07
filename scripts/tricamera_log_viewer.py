@@ -160,14 +160,10 @@ def main():
             object_pose.position = object_pose.position + cube_rot.apply(offset)
 
         if args.visualize_goal_pose:
-            cvmats = [trifinger_cameras.camera.cvMat(img) for img in images]
-            images = cube_visualizer.draw_cube(cvmats, goal_pose, True)
-            images = [np.array(img) for img in images]
+            images = cube_visualizer.draw_cube(images, goal_pose, True)
 
         if args.visualize_object_pose:
-            cvmats = [trifinger_cameras.camera.cvMat(img) for img in images]
-            images = cube_visualizer.draw_cube(cvmats, object_pose, False)
-            images = [np.array(img) for img in images]
+            images = cube_visualizer.draw_cube(images, object_pose, False)
 
         if args.show_confidence:
             images = [cv2.putText(

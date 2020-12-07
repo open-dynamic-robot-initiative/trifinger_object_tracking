@@ -11,6 +11,8 @@
 
 #include <pybind11/eigen.h>
 #include <pybind11/embed.h>
+
+#include <pybind11_opencv/cvbind.hpp>
 #include <serialization_utils/cereal_cvmat.hpp>
 
 namespace py = pybind11;
@@ -71,8 +73,6 @@ PyBulletTriCameraObjectTrackerDriver::get_observation()
                 // ensure that the image array is contiguous in memory,
                 // otherwise conversion to cv::Mat would fail
                 auto image = numpy_.attr("ascontiguousarray")(images[i]);
-                // convert to cv::Mat
-                image = cvMat_(image);
                 observation.cameras[i].image = image.cast<cv::Mat>();
             }
         }

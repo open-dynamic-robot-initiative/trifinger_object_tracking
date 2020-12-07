@@ -58,12 +58,8 @@ public:
         if (render_images)
         {
             // some imports that are needed later for converting images (numpy
-            // array
-            // -> cv::Mat)
+            // array -> cv::Mat)
             numpy_ = pybind11::module::import("numpy");
-            pybind11::module camera_types =
-                pybind11::module::import("trifinger_cameras.py_camera_types");
-            cvMat_ = camera_types.attr("cvMat");
 
             // TriFingerCameras gives access to the cameras in simulation
             pybind11::module mod_camera =
@@ -89,8 +85,6 @@ private:
 
     //! @brief The numpy module.
     pybind11::module numpy_;
-    //! @brief Python class that wraps cv::Mat (used for conversion).
-    pybind11::object cvMat_;
 
     time_series::Index last_update_robot_time_index_;
 };

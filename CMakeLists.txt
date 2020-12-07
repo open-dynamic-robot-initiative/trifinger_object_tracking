@@ -25,10 +25,10 @@ string(APPEND CMAKE_CXX_FLAGS " -O3")
 #  - 4: CUBOID_2x2x8
 set(OBJECT_VERSION 4)
 
-
 find_package(ament_cmake REQUIRED)
 find_package(mpi_cmake_modules REQUIRED)
 find_package(pybind11 REQUIRED)
+find_package(pybind11_opencv REQUIRED)
 find_package(serialization_utils REQUIRED)
 find_package(time_series REQUIRED)
 find_package(trifinger_cameras REQUIRED)
@@ -193,6 +193,7 @@ target_include_directories(pybullet_tricamera_object_tracker_driver PUBLIC
 )
 target_link_libraries(pybullet_tricamera_object_tracker_driver
     pybind11::pybind11
+    pybind11_opencv::pybind11_opencv
     robot_interfaces::robot_interfaces
     serialization_utils::serialization_utils
     cube_detector
@@ -208,6 +209,7 @@ add_pybind11_module(py_object_tracker srcpy/py_object_tracker.cpp
 )
 add_pybind11_module(py_tricamera_types srcpy/py_tricamera_types.cpp
     LINK_LIBRARIES
+        pybind11_opencv::pybind11_opencv
         ${tricamera_object_tracking_driver}
         pybullet_tricamera_object_tracker_driver
         cube_visualizer
