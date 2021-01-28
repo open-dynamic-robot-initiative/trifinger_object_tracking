@@ -6,9 +6,16 @@
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/types.hpp>
 
+// ignore all warnings of optim (this is a third-party library)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 #define OPTIM_ENABLE_ARMA_WRAPPERS
 #define OPTIM_DONT_USE_OPENMP
 #include <optim/optim.hpp>
+
+#pragma GCC diagnostic pop
+
 
 namespace trifinger_object_tracking
 {
