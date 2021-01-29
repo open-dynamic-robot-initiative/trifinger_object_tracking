@@ -16,7 +16,6 @@
 
 #pragma GCC diagnostic pop
 
-
 namespace trifinger_object_tracking
 {
 struct Stats
