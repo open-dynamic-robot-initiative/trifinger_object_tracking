@@ -10,15 +10,12 @@
  * - camera300.yml: Calibration parameters of camera300
  */
 #include <iostream>
-#include <string>
-
 #include <opencv2/opencv.hpp>
-
 #include <robot_interfaces/sensors/sensor_log_reader.hpp>
+#include <string>
 // TODO: not sure why but if "sensor_logger.hpp" is not included, the log reader
 // will have a cereal-related build error.
 #include <robot_interfaces/sensors/sensor_logger.hpp>
-
 #include <trifinger_object_tracking/cube_detector.hpp>
 #include <trifinger_object_tracking/tricamera_object_observation.hpp>
 #include <trifinger_object_tracking/utils.hpp>
@@ -93,11 +90,12 @@ int main(int argc, char **argv)
             if (!debug_video_file.empty())
             {
                 constexpr double FPS = 10.0;
-                bool ok = open_video_writer(debug_video,
-                                            debug_video_file,
-                                            CV_FOURCC('X', 'V', 'I', 'D'),
-                                            FPS,
-                                            debug_img.size());
+                bool ok = open_video_writer(
+                    debug_video,
+                    debug_video_file,
+                    cv::VideoWriter::fourcc('X', 'V', 'I', 'D'),
+                    FPS,
+                    debug_img.size());
                 if (!ok)
                 {
                     return 1;
