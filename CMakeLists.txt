@@ -38,7 +38,6 @@ find_package(Eigen3 REQUIRED)
 find_package(LAPACK REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(Armadillo REQUIRED)
 
 
@@ -84,11 +83,9 @@ target_include_directories(cube_detector PUBLIC
     $<INSTALL_INTERFACE:include>
     ${ARMADILLO_INCLUDE_DIRS}
     ${BLAS_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
 )
 target_link_libraries(cube_detector
     ${OpenCV_LIBS}
-    ${Boost_LIBRARIES}
     ${ARMADILLO_LIBRARIES}
     ${BLAS_LIBRARIES}
     ${LAPACK_LIBRARIES}
