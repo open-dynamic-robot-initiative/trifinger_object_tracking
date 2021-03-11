@@ -66,11 +66,6 @@ int main(int argc, char **argv)
 #ifdef VISUALIZE
     cv::Mat debug_img = cube_detector.create_debug_image(false);
 
-    time_t t = time(0);  // get time now
-    struct tm *now = localtime(&t);
-    char buffer[80];
-    strftime(buffer, 80, "%s", now);
-
     if (debug_out_dir.empty())
     {
         cv::namedWindow("debug", cv::WINDOW_NORMAL);
@@ -80,10 +75,11 @@ int main(int argc, char **argv)
     }
     else
     {
+        time_t now = time(0);  // get time now
         std::string out_file =
             debug_out_dir + "/" +
             data_dir.substr(data_dir.find_last_of("/\\") + 1, 4) + "__" +
-            std::string(buffer) + ".jpg";
+            std::to_string(now) + ".jpg";
         std::cout << "Write to " << out_file << std::endl;
         cv::imwrite(out_file, debug_img);
     }
