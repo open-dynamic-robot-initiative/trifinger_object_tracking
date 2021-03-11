@@ -12,6 +12,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # Simply load the binary model and dump it to a text file.  At this point,
+    # there is no information about the original feature names anymore, so they
+    # will simply be numbered.
     model = xgboost.XGBClassifier()
     model.load_model(args.in_model)
     model.get_booster().dump_model(args.out_dump)
