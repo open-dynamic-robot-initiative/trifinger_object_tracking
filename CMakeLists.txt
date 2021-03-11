@@ -23,7 +23,7 @@ string(APPEND CMAKE_CXX_FLAGS " -O3")
 #  - 2: CUBE_V2
 #  - 3: CUBE_V3
 #  - 4: CUBOID_2x2x8
-set(OBJECT_VERSION 4)
+set(OBJECT_VERSION 2)
 
 find_package(ament_cmake REQUIRED)
 find_package(mpi_cmake_modules REQUIRED)
