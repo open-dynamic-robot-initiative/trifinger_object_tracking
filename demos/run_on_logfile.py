@@ -28,7 +28,7 @@ def main():
     camera_log_file = args.log_dir / "camera_data.dat"
 
     if not args.log_dir.is_dir():
-        print("{} does not exist.".format(args.log_dir))
+        print("{} is not a directory.".format(args.log_dir))
         sys.exit(1)
 
     calib_files = []
