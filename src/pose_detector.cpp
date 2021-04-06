@@ -223,15 +223,16 @@ float PoseDetector::cost_function(
                     }
                     else
                     {
+#if OBJECT_VERSION == CUBOID_2x2x8
                         // we would like the borders to be close to some
                         // pixels. under the assumption that some parts of the
                         // object boundaries are visible this should help
                         // resolve ambiguities
                         distance_cost += 0.05 * pow(dist, 0.5);
+#endif
                     }
                 }
                 distance_cost *= distance_cost_scaling;
-                // std::cout << "cost (visible): " << cost << std::endl;
             }
 
             float invisibility_cost = 0.;
@@ -254,9 +255,11 @@ float PoseDetector::cost_function(
         }
     }
 
+#if OBJECT_VERSION == CUBOID_2x2x8
     // simple height cost (assume that it is more likely that the object is
     // further down
     cost += position[2] * height_cost_scaling;
+#endif
 
     return cost;
 }
