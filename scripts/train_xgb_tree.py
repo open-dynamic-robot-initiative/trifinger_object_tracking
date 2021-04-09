@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-# %%
+"""Train an XGBoost model for colour segmentation of images.
+
+Segmentation of up to six colours is supported.  Fewer number of colours are
+possible simply by providing training data for only a subset of the colours.
+"""
 import argparse
-import os
+import pathlib
 import random
+import sys
 import time
 
 import cv2 as cv
 import numpy as np
 import pandas as pd
-from PIL import Image
 from xgboost import XGBClassifier
 
 from matplotlib import colors
@@ -41,18 +45,12 @@ def compute_identical_fraction(a, b):
     return identical_fraction
 
 
-def show_image_bgr(image):
-    image = Image.fromarray(image[:, :, ::-1], "RGB")
-    image.show()
-
-
 def create_channels(image_bgr):
     conversions = {
         "hsv": cv.COLOR_BGR2HSV,
-        # "hls": cv.COLOR_BGR2HLS,
-        "xyz": cv.COLOR_BGR2XYZ,
-        "LAB": cv.COLOR_BGR2Lab,
-        "LUV": cv.COLOR_BGR2Luv,
+        # "xyz": cv.COLOR_BGR2XYZ,
+        # "LAB": cv.COLOR_BGR2Lab,
+        # "LUV": cv.COLOR_BGR2Luv,
     }
 
     channels = {"bgr"[i]: image_bgr[:, :, i] for i in range(3)}
@@ -65,7 +63,7 @@ def create_channels(image_bgr):
     return channels
 
 
-def create_features(*, image_bgr, flatten=False):
+def create_features(image_bgr, flatten=False):
 
     image_bgr = cv.medianBlur(image_bgr, 7)
     channels = create_channels(image_bgr=image_bgr)
@@ -76,23 +74,22 @@ def create_features(*, image_bgr, flatten=False):
     return channels, image_bgr.shape[:2]
 
 
-def load_segment(*, path, name):
-
-    image = cv.imread(os.path.join(path, "camera" + name[1:]))
+def load_segment(path: pathlib.Path, name: str) -> pd.DataFrame:
+    image = cv.imread(str(path / ("camera" + name[1:])))
     features, shape = create_features(image_bgr=image, flatten=True)
     data = pd.DataFrame(features)
 
-    mask = cv.imread(os.path.join(path, name))
+    mask = cv.imread(str(path / name))
     mask = mask.sum(axis=2) != 0
-    data["mask"] = mask.flatten()
-    data = data[data["mask"] == True]
+    mask = mask.flatten()
+    data = data[mask]
 
     data["class"] = filename2class[name[0]]
 
     return data
 
 
-def balance_classes(*, data, background_ratio, random_state):
+def balance_classes(data, background_ratio, random_state):
     foreground = data[data["class"] != "background"]
 
     min_class_size = foreground["class"].value_counts().min()
@@ -110,47 +107,39 @@ def balance_classes(*, data, background_ratio, random_state):
     return pd.concat([foreground, background])
 
 
-def get_frame_folders(input_path):
-    frame_folders = [
-        f
-        for f in os.listdir(input_path)
-        if os.path.isdir(os.path.join(input_path, f))
-    ]
-    return frame_folders
+def get_subdirectories(input_path: pathlib.Path):
+    return [f for f in input_path.iterdir() if f.is_dir()]
 
 
-def load_images_and_create_data(*, input_path, output_filename):
+def load_images_and_create_data(
+    input_path: pathlib.Path, output_filename: str
+):
     # go through the folders and load all the annotated images
     # then compute features and create a pandas frame
 
     print("loading images")
 
-    frame_folders = get_frame_folders(input_path)
-
     data = []
-    for frame_folder in frame_folders:
-        frame_path = os.path.join(input_path, frame_folder)
+    for frame_folder in get_subdirectories(input_path):
         segment_names = [
-            name for name in os.listdir(frame_path) if name[1].isdigit()
+            f.name
+            for f in frame_folder.iterdir()
+            if f.is_file() and f.name[1].isdigit()
         ]
 
-        if len(segment_names) == 0:
-            continue
-
         for segment_name in segment_names:
-            segment_data = load_segment(path=frame_path, name=segment_name)
-            segment_data["frame"] = frame_folder
-            data += [segment_data]
+            segment_data = load_segment(path=frame_folder, name=segment_name)
+            segment_data["frame"] = frame_folder.name
+            data.append(segment_data)
 
-    data = pd.concat(data, axis="index")
-
-    data.to_pickle(output_filename)
+    pd_data = pd.concat(data, axis="index")
+    pd_data.to_pickle(output_filename)
 
     print("done loading images")
 
 
 def prepare_data(
-    *, data, feature_names, train_fraction, background_ratio, seed
+    data: pd.DataFrame, feature_names, train_fraction, background_ratio, seed
 ):
     # create training and test data from entire data frame
 
@@ -215,11 +204,10 @@ def evaluate(model, X, y):
     print("elapsed time: ", end - start)
 
 
-def load_data_and_fit_model(*, input_filename, output_filename, feature_names):
+def load_data_and_fit_model(input_filename, output_filename, feature_names):
 
     print("preparing training data")
     data = pd.read_pickle(input_filename)
-    # %%
     X_train, y_train, X_test, y_test = prepare_data(
         data=data,
         feature_names=feature_names,
@@ -242,17 +230,19 @@ def load_data_and_fit_model(*, input_filename, output_filename, feature_names):
 
 
 def load_model_and_generate_evaluation_images(
-    *, model_filename, input_path, output_path, feature_names
+    model_filename,
+    input_path: pathlib.Path,
+    output_path: pathlib.Path,
+    feature_names,
 ):
     model = XGBClassifier()
     model.load_model(model_filename)
 
-    frame_folders = sorted(get_frame_folders(input_path))
-
-    for frame_folder in frame_folders:
-        frame_path = os.path.join(input_path, frame_folder)
+    for frame_folder in sorted(get_subdirectories(input_path)):
         segment_names = [
-            name for name in os.listdir(frame_path) if name[1].isdigit()
+            f.name
+            for f in frame_folder.iterdir()
+            if f.is_file() and f.name[1].isdigit()
         ]
 
         if len(segment_names) != 0:
@@ -260,8 +250,8 @@ def load_model_and_generate_evaluation_images(
 
         for camera_name in ["60", "180", "300"]:
             image_name = "camera" + camera_name + ".png"
-            print(frame_path + "/" + image_name)
-            image_bgr = cv.imread(os.path.join(frame_path, image_name))
+            print(frame_folder / image_name)
+            image_bgr = cv.imread(str(frame_folder / image_name))
             features, shape = create_features(
                 image_bgr=image_bgr, flatten=True
             )
@@ -274,25 +264,21 @@ def load_model_and_generate_evaluation_images(
             segments_bgr = [class2bgr(idx) for idx in segments.flatten()]
             segments_bgr = np.array(segments_bgr).reshape(*shape, 3)
 
-            path = os.path.join(output_path, frame_folder)
-            if not os.path.exists(path):
-                os.makedirs(path)
+            path = output_path / frame_folder.name
+            if not path.exists():
+                path.mkdir(parents=True)
 
             image_and_segments_bgr = np.concatenate(
                 [image_bgr, segments_bgr], axis=1
             )
-            # cv.imwrite(filename=os.path.join(path, image_name),
-            #            img=image_bgr)
             segments_filename = "camera" + camera_name + "_segments" + ".png"
             cv.imwrite(
-                filename=os.path.join(path, segments_filename),
+                filename=str(path / segments_filename),
                 img=image_and_segments_bgr,
             )
 
 
-# %%
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--train",
@@ -302,10 +288,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--image-dir",
         required=True,
+        type=pathlib.Path,
         help="Directory containing the training data.",
     )
     parser.add_argument(
         "--output-dir",
+        type=pathlib.Path,
         help="Output directory for test run.",
     )
     args = parser.parse_args()
@@ -318,6 +306,7 @@ if __name__ == "__main__":
     # feature_names = sorted(list(set(feature_names)))
 
     feature_names = ["b", "g", "r", "h", "s", "v"]
+    # feature_names = ["b", "g", "r"]
 
     if args.train:
         load_images_and_create_data(
@@ -337,3 +326,9 @@ if __name__ == "__main__":
             output_path=args.output_dir,
             feature_names=feature_names,
         )
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
