@@ -48,8 +48,8 @@ def compute_identical_fraction(a, b):
 def create_channels(image_bgr):
     conversions = {
         "hsv": cv.COLOR_BGR2HSV,
-        # "xyz": cv.COLOR_BGR2XYZ,
-        # "LAB": cv.COLOR_BGR2Lab,
+        "xyz": cv.COLOR_BGR2XYZ,
+        "LAB": cv.COLOR_BGR2Lab,
         # "LUV": cv.COLOR_BGR2Luv,
     }
 
@@ -279,6 +279,13 @@ def load_model_and_generate_evaluation_images(
 
 
 def main():
+    color_space_features = {
+        "bgr": ["b", "g", "r"],
+        "hsv": ["h", "s", "v"],
+        "xyz": ["x", "y", "z"],
+        "Lab": ["L", "A", "B"],
+    }
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--train",
@@ -296,17 +303,19 @@ def main():
         type=pathlib.Path,
         help="Output directory for test run.",
     )
+    parser.add_argument(
+        "--color-spaces",
+        nargs="+",
+        type=str,
+        choices=color_space_features.keys(),
+        default=["bgr", "hsv"],
+        help="Color spaces that are used as features.",
+    )
     args = parser.parse_args()
 
-    # probably we could get rid of some of these features without
-    # losing much accuracy
-    # feature_names = "rgb" + "hsv" + "hls" + "xyz" + "LAB" + "LUV"
-    # feature_names = "rgb" + "hsv"
-    # remove duplicates and sort for reproducibility
-    # feature_names = sorted(list(set(feature_names)))
-
-    feature_names = ["b", "g", "r", "h", "s", "v"]
-    # feature_names = ["b", "g", "r"]
+    feature_names = []
+    for color_space in args.color_spaces:
+        feature_names += color_space_features[color_space]
 
     if args.train:
         load_images_and_create_data(
