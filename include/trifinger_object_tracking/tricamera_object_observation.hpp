@@ -5,6 +5,8 @@
  */
 #pragma once
 
+#include <array>
+
 #include <trifinger_cameras/camera_observation.hpp>
 #include <trifinger_object_tracking/object_pose.hpp>
 
