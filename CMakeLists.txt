@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # stop build on first error
-string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors")
+string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors -Werror=return-type")
 
 # always enable optimization, otherwise object tracking is too slow
 string(APPEND CMAKE_CXX_FLAGS " -O3")
@@ -109,28 +109,6 @@ target_link_libraries(cube_visualizer
 )
 
 
-add_executable(single_observation src/single_observation.cpp)
-target_include_directories(single_observation PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-target_link_libraries(single_observation
-    cube_detector
-)
-
-
-add_executable(run_on_logfile src/run_on_logfile.cpp)
-target_include_directories(run_on_logfile PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-    ${OpenCV_INCLUDE_DIRS}
-)
-target_link_libraries(run_on_logfile
-    robot_interfaces::robot_interfaces
-    cube_detector
-)
-
-
 # TODO frontend should be in separate library
 
 add_library(simulation_object_tracker
@@ -203,6 +181,19 @@ set_target_properties(pybullet_tricamera_object_tracker_driver
     PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 
+add_library(lightblue_segmenter
+    src/xgb_single_color/lightblue_rgb.cpp
+    src/xgb_single_color/segment_image.cpp
+)
+target_include_directories(lightblue_segmenter PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(lightblue_segmenter
+    ${OpenCV_LIBS}
+)
+
+
 # Python Bindings
 add_pybind11_module(py_object_tracker srcpy/py_object_tracker.cpp
     LINK_LIBRARIES
@@ -218,6 +209,43 @@ add_pybind11_module(py_tricamera_types srcpy/py_tricamera_types.cpp
         ${tricamera_object_tracking_driver}
         pybullet_tricamera_object_tracker_driver
         cube_visualizer
+)
+add_pybind11_module(py_lightblue_segmenter srcpy/py_lightblue_segmenter.cpp
+    LINK_LIBRARIES
+        pybind11_opencv::pybind11_opencv
+        lightblue_segmenter
+)
+
+
+add_executable(single_observation src/single_observation.cpp)
+target_include_directories(single_observation PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(single_observation
+    cube_detector
+)
+
+
+add_executable(run_on_logfile src/run_on_logfile.cpp)
+target_include_directories(run_on_logfile PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${OpenCV_INCLUDE_DIRS}
+)
+target_link_libraries(run_on_logfile
+    robot_interfaces::robot_interfaces
+    cube_detector
+)
+
+
+add_executable(demo_lightblue_segmenter_cpp demos/demo_lightblue_segmenter.cpp)
+target_include_directories(demo_lightblue_segmenter_cpp PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(demo_lightblue_segmenter_cpp
+    lightblue_segmenter
 )
 
 
@@ -240,6 +268,7 @@ install(
         pybullet_tricamera_object_tracker_driver
         single_observation
         run_on_logfile
+        demo_lightblue_segmenter_cpp
 
     EXPORT export_${PROJECT_NAME}
     ARCHIVE DESTINATION lib
@@ -269,6 +298,7 @@ install_scripts(
 install(
     PROGRAMS
         demos/demo_cameras.py
+        demos/demo_lightblue_segmenter.py
         demos/run_on_logfile.py
 
     DESTINATION lib/${PROJECT_NAME}
