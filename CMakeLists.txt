@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # stop build on first error
-string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors")
+string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors -Werror=return-type")
 
 # always enable optimization, otherwise object tracking is too slow
 string(APPEND CMAKE_CXX_FLAGS " -O3")
