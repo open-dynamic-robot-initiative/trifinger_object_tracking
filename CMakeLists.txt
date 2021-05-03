@@ -302,6 +302,10 @@ if (BUILD_TESTING)
 endif()
 
 
+# Build the sphinx documentation
+add_documentation()
+
+
 ament_export_include_directories(include)
 ament_export_libraries(
     cv_sub_images
