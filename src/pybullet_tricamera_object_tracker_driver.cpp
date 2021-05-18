@@ -73,7 +73,10 @@ PyBulletTriCameraObjectTrackerDriver::get_observation()
                 // ensure that the image array is contiguous in memory,
                 // otherwise conversion to cv::Mat would fail
                 auto image = numpy_.attr("ascontiguousarray")(images[i]);
-                observation.cameras[i].image = image.cast<cv::Mat>();
+                cv::Mat image_cv = image.cast<cv::Mat>();
+                // explicitly copy to ensure it is not pointing to some data
+                // that later gets invalid
+                observation.cameras[i].image = image_cv.clone();
             }
         }
 
