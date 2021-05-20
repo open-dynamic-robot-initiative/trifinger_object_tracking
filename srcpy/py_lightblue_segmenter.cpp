@@ -15,6 +15,15 @@ PYBIND11_MODULE(py_lightblue_segmenter, m)
 {
     m.def("segment_image",
           &trifinger_object_tracking::segment_image,
-          "Segment the lightblue areas of the given image.",
+          pybind11::arg("image_bgr"),
+          R"XXX(
+          Segment the lightblue areas of the given image.
+
+          Args:
+              image_bgr: The image in BGR colour space.
+
+          Returns:
+              The segmentation mask.
+)XXX",
           pybind11::call_guard<pybind11::gil_scoped_release>());
 }
