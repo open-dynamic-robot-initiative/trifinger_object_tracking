@@ -11,7 +11,6 @@
 #include <pybind11/stl_bind.h>
 
 #include <pybind11_opencv/cvbind.hpp>
-
 #include <trifinger_object_tracking/pybullet_tricamera_object_tracker_driver.hpp>
 #ifdef Pylon_FOUND
 #include <trifinger_object_tracking/tricamera_object_tracking_driver.hpp>
@@ -43,13 +42,16 @@ PYBIND11_MODULE(py_tricamera_types, m)
         .def_readwrite(
             "cameras",
             &TriCameraObjectObservation::cameras,
-            "List[CameraObservation]: List of observations from cameras "
-            "'camera60', 'camera180' and 'camera300' (in this order)")
+            "List[~trifinger_cameras.camera.CameraObservation]: List "
+            "of observations from cameras 'camera60', 'camera180' "
+            "and 'camera300' (in this order)")
         .def_readwrite("object_pose",
                        &TriCameraObjectObservation::object_pose,
+                       "~trifinger_object_tracking.py_object_tracker."
                        "ObjectPose: Estimated object pose.")
         .def_readwrite("filtered_object_pose",
                        &TriCameraObjectObservation::filtered_object_pose,
+                       "~trifinger_object_tracking.py_object_tracker."
                        "ObjectPose: Filtered estimated object pose.");
 
 #ifdef Pylon_FOUND
