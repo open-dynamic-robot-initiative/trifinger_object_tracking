@@ -10,7 +10,7 @@ cv::Mat segment_image(const cv::Mat &image_bgr)
     cv::Mat mask(image_bgr.rows, image_bgr.cols, CV_8UC1, cv::Scalar(0));
 
     // blur the image to make colour classification easier
-    cv::medianBlur(image_bgr, blurred_image_bgr, 5);
+    cv::medianBlur(image_bgr, blurred_image_bgr, 3);
     // cv::cvtColor(blurred_image_bgr, image_hsv_, cv::COLOR_BGR2HSV);
 
     // structuring element for denoising
