@@ -100,9 +100,9 @@ TEST_F(TestPoseDetector, find_pose)
     FAIL() << "No ground truth given for this object version.";
 #endif
 
-    EXPECT_NEAR(pose.translation[0], actual_translation[0], 0.005);
-    EXPECT_NEAR(pose.translation[1], actual_translation[1], 0.005);
-    EXPECT_NEAR(pose.translation[2], actual_translation[2], 0.005);
+    EXPECT_NEAR(pose.translation[0], actual_translation[0], 0.01);
+    EXPECT_NEAR(pose.translation[1], actual_translation[1], 0.01);
+    EXPECT_NEAR(pose.translation[2], actual_translation[2], 0.01);
 
     // What is a good way to compare rotation vectors?
     // EXPECT_NEAR(pose.rotation[0], actual_rotation[0], 0.01);
