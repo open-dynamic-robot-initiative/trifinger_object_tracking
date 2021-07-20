@@ -251,7 +251,7 @@ target_link_libraries(demo_lightblue_segmenter_cpp
 
 # Installation
 
-ament_export_interfaces(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 # install headers
 install(DIRECTORY include/${PROJECT_NAME}/
@@ -307,6 +307,7 @@ install(
 
 if (BUILD_TESTING)
     find_package(ament_cmake_gtest REQUIRED)
+    find_package(ament_cmake_pytest REQUIRED)
     find_package(ament_index_cpp REQUIRED)
 
     # install test images
@@ -328,6 +329,10 @@ if (BUILD_TESTING)
         ament_index_cpp
     )
     install(TARGETS test_pose_detector DESTINATION lib/${PROJECT_NAME})
+
+    ament_add_pytest_test(test_lightblue_segmenter_py
+        test/test_lightblue_segmenter.py
+    )
 
 endif()
 

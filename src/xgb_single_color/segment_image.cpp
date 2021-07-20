@@ -4,6 +4,14 @@ namespace trifinger_object_tracking
 {
 cv::Mat segment_image(const cv::Mat &image_bgr)
 {
+    // verify input
+    if (image_bgr.channels() != 3)
+    {
+        throw std::runtime_error(
+            "`segment_image` expects a 3-channel image but image with " +
+            std::to_string(image_bgr.channels()) + " channels is given");
+    }
+
     cv::Mat blurred_image_bgr;
 
     // initialise mask to same shape as input image but single-channel
