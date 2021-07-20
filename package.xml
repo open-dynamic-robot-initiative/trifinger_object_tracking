@@ -13,7 +13,6 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <build_depend>mpi_cmake_modules</build_depend>
-  <build_depend>pybind11_vendor</build_depend>
   <build_depend>pybind11</build_depend>
   <build_depend>pybind11_opencv</build_depend>
 
