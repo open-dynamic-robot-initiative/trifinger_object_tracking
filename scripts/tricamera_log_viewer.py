@@ -7,14 +7,11 @@ import json
 import pathlib
 import sys
 
-import numpy as np
-from scipy.spatial.transform import Rotation
 import cv2
 
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-import trifinger_cameras
 import trifinger_object_tracking.py_object_tracker
 import trifinger_object_tracking.py_tricamera_types as tricamera
 from trifinger_cameras import utils
@@ -61,11 +58,6 @@ def main():
         "-p",
         action="store_true",
         help="Plot cube position",
-    )
-    parser.add_argument(
-        "--compensate-cube-offset",
-        action="store_true",
-        help="Compensate cube position offset in old logfiles.",
     )
     parser.add_argument(
         "--save-video",
@@ -149,21 +141,6 @@ def main():
             object_pose = observation.object_pose
         else:
             object_pose = observation.filtered_object_pose
-
-        if args.compensate_cube_offset:
-            # object_pose is read-only and unfortunately copy.copy does not
-            # work for this type
-            object_pose_cpy = type(object_pose)()
-            object_pose_cpy.position = np.array(object_pose.position)
-            object_pose_cpy.orientation = np.array(object_pose.orientation)
-            object_pose_cpy.confidence = object_pose.confidence
-            object_pose = object_pose_cpy
-
-            offset = np.array([0, 0, 0.0325])
-            cube_rot = Rotation.from_quat(object_pose.orientation)
-            object_pose.position = object_pose.position + cube_rot.apply(
-                offset
-            )
 
         if args.visualize_goal_pose:
             images = cube_visualizer.draw_cube(images, goal_pose, True)
