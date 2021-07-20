@@ -251,7 +251,7 @@ target_link_libraries(demo_lightblue_segmenter_cpp
 
 # Installation
 
-ament_export_interfaces(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 # install headers
 install(DIRECTORY include/${PROJECT_NAME}/
