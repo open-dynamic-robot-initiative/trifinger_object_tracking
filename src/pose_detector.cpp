@@ -66,6 +66,21 @@ PoseDetector::PoseDetector(const CubeModel &cube_model,
         (orientation_.upper_bound + orientation_.lower_bound) / 2.0;
 }
 
+/**
+ * @brief Proportionally sample fixed number of pixels from segmentation masks.
+ *
+ * From each given segmentation mask sample some pixels randomly, such that the
+ * total number of samples (i.e. of all masks together) equals num_samples.  The
+ * number of pixels sampled from each mask is chosen proportionally to the total
+ * number of pixels of all masks.
+ *
+ * @param masks_pixels Pixels of colour segmentation masks of all cameras.
+ *     There needs to be a list of masks for each camera, however the number of
+ *     masks can vary (and can even be zero for some cameras).
+ * @param num_samples  Total number of pixels that are sampled.
+ *
+ * @return  The sampled mask pixels.
+ */
 PoseDetector::MasksPixels sample_masks_pixels_proportionally(
     const PoseDetector::MasksPixels &masks_pixels,
     const unsigned int &num_samples)
@@ -116,6 +131,16 @@ PoseDetector::MasksPixels sample_masks_pixels_proportionally(
     return sampled_masks_pixels;
 }
 
+/**
+ * @brief Randomly sample a fixed number of pixels from each given mask.
+ *
+ * @param masks_pixels Pixels of colour segmentation masks of all cameras.
+ *     There needs to be a list of masks for each camera, however the number of
+ *     masks can vary (and can even be zero for some cameras).
+ * @param num_samples_per_mask Number of pixels that are sampled from each mask.
+ *
+ * @return The sampled mask pixels.
+ */
 PoseDetector::MasksPixels sample_masks_pixels(
     const PoseDetector::MasksPixels &masks_pixels,
     const unsigned int &num_samples_per_mask)
