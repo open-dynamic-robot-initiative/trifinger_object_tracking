@@ -1,10 +1,16 @@
+************
+Object Model
+************
+
+
 Cube Model Definition
 =====================
 
 Some information about the conventions used for defining the cube model (see
 cube_model.hpp).
 
-TODO: Add some references to the actual code?
+Note that while it is called "cube model" for historic reasons, other cuboids
+are supported as well.
 
 
 Face and Corner Indices
@@ -14,7 +20,8 @@ The faces and corners of the cube are referenced by indices.  The figure blow
 shows the positions of the faces (F0 to F5) and corners (C0 to C7) with respect
 to the cube reference frame.
 
-![Indices of cube faces and corners](images/cube_model.svg)
+.. image:: images/cube_model.svg
+   :alt: Indices of cube faces and corners
 
 When accessing elements of a list that corresponds to the faces (e.g. the list
 of face normal vectors), the i-th entry belongs to face "Fi".  Likewise for the
@@ -45,9 +52,20 @@ Supported Object Versions
 CUBE_V1-3
 ---------
 
-- v1: ![CUBE_V1](images/cube_v1.jpg)
-- v2: ![CUBE_V2](images/cube_v2.jpg)
-- v3: ![CUBE_V3](images/cube_v3.jpg)
+- v1:
+
+  .. image:: images/cube_v1.jpg
+     :alt: CUBE_V1
+
+- v2:
+
+  .. image:: images/cube_v2.jpg
+     :alt: CUBE_V2
+
+- v3:
+
+  .. image:: images/cube_v3.jpg
+     :alt: CUBE_V3
 
 The cube versions 1 to 3 all have the same size (6.5 cm width).  They were
 produced with different methods resulting in some differences on the colours and
@@ -62,7 +80,8 @@ has not been integrated into the software.
 CUBOID_2x2x8
 ------------
 
-![CUBOID_2x2x8](images/cuboid_2x2x8.jpg)
+.. image:: images/cuboid_2x2x8.jpg
+   :alt: CUBOID_2x2x8
 
 Cuboid of size 2x2x8 cm.  Same manufacturing method as CUBE_V2, therefore the
 same colour segmentation can be used.

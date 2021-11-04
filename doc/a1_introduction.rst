@@ -23,7 +23,7 @@ Intrinsic and extrinsic calibration parameters of all cameras need to be
 provided.
 
 **Colour Segmentation:**  A colour segmentation model needs to be provided for
-the colours of the used object.  See :doc:`train_colour_segmentation`.
+the colours of the used object.  See :doc:`b1_train_colour_segmentation`.
 
 
 Method
@@ -45,7 +45,8 @@ Colour Segmentation
 The colour segmentation is done using a pixel-wise XGBoost classifier.  The
 model is trained in Python using manually labelled images and then converted to
 static C++ code (basically a big ``if/else`` tree) for best performance.
-See :doc:`train_colour_segmentation` for more details on how to train the model.
+See :doc:`b1_train_colour_segmentation` for more details on how to train the
+model.
 
 The input of the model are the RGB and HSV values of a single pixel, the output
 is a label denoting either one of the six colours or the background.  From this

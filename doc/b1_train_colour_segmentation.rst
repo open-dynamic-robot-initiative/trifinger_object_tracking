@@ -1,5 +1,6 @@
+************************************************
 Train Colour Segmentation for the Object Tracker
-================================================
+************************************************
 
 
 This article describes all steps necessary to train a colour segmentation model
@@ -12,12 +13,16 @@ as follows:
    object tracker.
 
 
-# Generate a Dataset
+Generate a Dataset
+==================
 
-## Collect Images
+Collect Images
+--------------
 
 First of all, record some images of the object in the TriFinger platform.  First
 run
+
+::
 
     ros2 run trifinger_cameras record_image_dataset --no-downsample -o <output_directory>
 
@@ -34,7 +39,7 @@ want to record images with varying amount of occlusion for later testing of the
 actual tracking.
 
 You will end up with the following file structure (each subdirectory of
-`output_directory` corresponding to one snapshot:
+``output_directory`` corresponding to one snapshot::
 
     output_directory
     ├── 0001
@@ -48,7 +53,8 @@ You will end up with the following file structure (each subdirectory of
     ...
 
 
-## Label Colours in the Images
+Label Colours in the Images
+---------------------------
 
 Now comes the annoying part:  To get a dataset for training the colour
 segmentation model, the recorded images need to be labelled manually.
@@ -65,6 +71,8 @@ save disk space but three-channel images work as well.
 
 The mask images have to be in PNG format and be named with the pattern
 
+::
+
     {colour_code}{camera_id}.png
 
 The colour codes are:
@@ -76,9 +84,9 @@ The colour codes are:
 * magenta: m
 * yellow: y
 
-So for example the red mask for `camera_180.png` would be called `r180.png`.
+So for example the red mask for ``camera_180.png`` would be called ``r180.png``.
 
-There is a plugin for Gimp in the `gimp_plugin` directory of this repository
+There is a plugin for Gimp in the ``gimp_plugin`` directory of this repository
 which helps with creating the masks.  See the README there for more details.
 
 When masking, rather be a bit conservative at the edges.  It is better to
@@ -89,11 +97,14 @@ non-existent mask will be interpreted as "this colour does not appear in that
 image".
 
 
-## Generate Background Labels
+Generate Background Labels
+--------------------------
 
 In the previous step only the labels for the colours were created.  For the
 training, there also need to be masks for the background.  Those can be
 generated automatically, though.  Simply run
+
+::
 
     ros2 run trifinger_object_tracking create_background_data <dataset_dir>
 
@@ -101,10 +112,13 @@ The script will automatically go through the dataset and create background masks
 (using the colour code "n") based on the colour masks.
 
 
-## Verify the Labels
+Verify the Labels
+-----------------
 
 Before starting the training, you should verify that all masks are correct (i.e.
 do not include pixels of a wrong colour).
+
+::
 
     ros2 run trifinger_object_tracking view_masks <dataset_dir> <colour_code>
 
@@ -119,21 +133,22 @@ such a case, fix the corresponding colour masks and run the background mask
 creation again.
 
 
-# Train the Segmentation Model
+Train the Segmentation Model
+============================
 
 The colour segmentation is done using a xgboost model which is trained in Python
 and then converted to static C++ code.
 
-First, train the model:
+First, train the model::
 
     ros2 run trifinger_object_tracking train_xgb_tree --train \
         --image-dir <dataset_dir>
         [--output-dir <test_output_dir>]
 
-The `--output-dir` argument is optional.  If set, the newly trained model will
+The ``--output-dir`` argument is optional.  If set, the newly trained model will
 be applied to the unlabelled images in the dataset and the results will be
 written to the given directory.  You can also run this step separately after the
-training by running the above command without the `--train` flag.
+training by running the above command without the ``--train`` flag.
 
 The following files will be created in the current working directory:
 
@@ -143,17 +158,19 @@ The following files will be created in the current working directory:
 - xgb_model.bin_dump.txt: A text file with a dump of the model
 
 
-## Generate C++ Code
+Generate C++ Code
+-----------------
 
 While xgboost has a C++ API, this is cumbersome to use and not well
 documentation.  Instead, we can generate static C++ code from the trained model
 which should also give a significant performance boost.
 
 For this, first a proper txt dump of the model needs to be created.  We are
-already getting such a dump from the training script (`xgb_model.bin_dump.txt`),
-however, this file contains the actual feature names, which is nice in general
-but unfortunately the "dump to C++" conversion will not work with this.
-Therefore we need to create a new dump without the feature names:
+already getting such a dump from the training script
+(``xgb_model.bin_dump.txt``), however, this file contains the actual feature
+names, which is nice in general but unfortunately the "dump to C++" conversion
+will not work with this.  Therefore we need to create a new dump without the
+feature names::
 
     ros2 run trifinger_object_tracking get_xgb_dump xgb_model.bin xgb_model_dump.txt
 
@@ -164,30 +181,35 @@ can compare which feature "fx" corresponds to.
 
 From this second dump, we can now generate the C++ code.  This
 can be easily converted to a C++ file with static if/else statements using
-[xgb2cpp](https://github.com/popcorn/xgb2cpp) (in case the original repo
-disappears, we have a [backup fork](https://github.com/luator/xgb2cpp)):
+`xgb2cpp <https://github.com/popcorn/xgb2cpp>`_ (in case the original repo
+disappears, we have a `backup fork <https://github.com/luator/xgb2cpp>`_)::
 
     python generate_cpp_code.py --num_classes 7 --xgb_dump xgb_model_dump.txt
 
-This creates a file `xgboost_classifier.cpp` in the current working directory.
+This creates a file ``xgboost_classifier.cpp`` in the current working directory.
 
 
-## Integrate the model in the object tracker
+Integrate the model in the object tracker
+-----------------------------------------
 
-Copy the generated `xgboost_classifier.cpp` to `src/object_name/` of the
+Copy the generated ``xgboost_classifier.cpp`` to ``src/object_name/`` of the
 trifinger_object_tracking package.  Then open it and apply the following
 changes (they make the code more efficient):
 
 1. Adjust the header include to
 
+   .. code-block:: c++
+
        #include <trifinger_object_tracking/xgboost_classifier.h>
 
-2. Replace `std::vector` with `std::array` (for better performance):
+2. Replace ``std::vector`` with ``std::array`` (for better performance):
+
+   .. code-block:: c++
 
        std::array<float, XGB_NUM_CLASSES> xgb_classify(std::array<float, XGB_NUM_FEATURES> &sample) {
 
          std::array<float, XGB_NUM_CLASSES> sum;
          sum.fill(0.0);
 
-Finally update the `CMakeLists.txt` to use this file (currently done by setting
-the `cube_model_dir` variable).
+Finally update the ``CMakeLists.txt`` to use this file (currently done by
+setting the ``cube_model_dir`` variable).
