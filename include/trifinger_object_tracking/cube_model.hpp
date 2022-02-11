@@ -8,11 +8,13 @@
 #include <cstdint>
 #include <map>
 
+#include "color_model.hpp"
+
 // Give names to cube versions fore more clarity in the code below
-#define CUBE_V1 1
-#define CUBE_V2 2
-#define CUBE_V3 3
-#define CUBOID_2x2x8 4
+#define OBJECT_MODEL_CUBE_V1 1
+#define OBJECT_MODEL_CUBE_V2 2
+#define OBJECT_MODEL_CUBE_V3 3
+#define OBJECT_MODEL_CUBOID_2x2x8 4
 
 namespace trifinger_object_tracking
 {
@@ -55,8 +57,8 @@ public:
     /*
      * Define geometry (via corner positions) depending on the object version
      */
-#if OBJECT_VERSION == CUBE_V1 || OBJECT_VERSION == CUBE_V2 || \
-    OBJECT_VERSION == CUBE_V3
+#if OBJECT_VERSION == OBJECT_MODEL_CUBE_V1 || OBJECT_VERSION == OBJECT_MODEL_CUBE_V2 || \
+    OBJECT_VERSION == OBJECT_MODEL_CUBE_V3
     static constexpr float WIDTH = 0.0652;
     static constexpr float HALF_WIDTH = WIDTH / 2.0;
 
@@ -71,7 +73,7 @@ public:
         {-HALF_WIDTH, +HALF_WIDTH, -HALF_WIDTH, 1},
         {-HALF_WIDTH, -HALF_WIDTH, -HALF_WIDTH, 1}};
 
-#elif OBJECT_VERSION == CUBOID_2x2x8
+#elif OBJECT_VERSION == OBJECT_MODEL_CUBOID_2x2x8
 
     static constexpr float LENGTH = 0.08;
     static constexpr float LONG_HALF_WIDTH = LENGTH / 2.0;
@@ -94,7 +96,7 @@ public:
     /*
      * Define colour-to-face mapping depending on the object version
      */
-#if OBJECT_VERSION == CUBE_V1
+#if OBJECT_VERSION == OBJECT_MODEL_CUBE_V1
     // Colour mapping of cube v1.  Red, green, blue faces are pointing in x, y,
     // z directions.
     static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {
@@ -105,8 +107,8 @@ public:
         CubeFace::FACE_4,  // MAGENTA
         CubeFace::FACE_3   // YELLOW
     };
-#elif OBJECT_VERSION == CUBE_V2 || OBJECT_VERSION == CUBE_V3 || \
-    OBJECT_VERSION == CUBOID_2x2x8
+#elif OBJECT_VERSION == OBJECT_MODEL_CUBE_V2 || OBJECT_VERSION == OBJECT_MODEL_CUBE_V3 || \
+    OBJECT_VERSION == OBJECT_MODEL_CUBOID_2x2x8
     // Colour mapping of cube v2.  Red, green, blue faces are pointing in x, y,
     // z directions.
     static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {
@@ -132,6 +134,14 @@ public:
 
     static constexpr float face_normal_vectors[6][3] = {
         {0, 0, 1}, {1, 0, 0}, {0, 1, 0}, {-1, 0, 0}, {0, -1, 0}, {0, 0, -1}};
+
+#if OBJECT_VERSION == OBJECT_MODEL_CUBE_V1
+    static constexpr ColorModel color_model = ColorModel::CUBE_V1;
+#elif OBJECT_VERSION == OBJECT_MODEL_CUBE_V2
+    static constexpr ColorModel color_model = ColorModel::CUBE_V2;
+#elif OBJECT_VERSION == OBJECT_MODEL_CUBOID_2x2x8
+    static constexpr ColorModel color_model = ColorModel::CUBOID_V2;
+#endif
 
     CubeModel()
     {

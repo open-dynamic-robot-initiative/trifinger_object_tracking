@@ -4,7 +4,8 @@
 #include <vector>
 using namespace std;
 
-std::array<float, XGB_NUM_CLASSES> xgb_classify(std::array<float, XGB_NUM_FEATURES> &sample) {
+namespace trifinger_object_tracking {
+std::array<float, XGB_NUM_CLASSES> xgb_classify_cuboid_v2(std::array<float, XGB_NUM_FEATURES> &sample) {
 
   std::array<float, XGB_NUM_CLASSES> sum;
   sum.fill(0.0);
@@ -1440,4 +1441,4 @@ std::array<float, XGB_NUM_CLASSES> xgb_classify(std::array<float, XGB_NUM_FEATUR
 
   return sum;
 }
-
+}

@@ -69,7 +69,7 @@ void ColorSegmenter::xgboost_mask()
             features[5] = static_cast<float>(hsv[2]);
 
             std::array<float, XGB_NUM_CLASSES> probabilities =
-                xgb_classify(features);
+                xgb_classify(cube_model_.color_model, features);
 
             auto max_elem =
                 std::max_element(probabilities.begin(), probabilities.end());

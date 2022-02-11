@@ -76,7 +76,9 @@ add_library(cube_detector
     src/pose_detector.cpp
     src/utils.cpp
     src/cube_model.cpp
-    ${cube_model_dir}/xgboost_classifier.cpp
+    src/cube_v1/xgboost_classifier.cpp
+    src/cube_v2/xgboost_classifier.cpp
+    src/cuboid_2x2x8/xgboost_classifier.cpp
 )
 target_include_directories(cube_detector PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
