@@ -25,13 +25,15 @@ public:
     /**
      * @param camera_params Calibration parameters of the cameras.
      */
-    CubeDetector(const std::array<trifinger_cameras::CameraParameters,
+    CubeDetector(BaseCuboidModel::ConstPtr cube_model,
+                 const std::array<trifinger_cameras::CameraParameters,
                                   N_CAMERAS> &camera_params);
 
     /**
      * @param camera_param_files Paths to the camera calibration files.
      */
-    CubeDetector(const std::array<std::string, N_CAMERAS> &camera_param_files);
+    CubeDetector(BaseCuboidModel::ConstPtr cube_model,
+                 const std::array<std::string, N_CAMERAS> &camera_param_files);
 
     ObjectPose detect_cube_single_thread(
         const std::array<cv::Mat, N_CAMERAS> &images);
@@ -55,7 +57,7 @@ public:
     cv::Mat create_debug_image(bool fill_faces = false) const;
 
 private:
-    CubeModel cube_model_;
+    BaseCuboidModel::ConstPtr cube_model_;  // FIXME not initialised!!!
     std::array<ColorSegmenter, N_CAMERAS> color_segmenters_;
     PoseDetector pose_detector_;
 

@@ -41,7 +41,7 @@ inline std::array<float, XGB_NUM_CLASSES> xgb_classify(
 class ColorSegmenter
 {
 private:
-    CubeModel cube_model_;
+    BaseCuboidModel::ConstPtr cube_model_;
     cv::Mat image_hsv_, image_bgr_;
 
     //! individual color segment mask
@@ -53,7 +53,7 @@ private:
 
 public:
     // constructor
-    ColorSegmenter(const CubeModel &cube_model);
+    ColorSegmenter(BaseCuboidModel::ConstPtr cube_model);
 
     /**
      * @brief Detect colours in the image and create segmentation masks.

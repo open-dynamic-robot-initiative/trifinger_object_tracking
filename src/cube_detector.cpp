@@ -6,9 +6,11 @@
 
 namespace trifinger_object_tracking
 {
-CubeDetector::CubeDetector(const std::array<trifinger_cameras::CameraParameters,
+CubeDetector::CubeDetector(BaseCuboidModel::ConstPtr cube_model,
+                           const std::array<trifinger_cameras::CameraParameters,
                                             N_CAMERAS> &camera_params)
-    : color_segmenters_{ColorSegmenter(cube_model_),
+    : cube_model_(cube_model),
+      color_segmenters_{ColorSegmenter(cube_model_),
                         ColorSegmenter(cube_model_),
                         ColorSegmenter(cube_model_)},
       pose_detector_(cube_model_, camera_params)
@@ -16,8 +18,10 @@ CubeDetector::CubeDetector(const std::array<trifinger_cameras::CameraParameters,
 }
 
 CubeDetector::CubeDetector(
+    BaseCuboidModel::ConstPtr cube_model,
     const std::array<std::string, N_CAMERAS> &camera_param_files)
     : CubeDetector(
+          cube_model,
           trifinger_object_tracking::load_camera_parameters(camera_param_files))
 {
 }
@@ -36,7 +40,8 @@ ObjectPose CubeDetector::detect_cube(
     {
         threads[i] = std::thread(
             [this, &dominant_colors, &masks](int camera_idx,
-                                             const cv::Mat &image) {
+                                             const cv::Mat &image)
+            {
                 color_segmenters_[camera_idx].detect_colors(image);
 
                 dominant_colors[camera_idx] =
@@ -105,7 +110,7 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
             for (auto [color, corner_indices] :
                  pose_detector_.get_visible_faces(i))
             {
-                auto rgb = cube_model_.get_rgb(color);
+                auto rgb = cube_model_->get_rgb(color);
 
                 std::vector<cv::Point> corners = {imgpoints[corner_indices[0]],
                                                   imgpoints[corner_indices[1]],
@@ -118,7 +123,7 @@ cv::Mat CubeDetector::create_debug_image(bool fill_faces) const
         else
         {
             // draw all the cube edges in the image
-            for (auto &it : cube_model_.edges)
+            for (auto &it : cube_model_->edges)
             {
                 cv::line(image,
                          imgpoints[it.second.c1],
@@ -217,13 +222,16 @@ ObjectPose CubeDetector::convert_pose(const Pose &pose)
     return object_pose;
 }
 
-CubeDetector create_trifingerpro_cube_detector()
+CubeDetector create_trifingerpro_cube_detector(
+    BaseCuboidModel::ConstPtr cube_model)
 {
-    return CubeDetector({
-        "/etc/trifingerpro/camera60_cropped_and_downsampled.yml",
-        "/etc/trifingerpro/camera180_cropped_and_downsampled.yml",
-        "/etc/trifingerpro/camera300_cropped_and_downsampled.yml",
-    });
+    return CubeDetector(
+        cube_model,
+        {
+            "/etc/trifingerpro/camera60_cropped_and_downsampled.yml",
+            "/etc/trifingerpro/camera180_cropped_and_downsampled.yml",
+            "/etc/trifingerpro/camera300_cropped_and_downsampled.yml",
+        });
 }
 
 }  // namespace trifinger_object_tracking

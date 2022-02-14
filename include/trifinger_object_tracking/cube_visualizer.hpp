@@ -5,9 +5,9 @@
  */
 #pragma once
 
-#include <opencv2/opencv.hpp>
-
 #include <trifinger_cameras/parse_yml.h>
+
+#include <opencv2/opencv.hpp>
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/object_pose.hpp>
 #include <trifinger_object_tracking/pose_detector.hpp>
@@ -20,15 +20,16 @@ class CubeVisualizer
 public:
     static constexpr unsigned int N_CAMERAS = 3;
 
-    CubeVisualizer(const std::array<trifinger_cameras::CameraParameters,
+    CubeVisualizer(BaseCuboidModel::ConstPtr cube_model,
+                   const std::array<trifinger_cameras::CameraParameters,
                                     N_CAMERAS> &camera_params)
-        : pose_detector_(cube_model_, camera_params)
+        : cube_model_(cube_model), pose_detector_(cube_model, camera_params)
     {
     }
 
-    CubeVisualizer(const std::array<std::string, N_CAMERAS> &camera_calib_files)
-        : pose_detector_(cube_model_,
-                         load_camera_parameters(camera_calib_files))
+    CubeVisualizer(BaseCuboidModel::ConstPtr cube_model,
+                   const std::array<std::string, N_CAMERAS> &camera_calib_files)
+        : CubeVisualizer(cube_model, load_camera_parameters(camera_calib_files))
     {
     }
 
@@ -38,7 +39,7 @@ public:
         bool fill_faces = false);
 
 private:
-    CubeModel cube_model_;
+    BaseCuboidModel::ConstPtr cube_model_;
     PoseDetector pose_detector_;
 };
 }  // namespace trifinger_object_tracking

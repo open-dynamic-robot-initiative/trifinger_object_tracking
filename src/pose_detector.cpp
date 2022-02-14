@@ -16,7 +16,7 @@ cv::Mat getPoseMatrix(const cv::Vec3f &rvec, const cv::Vec3f &tvec)
     return cv::Mat(cv::Affine3f(rvec, tvec).matrix);
 }
 
-PoseDetector::PoseDetector(const CubeModel &cube_model,
+PoseDetector::PoseDetector(BaseCuboidModel::ConstPtr cube_model,
                            const std::array<trifinger_cameras::CameraParameters,
                                             N_CAMERAS> &camera_parameters)
     : cube_model_(cube_model),
@@ -45,12 +45,12 @@ PoseDetector::PoseDetector(const CubeModel &cube_model,
     // around the const array but need to copy the data
     corners_in_cube_frame_ = cv::Mat(8, 4, CV_32F);
     std::memcpy(corners_in_cube_frame_.data,
-                cube_model_.cube_corners,
+                cube_model_->get_corners().data(),
                 corners_in_cube_frame_.total() * sizeof(float));
 
     reference_vector_normals_ = cv::Mat(6, 3, CV_32F);
     std::memcpy(reference_vector_normals_.data,
-                cube_model_.face_normal_vectors,
+                cube_model_->face_normal_vectors,
                 reference_vector_normals_.total() * sizeof(float));
     reference_vector_normals_ = reference_vector_normals_.t();
 
@@ -229,7 +229,7 @@ float PoseDetector::cost_function(
             float distance_cost = 0;
             {
                 auto corner_indices =
-                    cube_model_.get_face_corner_indices(color);
+                    cube_model_->get_face_corner_indices(color);
 
                 std::vector<cv::Point> corners = {imgpoints[corner_indices[0]],
                                                   imgpoints[corner_indices[1]],
@@ -248,13 +248,15 @@ float PoseDetector::cost_function(
                     }
                     else
                     {
-#if OBJECT_VERSION == CUBOID_2x2x8
-                        // we would like the borders to be close to some
-                        // pixels. under the assumption that some parts of the
-                        // object boundaries are visible this should help
-                        // resolve ambiguities
-                        distance_cost += 0.05 * pow(dist, 0.5);
-#endif
+                        // FIXME check type, not name
+                        if (cube_model_->get_name() == "cuboid_2x2x8_v2")
+                        {
+                            // we would like the borders to be close to some
+                            // pixels. under the assumption that some parts of
+                            // the object boundaries are visible this should
+                            // help resolve ambiguities
+                            distance_cost += 0.05 * pow(dist, 0.5);
+                        }
                     }
                 }
                 distance_cost *= distance_cost_scaling;
@@ -280,11 +282,13 @@ float PoseDetector::cost_function(
         }
     }
 
-#if OBJECT_VERSION == CUBOID_2x2x8
-    // simple height cost (assume that it is more likely that the object is
-    // further down
-    cost += position[2] * height_cost_scaling;
-#endif
+    // FIXME check type, not name
+    if (cube_model_->get_name() == "cuboid_2x2x8_v2")
+    {
+        // simple height cost (assume that it is more likely that the object is
+        // further down
+        cost += position[2] * height_cost_scaling;
+    }
 
     return cost;
 }
@@ -357,7 +361,7 @@ float PoseDetector::compute_confidence(
             if (face_is_visible)
             {
                 auto corner_indices =
-                    cube_model_.get_face_corner_indices(color);
+                    cube_model_->get_face_corner_indices(color);
 
                 std::vector<cv::Point> corners = {imgpoints[corner_indices[0]],
                                                   imgpoints[corner_indices[1]],
@@ -528,7 +532,8 @@ void PoseDetector::optimize_using_optim(
          &invisibility_cost_scaling,
          &height_cost_scaling](
             const arma::vec &pose, arma::vec * /*grad_out*/, void *
-            /*opt_data*/) -> double {
+            /*opt_data*/) -> double
+        {
             cv::Vec3f position;
             cv::Vec3f orientation;
             pose2position_and_orientation(pose, &position, &orientation);
@@ -655,15 +660,10 @@ void PoseDetector::compute_color_visibility(
     float *face_normal_dot_camera_direction) const
 {
     // get the normal vector of that face
-    // <<<<<<< HEAD
-    int normal_idx = cube_model_.map_color_to_face[color];
-    // cv::Vec3f face_normal = face_normal_vectors.col(normal_idx);
-    // =======
-    // int normal_idx = cube_model_.map_color_to_normal_index[color];
+    int normal_idx = cube_model_->map_color_to_face(color);
     cv::Vec3f face_normal = face_normals.col(normal_idx);
-    // >>>>>>> manuel/optimizing_cem
 
-    auto corner_indices = cube_model_.get_face_corner_indices(color);
+    auto corner_indices = cube_model_->get_face_corner_indices(color);
 
     // get an arbitrary corner of that face
     unsigned int corner_idx = corner_indices[0];
@@ -685,11 +685,11 @@ PoseDetector::get_visible_faces(unsigned int camera_idx,
     std::vector<std::pair<FaceColor, std::array<unsigned int, 4>>> result;
 
     // check for each color if the face is visible
-    for (FaceColor color : cube_model_.get_colors())
+    for (FaceColor color : cube_model_->get_colors())
     {
         if (is_face_visible(color, camera_idx, cube_pose_world))
         {
-            auto corner_indices = cube_model_.get_face_corner_indices(color);
+            auto corner_indices = cube_model_->get_face_corner_indices(color);
             result.push_back(std::make_pair(color, corner_indices));
         }
     }

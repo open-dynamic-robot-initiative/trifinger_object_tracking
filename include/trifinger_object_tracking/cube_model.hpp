@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <map>
+#include <memory>
 
 #include "color_model.hpp"
 
@@ -42,9 +43,12 @@ enum FaceColor
 
 std::ostream& operator<<(std::ostream& os, const FaceColor& color);
 
-class CubeModel
+class BaseCuboidModel
 {
 public:
+    typedef std::shared_ptr<BaseCuboidModel> Ptr;
+    typedef std::shared_ptr<const BaseCuboidModel> ConstPtr;
+
     struct Edge
     {
         // Indices of the cube corners that belong to that edge
@@ -54,72 +58,13 @@ public:
 
     static constexpr unsigned int N_FACES = 6;
 
-    /*
-     * Define geometry (via corner positions) depending on the object version
-     */
-#if OBJECT_VERSION == OBJECT_MODEL_CUBE_V1 || OBJECT_VERSION == OBJECT_MODEL_CUBE_V2 || \
-    OBJECT_VERSION == OBJECT_MODEL_CUBE_V3
-    static constexpr float WIDTH = 0.0652;
-    static constexpr float HALF_WIDTH = WIDTH / 2.0;
+    typedef std::array<std::array<float, 4>, 8> corners_t;  // FIXME name
+    typedef std::array<CubeFace, N_FACES> CubeFaceArray;
 
-    //! Cube corner positions in cube frame
-    static constexpr float cube_corners[8][4] = {
-        {+HALF_WIDTH, -HALF_WIDTH, +HALF_WIDTH, 1},
-        {+HALF_WIDTH, +HALF_WIDTH, +HALF_WIDTH, 1},
-        {-HALF_WIDTH, +HALF_WIDTH, +HALF_WIDTH, 1},
-        {-HALF_WIDTH, -HALF_WIDTH, +HALF_WIDTH, 1},
-        {+HALF_WIDTH, -HALF_WIDTH, -HALF_WIDTH, 1},
-        {+HALF_WIDTH, +HALF_WIDTH, -HALF_WIDTH, 1},
-        {-HALF_WIDTH, +HALF_WIDTH, -HALF_WIDTH, 1},
-        {-HALF_WIDTH, -HALF_WIDTH, -HALF_WIDTH, 1}};
-
-#elif OBJECT_VERSION == OBJECT_MODEL_CUBOID_2x2x8
-
-    static constexpr float LENGTH = 0.08;
-    static constexpr float LONG_HALF_WIDTH = LENGTH / 2.0;
-    static constexpr float WIDTH = 0.02;
-    static constexpr float SHORT_HALF_WIDTH = WIDTH / 2.0;
-
-    //! Cube corner positions in cube frame
-    static constexpr float cube_corners[8][4] = {
-        {+SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
-        {+SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
-        {-SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
-        {-SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
-        {+SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1},
-        {+SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1},
-        {-SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1},
-        {-SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1}};
-
-#endif
-
-    /*
-     * Define colour-to-face mapping depending on the object version
-     */
-#if OBJECT_VERSION == OBJECT_MODEL_CUBE_V1
-    // Colour mapping of cube v1.  Red, green, blue faces are pointing in x, y,
-    // z directions.
-    static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {
-        CubeFace::FACE_1,  // RED
-        CubeFace::FACE_2,  // GREEN
-        CubeFace::FACE_0,  // BLUE
-        CubeFace::FACE_5,  // CYAN
-        CubeFace::FACE_4,  // MAGENTA
-        CubeFace::FACE_3   // YELLOW
-    };
-#elif OBJECT_VERSION == OBJECT_MODEL_CUBE_V2 || OBJECT_VERSION == OBJECT_MODEL_CUBE_V3 || \
-    OBJECT_VERSION == OBJECT_MODEL_CUBOID_2x2x8
-    // Colour mapping of cube v2.  Red, green, blue faces are pointing in x, y,
-    // z directions.
-    static constexpr std::array<CubeFace, N_FACES> map_color_to_face = {
-        CubeFace::FACE_1,  // RED
-        CubeFace::FACE_2,  // GREEN
-        CubeFace::FACE_0,  // BLUE
-        CubeFace::FACE_5,  // CYAN
-        CubeFace::FACE_3,  // MAGENTA
-        CubeFace::FACE_4   // YELLOW
-    };
-#endif
+    virtual std::string get_name() const = 0;
+    virtual corners_t get_corners() const = 0;
+    virtual CubeFace map_color_to_face(FaceColor color) const = 0;
+    virtual ColorModel get_color_model() const = 0;
 
     // TODO make this nice and const
     std::map<std::pair<CubeFace, CubeFace>, Edge> edges;
@@ -135,15 +80,7 @@ public:
     static constexpr float face_normal_vectors[6][3] = {
         {0, 0, 1}, {1, 0, 0}, {0, 1, 0}, {-1, 0, 0}, {0, -1, 0}, {0, 0, -1}};
 
-#if OBJECT_VERSION == OBJECT_MODEL_CUBE_V1
-    static constexpr ColorModel color_model = ColorModel::CUBE_V1;
-#elif OBJECT_VERSION == OBJECT_MODEL_CUBE_V2
-    static constexpr ColorModel color_model = ColorModel::CUBE_V2;
-#elif OBJECT_VERSION == OBJECT_MODEL_CUBOID_2x2x8
-    static constexpr ColorModel color_model = ColorModel::CUBOID_V2;
-#endif
-
-    CubeModel()
+    BaseCuboidModel()
     {
         initialise_edges();
     }
@@ -228,9 +165,9 @@ public:
     }
 
     //! Maps each color to the indices of the corresponding cube corners.
-    static std::array<unsigned int, 4> get_face_corner_indices(FaceColor color)
+    std::array<unsigned int, 4> get_face_corner_indices(FaceColor color) const
     {
-        const CubeFace face = map_color_to_face[color];
+        const CubeFace face = map_color_to_face(color);
         return face_corner_indices[face];
     }
 
@@ -259,5 +196,153 @@ private:
         }
     }
 };
+
+class BaseCubeModel : public virtual BaseCuboidModel
+{
+public:
+    static constexpr float WIDTH = 0.0652;
+    static constexpr float HALF_WIDTH = WIDTH / 2.0;
+
+    //! Cube corner positions in cube frame
+    static constexpr corners_t cube_corners{
+        {{+HALF_WIDTH, -HALF_WIDTH, +HALF_WIDTH, 1},
+         {+HALF_WIDTH, +HALF_WIDTH, +HALF_WIDTH, 1},
+         {-HALF_WIDTH, +HALF_WIDTH, +HALF_WIDTH, 1},
+         {-HALF_WIDTH, -HALF_WIDTH, +HALF_WIDTH, 1},
+         {+HALF_WIDTH, -HALF_WIDTH, -HALF_WIDTH, 1},
+         {+HALF_WIDTH, +HALF_WIDTH, -HALF_WIDTH, 1},
+         {-HALF_WIDTH, +HALF_WIDTH, -HALF_WIDTH, 1},
+         {-HALF_WIDTH, -HALF_WIDTH, -HALF_WIDTH, 1}}};
+
+    corners_t get_corners() const override
+    {
+        return cube_corners;
+    }
+};
+
+class CubeV1Model : public BaseCubeModel
+{
+public:
+    std::string get_name() const override
+    {
+        return "cube_v1";
+    }
+
+    CubeFace map_color_to_face(FaceColor color) const override
+    {
+        // Colour mapping of cube v1.  Red, green, blue faces are pointing in x,
+        // y, z directions.
+        static constexpr std::array<CubeFace, N_FACES> color_to_face = {
+            CubeFace::FACE_1,  // RED
+            CubeFace::FACE_2,  // GREEN
+            CubeFace::FACE_0,  // BLUE
+            CubeFace::FACE_5,  // CYAN
+            CubeFace::FACE_4,  // MAGENTA
+            CubeFace::FACE_3   // YELLOW
+        };
+
+        return color_to_face[color];
+    }
+
+    ColorModel get_color_model() const override
+    {
+        return ColorModel::CUBE_V1;
+    }
+};
+
+// color order is the same for V2 and V3 objects, so use a common base class for
+// this
+class CubeV2ColorOrderBase : public virtual BaseCuboidModel
+{
+public:
+    CubeFace map_color_to_face(FaceColor color) const override
+    {
+        // Colour mapping of cube v2.  Red, green, blue faces are pointing in x,
+        // y, z directions.
+        static constexpr std::array<CubeFace, N_FACES> color_to_face = {
+            CubeFace::FACE_1,  // RED
+            CubeFace::FACE_2,  // GREEN
+            CubeFace::FACE_0,  // BLUE
+            CubeFace::FACE_5,  // CYAN
+            CubeFace::FACE_3,  // MAGENTA
+            CubeFace::FACE_4   // YELLOW
+        };
+
+        return color_to_face[color];
+    }
+};
+
+class CubeV2Model : public BaseCubeModel, CubeV2ColorOrderBase
+{
+public:
+    std::string get_name() const override
+    {
+        return "cube_v2";
+    }
+
+    ColorModel get_color_model() const override
+    {
+        return ColorModel::CUBE_V2;
+    }
+};
+
+class CubeV3Model : public BaseCubeModel, CubeV2ColorOrderBase
+{
+public:
+    std::string get_name() const override
+    {
+        return "cube_v3";
+    }
+
+    ColorModel get_color_model() const override
+    {
+        throw std::runtime_error("Not implemented");
+    }
+};
+
+class Cuboid2x2x8V2Model : public virtual BaseCuboidModel, CubeV2ColorOrderBase
+{
+public:
+    static constexpr float LENGTH = 0.08;
+    static constexpr float LONG_HALF_WIDTH = LENGTH / 2.0;
+    static constexpr float WIDTH = 0.02;
+    static constexpr float SHORT_HALF_WIDTH = WIDTH / 2.0;
+
+    //! Cube corner positions in cube frame
+    static constexpr corners_t cube_corners = {
+        {{+SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
+         {+SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
+         {-SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
+         {-SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
+         {+SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1},
+         {+SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1},
+         {-SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1},
+         {-SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, -SHORT_HALF_WIDTH, 1}}};
+
+    std::string get_name() const override
+    {
+        return "cuboid_2x2x8_v2";
+    }
+
+    corners_t get_corners() const override
+    {
+        return cube_corners;
+    }
+
+    ColorModel get_color_model() const override
+    {
+        return ColorModel::CUBOID_V2;
+    }
+};
+
+/**
+ * @brief Get object model instance by name
+ *
+ * @param name Name of the model type.  One of CubeV1, CubeV2, CubeV3,
+ *      Cuboid2x2x8V2
+ *
+ * @return Instance of the specified model.
+ */
+BaseCuboidModel::ConstPtr get_model_by_name(const std::string& name);
 
 }  // namespace trifinger_object_tracking

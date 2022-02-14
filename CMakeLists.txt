@@ -15,16 +15,6 @@ string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors -Werror=return-type
 # always enable optimization, otherwise object tracking is too slow
 string(APPEND CMAKE_CXX_FLAGS " -O3")
 
-
-# Specify for which cube version to build the object tracker
-#
-# Currently supported object versions:
-#  - 1: CUBE_V1
-#  - 2: CUBE_V2
-#  - 3: CUBE_V3
-#  - 4: CUBOID_2x2x8
-set(OBJECT_VERSION 2)
-
 find_package(ament_cmake REQUIRED)
 find_package(mpi_cmake_modules REQUIRED)
 find_package(pybind11 REQUIRED)
@@ -47,18 +37,6 @@ endif()
 
 
 ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR python/${PROJECT_NAME})
-
-
-add_definitions(-DOBJECT_VERSION=${OBJECT_VERSION})
-if (${OBJECT_VERSION} EQUAL 1)
-    set(cube_model_dir src/cube_v1/)
-elseif(${OBJECT_VERSION} EQUAL 2)
-    set(cube_model_dir src/cube_v2/)
-elseif(${OBJECT_VERSION} EQUAL 4)
-    set(cube_model_dir src/cuboid_2x2x8/)
-else()
-    message(FATAL_ERROR "Invalid OBJECT_VERSION '${OBJECT_VERSION}'")
-endif()
 
 
 add_library(cv_sub_images src/cv_sub_images.cpp)
@@ -340,6 +318,13 @@ if (BUILD_TESTING)
     ament_add_gtest(test_pose_detector test/test_pose_detector.cpp)
     target_link_libraries(test_pose_detector cube_detector)
     ament_target_dependencies(test_pose_detector
+        ament_index_cpp
+    )
+    install(TARGETS test_pose_detector DESTINATION lib/${PROJECT_NAME})
+
+    ament_add_gtest(test_cube_detector test/test_cube_detector.cpp)
+    target_link_libraries(test_cube_detector cube_detector)
+    ament_target_dependencies(test_cube_detector
         ament_index_cpp
     )
     install(TARGETS test_pose_detector DESTINATION lib/${PROJECT_NAME})

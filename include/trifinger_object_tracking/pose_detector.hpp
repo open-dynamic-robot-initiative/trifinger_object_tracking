@@ -37,7 +37,7 @@ public:
                        PoseDetector::N_CAMERAS>
         MasksPixels;
 
-    PoseDetector(const CubeModel &cube_model,
+    PoseDetector(BaseCuboidModel::ConstPtr cube_model,
                  const std::array<trifinger_cameras::CameraParameters,
                                   N_CAMERAS> &camera_parameters);
 
@@ -96,7 +96,7 @@ public:
     void set_pose(const Pose &pose);
 
 private:
-    CubeModel cube_model_;
+    BaseCuboidModel::ConstPtr cube_model_;
 
     std::array<cv::Mat, N_CAMERAS> camera_matrices_;
     std::array<cv::Mat, N_CAMERAS> distortion_coeffs_;
