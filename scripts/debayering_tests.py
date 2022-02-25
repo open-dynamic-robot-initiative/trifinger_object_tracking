@@ -85,7 +85,7 @@ def rbg_to_bayer_bg(image: np.ndarray) -> np.ndarray:
 
 def toy_example():
     size = 8
-    bayer = np.arange(size ** 2, dtype=np.uint8).reshape([size, size, 1])
+    bayer = np.arange(size**2, dtype=np.uint8).reshape([size, size, 1])
     bayer = np.random.randint(255, size=[size, size], dtype=np.uint8)
     image = cv2.cvtColor(bayer, cv2.COLOR_BAYER_BG2BGR)
     bayer = bayer.squeeze()
