@@ -10,7 +10,7 @@ jobs:
     - uses: actions/checkout@v2
     - run: git fetch origin ${GITHUB_BASE_REF}
     - name: Check for FIXMEs
-      uses: luator/github_action_check_new_todos@v1.0.0
+      uses: luator/github_action_check_new_todos@v1
       with:
           label: FIXME
           base_ref: origin/${{ github.base_ref }}
@@ -22,7 +22,7 @@ jobs:
     - uses: actions/checkout@v2
     - run: git fetch origin ${GITHUB_BASE_REF}
     - name: Check for TODOs
-      uses: luator/github_action_check_new_todos@v1.0.0
+      uses: luator/github_action_check_new_todos@v1
       with:
           label: TODO
           base_ref: origin/${{ github.base_ref }}
