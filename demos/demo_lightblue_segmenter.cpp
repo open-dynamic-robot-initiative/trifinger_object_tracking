@@ -1,7 +1,7 @@
-#include <iostream>
-#include <string>
-#include <opencv2/opencv.hpp>
 #include <trifinger_object_tracking/xgboost_classifier_single_color_rgb.h>
+#include <iostream>
+#include <opencv2/opencv.hpp>
+#include <string>
 
 int main(int argc, char *argv[])
 {

@@ -519,31 +519,33 @@ void PoseDetector::optimize_using_optim(
     // std::cout << "settings.de_settings.initial_ub "
     //           << settings.de_settings.initial_ub.t() << std::endl;
 
-    optim::de(pose,
-              [this,
-               &dominant_colors,
-               &sampled_masks_pixels,
-               &distance_cost_scaling,
-               &invisibility_cost_scaling,
-               &height_cost_scaling](
-                  const arma::vec &pose, arma::vec * /*grad_out*/, void *
-                  /*opt_data*/) -> double {
-                  cv::Vec3f position;
-                  cv::Vec3f orientation;
-                  pose2position_and_orientation(pose, &position, &orientation);
+    optim::de(
+        pose,
+        [this,
+         &dominant_colors,
+         &sampled_masks_pixels,
+         &distance_cost_scaling,
+         &invisibility_cost_scaling,
+         &height_cost_scaling](
+            const arma::vec &pose, arma::vec * /*grad_out*/, void *
+            /*opt_data*/) -> double
+        {
+            cv::Vec3f position;
+            cv::Vec3f orientation;
+            pose2position_and_orientation(pose, &position, &orientation);
 
-                  float cost = this->cost_function(position,
-                                                   orientation,
-                                                   dominant_colors,
-                                                   sampled_masks_pixels,
-                                                   distance_cost_scaling,
-                                                   invisibility_cost_scaling,
-                                                   height_cost_scaling);
+            float cost = this->cost_function(position,
+                                             orientation,
+                                             dominant_colors,
+                                             sampled_masks_pixels,
+                                             distance_cost_scaling,
+                                             invisibility_cost_scaling,
+                                             height_cost_scaling);
 
-                  return cost;
-              },
-              nullptr,
-              settings);
+            return cost;
+        },
+        nullptr,
+        settings);
 
     pose2position_and_orientation(pose, &position_.mean, &orientation_.mean);
 
