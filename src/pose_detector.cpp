@@ -528,8 +528,7 @@ void PoseDetector::optimize_using_optim(
          &invisibility_cost_scaling,
          &height_cost_scaling](
             const arma::vec &pose, arma::vec * /*grad_out*/, void *
-            /*opt_data*/) -> double
-        {
+            /*opt_data*/) -> double {
             cv::Vec3f position;
             cv::Vec3f orientation;
             pose2position_and_orientation(pose, &position, &orientation);
