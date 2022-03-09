@@ -88,6 +88,9 @@ PyBulletTriCameraObjectTrackerDriver::get_observation()
     // there is no noise in the simulation
     observation.object_pose.confidence = 1.0;
 
+    // no noise, so no actual filtering needed
+    observation.filtered_object_pose = observation.object_pose;
+
     return observation;
 }
 
