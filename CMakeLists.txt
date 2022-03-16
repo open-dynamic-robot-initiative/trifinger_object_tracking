@@ -217,6 +217,7 @@ target_include_directories(single_observation PUBLIC
 )
 target_link_libraries(single_observation
     cube_detector
+    program_options
 )
 
 
@@ -229,6 +230,7 @@ target_include_directories(run_on_logfile PRIVATE
 target_link_libraries(run_on_logfile
     robot_interfaces::robot_interfaces
     cube_detector
+    program_options
 )
 
 
