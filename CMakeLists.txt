@@ -29,6 +29,7 @@ find_package(LAPACK REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Armadillo REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
 
 
 if (${HAS_PYLON_DRIVERS})
@@ -171,6 +172,18 @@ target_include_directories(lightblue_segmenter PUBLIC
 )
 target_link_libraries(lightblue_segmenter
     ${OpenCV_LIBS}
+)
+
+
+add_library(program_options
+    src/program_options.cpp
+)
+target_include_directories(program_options PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(program_options
+    Boost::program_options
 )
 
 
