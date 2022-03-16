@@ -54,6 +54,7 @@ TEST_F(TestCubeDetector, find_pose_cube_v1)
     load_test_data(cube_model->get_name());
 
     CubeDetector cube_detector(cube_model, camera_parameters_);
+    // FIXME add tests for the multi-thread version
     ObjectPose pose = cube_detector.detect_cube_single_thread(images_);
 
     // FIXME the detected position is actually a bit off here.  The cube is

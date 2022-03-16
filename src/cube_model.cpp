@@ -34,6 +34,7 @@ std::ostream& operator<<(std::ostream& os, const FaceColor& color)
 
 BaseCuboidModel::ConstPtr get_model_by_name(const std::string& name)
 {
+    // FIXME use same names as returned by model.get_name() here!
     if (name == "CubeV1")
     {
         return std::make_shared<const trifinger_object_tracking::CubeV1Model>();
