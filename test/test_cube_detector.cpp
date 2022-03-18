@@ -54,8 +54,35 @@ TEST_F(TestCubeDetector, find_pose_cube_v1)
     load_test_data(cube_model->get_name());
 
     CubeDetector cube_detector(cube_model, camera_parameters_);
-    // FIXME add tests for the multi-thread version
     ObjectPose pose = cube_detector.detect_cube_single_thread(images_);
+
+    // FIXME the detected position is actually a bit off here.  The cube is
+    // on the ground, so the height would need to be 0.0325.
+    cv::Vec3f actual_position(-0.014, -0.024, 0.028);
+    cv::Vec4f actual_orientation(
+        0.58214203, 0.36977536, -0.61211132, 0.38690641);
+    //= cv::Vec3f(1.48171, 0.941179, -1.55799);
+
+    EXPECT_NEAR(pose.position[0], actual_position[0], 0.01);
+    EXPECT_NEAR(pose.position[1], actual_position[1], 0.01);
+    EXPECT_NEAR(pose.position[2], actual_position[2], 0.01);
+
+    // FIXME What is a good way to compare orientation vectors?
+    // EXPECT_NEAR(pose.orientation[0], actual_orientation[0], 0.01);
+    // EXPECT_NEAR(pose.orientation[1], actual_orientation[1], 0.01);
+    // EXPECT_NEAR(pose.orientation[2], actual_orientation[2], 0.01);
+    // EXPECT_NEAR(pose.orientation[3], actual_orientation[2], 0.01);
+
+    EXPECT_GT(pose.confidence, 0.8);
+}
+
+TEST_F(TestCubeDetector, find_pose_cube_v1_multithread)
+{
+    auto cube_model = std::make_shared<const CubeV1Model>();
+    load_test_data(cube_model->get_name());
+
+    CubeDetector cube_detector(cube_model, camera_parameters_);
+    ObjectPose pose = cube_detector.detect_cube(images_);
 
     // FIXME the detected position is actually a bit off here.  The cube is
     // on the ground, so the height would need to be 0.0325.

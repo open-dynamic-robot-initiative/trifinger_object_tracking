@@ -36,8 +36,32 @@ def test_find_pose_cube_v1():
         model, test_data["camera_parameter_files"]
     )
 
-    # FIXME add tests for multi-thread version
     pose = cube_detector.detect_cube_single_thread(test_data["images"])
+
+    # TODO the detected position is actually a bit off here.  The cube is
+    # on the ground, so the height would need to be 0.0325.
+    expected_position = np.array([-0.014, -0.024, 0.028])
+    expected_orientation = Rotation.from_quat(
+        [0.58214203, 0.36977536, -0.61211132, 0.38690641]
+    )
+
+    np.testing.assert_array_almost_equal(pose.position, expected_position, 2)
+
+    actual_orientation = Rotation.from_quat(pose.orientation)
+    assert rotation_error(actual_orientation, expected_orientation) < 0.1
+
+    assert pose.confidence > 0.8
+
+
+def test_find_pose_cube_v1_multithread():
+    model = object_tracker.CubeV1Model()
+    test_data = load_test_data(model.get_name())
+
+    cube_detector = object_tracker.CubeDetector(
+        model, test_data["camera_parameter_files"]
+    )
+
+    pose = cube_detector.detect_cube(test_data["images"])
 
     # TODO the detected position is actually a bit off here.  The cube is
     # on the ground, so the height would need to be 0.0325.
