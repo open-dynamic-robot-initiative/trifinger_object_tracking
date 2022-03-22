@@ -13,13 +13,15 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
-#include <real_time_tools/timer.hpp>
 #include <robot_interfaces/sensors/sensor_log_reader.hpp>
+#include <real_time_tools/timer.hpp>
+
 
 // TODO: not sure why but if "sensor_logger.hpp" is not included, the log reader
 // will have a cereal-related build error.
 #include <robot_interfaces/sensors/sensor_logger.hpp>
 #include <trifinger_object_tracking/cube_detector.hpp>
+#include <trifinger_object_tracking/program_options.hpp>
 #include <trifinger_object_tracking/tricamera_object_observation.hpp>
 #include <trifinger_object_tracking/utils.hpp>
 
@@ -42,20 +44,66 @@ bool open_video_writer(cv::VideoWriter &writer,
     return true;
 }
 
+class Args : public trifinger_object_tracking::ProgramOptions
+{
+public:
+    std::string data_dir, cube_model_name;
+    bool multithread;
+
+    std::string help() const override
+    {
+        return R"HELP(Measure object detection performance using a logfile.
+ 
+Expects as argument <data-dir> the path to the directory containing the
+following files:
+
+- camera_data.dat: Camera log file (TriCameraObjectObservation)
+- camera60.yml: Calibration parameters of camera60
+- camera180.yml: Calibration parameters of camera180
+- camera300.yml: Calibration parameters of camera300
+
+Usage:  run_on_logfile [options] <data-dir>
+
+)HELP";
+    }
+
+    void add_options(boost::program_options::options_description &options,
+                     boost::program_options::positional_options_description
+                         &positional) override
+    {
+        namespace po = boost::program_options;
+        // clang-format off
+        options.add_options()
+            ("data-dir,d",
+             po::value<std::string>(&data_dir)->required(),
+             "Directory in which the logfiles are stored.")
+            ("object-model,o",
+             po::value<std::string>(&cube_model_name)->required(),
+             "Name of the object model (e.g. 'CubeV2').")
+            ("multithread",
+             "Use multi-threaded object detection.")
+            ;
+        // clang-format on
+
+        positional.add("data-dir", 1);
+    }
+
+    void postprocess(const boost::program_options::variables_map &args) override
+    {
+        multithread = args.count("multithread") > 0;
+    }
+};
+
 int main(int argc, char **argv)
 {
-    if (argc != 2 && argc != 3)
+    // read command line arguments
+    Args args;
+    if (!args.parse_args(argc, argv))
     {
-        std::cout << "Invalid number of arguments." << std::endl;
-        std::cout << "Usage: " << argv[0] << " data_directory [--multithread]"
-                  << std::endl;
         return 1;
     }
-    const std::string data_dir = argv[1];
-    const bool multithread =
-        argc > 2 ? std::string(argv[2]) == "--multithread" : false;
 
-    if (multithread)
+    if (args.multithread)
     {
         std::cout << "Use multi-threaded object detection." << std::endl;
     }
@@ -66,16 +114,19 @@ int main(int argc, char **argv)
 
     std::array<trifinger_cameras::CameraParameters, 3> camera_params =
         trifinger_object_tracking::load_camera_parameters({
-            data_dir + "/camera60.yml",
-            data_dir + "/camera180.yml",
-            data_dir + "/camera300.yml",
+            args.data_dir + "/camera60.yml",
+            args.data_dir + "/camera180.yml",
+            args.data_dir + "/camera300.yml",
         });
 
-    trifinger_object_tracking::CubeDetector cube_detector(camera_params);
+    auto cube_model =
+        trifinger_object_tracking::get_model_by_name(args.cube_model_name);
+    trifinger_object_tracking::CubeDetector cube_detector(cube_model,
+                                                          camera_params);
 
     robot_interfaces::SensorLogReader<
         trifinger_object_tracking::TriCameraObjectObservation>
-        log_reader(data_dir + "/camera_data.dat");
+        log_reader(args.data_dir + "/camera_data.dat");
 
     real_time_tools::Timer timer;
     for (const auto &observation : log_reader.data)
@@ -88,7 +139,7 @@ int main(int argc, char **argv)
                          cv::COLOR_BayerBG2BGR);
         }
 
-        if (multithread)
+        if (args.multithread)
         {
             timer.tic();
             cube_detector.detect_cube(images_bgr);

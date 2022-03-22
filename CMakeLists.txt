@@ -242,6 +242,7 @@ target_include_directories(benchmark_with_logfile PUBLIC
 target_link_libraries(benchmark_with_logfile
     robot_interfaces::robot_interfaces
     cube_detector
+    program_options
 )
 
 
