@@ -239,6 +239,17 @@ target_link_libraries(run_on_logfile
 )
 
 
+add_executable(benchmark_with_logfile src/benchmark_with_logfile.cpp)
+target_include_directories(benchmark_with_logfile PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(benchmark_with_logfile
+    robot_interfaces::robot_interfaces
+    cube_detector
+)
+
+
 add_executable(demo_lightblue_segmenter_cpp demos/demo_lightblue_segmenter.cpp)
 target_include_directories(demo_lightblue_segmenter_cpp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -268,6 +279,7 @@ install(
         pybullet_tricamera_object_tracker_driver
         single_observation
         run_on_logfile
+        benchmark_with_logfile
         demo_lightblue_segmenter_cpp
 
     EXPORT export_${PROJECT_NAME}
