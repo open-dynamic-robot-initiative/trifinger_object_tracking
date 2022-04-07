@@ -11,12 +11,6 @@
 
 #include "color_model.hpp"
 
-// Give names to cube versions fore more clarity in the code below
-#define OBJECT_MODEL_CUBE_V1 1
-#define OBJECT_MODEL_CUBE_V2 2
-#define OBJECT_MODEL_CUBE_V3 3
-#define OBJECT_MODEL_CUBOID_2x2x8 4
-
 namespace trifinger_object_tracking
 {
 enum CubeFace
@@ -43,32 +37,46 @@ enum FaceColor
 
 std::ostream& operator<<(std::ostream& os, const FaceColor& color);
 
+/**
+ * @brief Base class for all cuboid object models
+ */
 class BaseCuboidModel
 {
 public:
     typedef std::shared_ptr<BaseCuboidModel> Ptr;
     typedef std::shared_ptr<const BaseCuboidModel> ConstPtr;
 
+    //! @brief Represents a cuboid edge, defined by its two corner points.
     struct Edge
     {
-        // Indices of the cube corners that belong to that edge
+        //! @brief Index of the first cuboid corner that belong to the edge.
         unsigned int c1;
+        //! @brief Index of the second cuboid corner that belong to the edge.
         unsigned int c2;
     };
 
+    //! @brief Number of faces of the cuboid.
     static constexpr unsigned int N_FACES = 6;
 
     typedef std::array<std::array<float, 4>, 8> corners_t;  // FIXME name
     typedef std::array<CubeFace, N_FACES> CubeFaceArray;
 
+    //! @brief Get name of the model.
     virtual std::string get_name() const = 0;
+
+    //! @brief Get homogeneous coordinates (x, y, z, 1) of the cube corners.
     virtual corners_t get_corners() const = 0;
+
+    //! @brief Get the cuboid face that has the specified colour.
     virtual CubeFace map_color_to_face(FaceColor color) const = 0;
+
+    //! @brief Get the colour model that is used for this object.
     virtual ColorModel get_color_model() const = 0;
 
     // TODO make this nice and const
     std::map<std::pair<CubeFace, CubeFace>, Edge> edges;
 
+    //! For each cuboid face the indices of the corresponding corners.
     static constexpr std::array<std::array<unsigned int, 4>, N_FACES>
         face_corner_indices = {{{0, 1, 2, 3},
                                 {4, 5, 1, 0},
@@ -77,6 +85,7 @@ public:
                                 {7, 4, 0, 3},
                                 {7, 6, 5, 4}}};
 
+    //! Normal vectors of all cuboid faces.
     static constexpr float face_normal_vectors[6][3] = {
         {0, 0, 1}, {1, 0, 0}, {0, 1, 0}, {-1, 0, 0}, {0, -1, 0}, {0, 0, -1}};
 
@@ -85,6 +94,7 @@ public:
         initialise_edges();
     }
 
+    //! @brief Get face colours. The index in the list refers to the face index.
     static std::array<FaceColor, 6> get_colors()
     {
         return {FaceColor::RED,
@@ -95,6 +105,7 @@ public:
                 FaceColor::YELLOW};
     }
 
+    //! @brief Get name of the given colour.
     static std::string get_color_name(FaceColor color)
     {
         switch (color)
@@ -118,6 +129,14 @@ public:
         }
     }
 
+    /**
+     * @brief Get RGB value of the given colour.
+     *
+     * Note that the RGB values returned by this function are only meant for
+     * visualisation purposes and do not necessarily represent the actual shade
+     * of the colour on the given object (e.g. the value returned for red is
+     * always (255, 0, 0), independent of the object.
+     */
     static std::array<int, 3> get_rgb(FaceColor color)
     {
         switch (color)
@@ -141,6 +160,12 @@ public:
         }
     }
 
+    /**
+     * @brief Get HSV value of the given colour.
+     *
+     * Like @ref get_rgb() this is only for visualisation purposes and does not
+     * attempt to match the actual colour of the real object.
+     */
     static std::array<int, 3> get_hsv(FaceColor color)
     {
         switch (color)
@@ -197,6 +222,9 @@ private:
     }
 };
 
+/**
+ * @brief Base model for all 65mm cubes.
+ */
 class BaseCubeModel : public virtual BaseCuboidModel
 {
 public:
@@ -220,6 +248,15 @@ public:
     }
 };
 
+/**
+ * @brief Model for 65mm cube version 1.
+ *
+ * @image html images/cube_v1.jpg
+ *
+ * @verbatim embed:rst:leading-asterisk
+ * See :ref:`object_model` for more information on the object model.
+ * @endverbatim
+ */
 class CubeV1Model : public BaseCubeModel
 {
 public:
@@ -272,6 +309,15 @@ public:
     }
 };
 
+/**
+ * @brief Model for 65mm cube version 2.
+ *
+ * @image html images/cube_v2.jpg
+ *
+ * @verbatim embed:rst:leading-asterisk
+ * See :ref:`object_model` for more information on the object model.
+ * @endverbatim
+ */
 class CubeV2Model : public BaseCubeModel, CubeV2ColorOrderBase
 {
 public:
@@ -286,6 +332,15 @@ public:
     }
 };
 
+/**
+ * @brief Model for 65mm cube version 3.
+ *
+ * @image html images/cube_v3.jpg
+ *
+ * @verbatim embed:rst:leading-asterisk
+ * See :ref:`object_model` for more information on the object model.
+ * @endverbatim
+ */
 class CubeV3Model : public BaseCubeModel, CubeV2ColorOrderBase
 {
 public:
@@ -300,6 +355,15 @@ public:
     }
 };
 
+/**
+ * @brief Model for the 2x2x8 cm cuboid version 2.
+ *
+ * @image html images/cuboid_2x2x8.jpg
+ *
+ * @verbatim embed:rst:leading-asterisk
+ * See :ref:`object_model` for more information on the object model.
+ * @endverbatim
+ */
 class Cuboid2x2x8V2Model : public virtual BaseCuboidModel, CubeV2ColorOrderBase
 {
 public:
