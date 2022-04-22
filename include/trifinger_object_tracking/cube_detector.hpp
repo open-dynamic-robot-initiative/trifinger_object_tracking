@@ -23,6 +23,7 @@ public:
     static constexpr unsigned int N_CAMERAS = 3;
 
     /**
+     * @param cube_model The model that is used for detecting the cube.
      * @param camera_params Calibration parameters of the cameras.
      */
     CubeDetector(BaseCuboidModel::ConstPtr cube_model,
@@ -30,6 +31,7 @@ public:
                                   N_CAMERAS> &camera_params);
 
     /**
+     * @param cube_model The model that is used for detecting the cube.
      * @param camera_param_files Paths to the camera calibration files.
      */
     CubeDetector(BaseCuboidModel::ConstPtr cube_model,

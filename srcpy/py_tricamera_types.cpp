@@ -62,10 +62,12 @@ PYBIND11_MODULE(py_tricamera_types, m)
         .def(pybind11::init<const std::string&,
                             const std::string&,
                             const std::string&,
+                            BaseCuboidModel::ConstPtr,
                             bool>(),
              pybind11::arg("camera1"),
              pybind11::arg("camera2"),
              pybind11::arg("camera3"),
+             pybind11::arg("cube_model"),
              pybind11::arg("downsample_images") = true)
         .def("get_observation", &TriCameraObjectTrackerDriver::get_observation);
 #endif
@@ -81,7 +83,7 @@ PYBIND11_MODULE(py_tricamera_types, m)
              &PyBulletTriCameraObjectTrackerDriver::get_observation);
 
     // FIXME needs to be re-enabled!
-    //pybind11::class_<CubeVisualizer>(m, "CubeVisualizer")
+    // pybind11::class_<CubeVisualizer>(m, "CubeVisualizer")
     //    .def(pybind11::init<std::array<std::string, 3>>())
     //    .def("draw_cube", &CubeVisualizer::draw_cube);
 }

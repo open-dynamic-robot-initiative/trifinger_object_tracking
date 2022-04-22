@@ -21,12 +21,14 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     const std::string& device_id_1,
     const std::string& device_id_2,
     const std::string& device_id_3,
+    BaseCuboidModel::ConstPtr cube_model,
     bool downsample_images)
     : cameras_{trifinger_cameras::PylonDriver(device_id_1, downsample_images),
                trifinger_cameras::PylonDriver(device_id_2, downsample_images),
                trifinger_cameras::PylonDriver(device_id_3, downsample_images)},
       cube_detector_(
-          trifinger_object_tracking::create_trifingerpro_cube_detector()),
+          trifinger_object_tracking::create_trifingerpro_cube_detector(
+              cube_model)),
       last_update_time_(std::chrono::system_clock::now()),
       downsample_images_(downsample_images)
 {
