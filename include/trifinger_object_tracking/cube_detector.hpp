@@ -57,7 +57,7 @@ public:
     cv::Mat create_debug_image(bool fill_faces = false) const;
 
 private:
-    BaseCuboidModel::ConstPtr cube_model_;  // FIXME not initialised!!!
+    BaseCuboidModel::ConstPtr cube_model_;
     std::array<ColorSegmenter, N_CAMERAS> color_segmenters_;
     PoseDetector pose_detector_;
 
