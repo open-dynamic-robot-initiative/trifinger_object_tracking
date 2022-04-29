@@ -63,7 +63,7 @@ Usage:  single_observation [options] <data-dir>
              "Directory in which the images are stored.")
             ("object-model,o",
              po::value<std::string>(&cube_model_name)->required(),
-             "Name of the object model (e.g. 'CubeV2').")
+             "Name of the object model (e.g. 'cube_v2').")
             ("debug-out",
              po::value<std::string>(&debug_out_dir),
              "If set, write debug files to this directory.")

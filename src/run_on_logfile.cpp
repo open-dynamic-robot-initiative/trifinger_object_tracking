@@ -76,7 +76,7 @@ Usage:  run_on_logfile [options] <data-dir>
              "Directory in which the logfiles are stored.")
             ("object-model,o",
              po::value<std::string>(&cube_model_name)->required(),
-             "Name of the object model (e.g. 'CubeV2').")
+             "Name of the object model (e.g. 'cube_v2').")
             ("save-video",
              po::value<std::string>(&debug_video_file),
              "Save debug video to the specified path.")

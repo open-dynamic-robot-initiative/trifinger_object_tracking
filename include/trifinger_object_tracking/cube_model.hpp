@@ -402,11 +402,12 @@ public:
 /**
  * @brief Get object model instance by name
  *
- * @param name Name of the model type.  One of CubeV1, CubeV2, CubeV3,
- *      Cuboid2x2x8V2
+ * @param name Name of the model type.  One of cube_v1, cube_v2, cube_v3,
+ *      cuboid_2x2x8_v2 (same names as returned by @ref BaseCuboidModel::get_name()).
  *
  * @return Instance of the specified model.
  */
 BaseCuboidModel::ConstPtr get_model_by_name(const std::string& name);
+// TODO: unit test for get_model_by_name()
 
 }  // namespace trifinger_object_tracking
