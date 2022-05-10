@@ -1,5 +1,4 @@
 #include <math.h>
-#include <trifinger_object_tracking/xgboost_classifier.h>
 
 #include <algorithm>  // std::sort, std::stable_sort
 #include <chrono>
@@ -12,7 +11,7 @@
 
 namespace trifinger_object_tracking
 {
-ColorSegmenter::ColorSegmenter(const CubeModel &cube_model)
+ColorSegmenter::ColorSegmenter(BaseCuboidModel::ConstPtr cube_model)
     : cube_model_(cube_model)
 {
 }
@@ -46,7 +45,7 @@ void ColorSegmenter::xgboost_mask()
         cv::MORPH_ELLIPSE, cv::Size(2 * OPEN_RADIUS + 1, 2 * OPEN_RADIUS + 1));
 
     // initialize masks
-    for (FaceColor color : cube_model_.get_colors())
+    for (FaceColor color : cube_model_->get_colors())
     {
         masks_[color] =
             cv::Mat(image_bgr_.rows, image_bgr_.cols, CV_8UC1, cv::Scalar(0));
@@ -69,7 +68,7 @@ void ColorSegmenter::xgboost_mask()
             features[5] = static_cast<float>(hsv[2]);
 
             std::array<float, XGB_NUM_CLASSES> probabilities =
-                xgb_classify(features);
+                xgb_classify(cube_model_->get_color_model(), features);
 
             auto max_elem =
                 std::max_element(probabilities.begin(), probabilities.end());
@@ -85,7 +84,7 @@ void ColorSegmenter::xgboost_mask()
 
     std::array<unsigned int, FaceColor::N_COLORS> color_counts;
     // post-process masks
-    for (FaceColor color : cube_model_.get_colors())
+    for (FaceColor color : cube_model_->get_colors())
     {
         // "open" image to get rid of single-pixel noise
         cv::morphologyEx(
@@ -119,7 +118,7 @@ cv::Mat ColorSegmenter::get_segmented_image() const
 
     for (FaceColor color : dominant_colors_)
     {
-        auto rgb = cube_model_.get_rgb(color);
+        auto rgb = cube_model_->get_rgb(color);
         // image is BGR, so swap R and B
         cv::Scalar color_bgr(rgb[2], rgb[1], rgb[0]);
         segmentation.setTo(color_bgr, masks_[color]);

@@ -23,15 +23,19 @@ public:
     static constexpr unsigned int N_CAMERAS = 3;
 
     /**
+     * @param cube_model The model that is used for detecting the cube.
      * @param camera_params Calibration parameters of the cameras.
      */
-    CubeDetector(const std::array<trifinger_cameras::CameraParameters,
+    CubeDetector(BaseCuboidModel::ConstPtr cube_model,
+                 const std::array<trifinger_cameras::CameraParameters,
                                   N_CAMERAS> &camera_params);
 
     /**
+     * @param cube_model The model that is used for detecting the cube.
      * @param camera_param_files Paths to the camera calibration files.
      */
-    CubeDetector(const std::array<std::string, N_CAMERAS> &camera_param_files);
+    CubeDetector(BaseCuboidModel::ConstPtr cube_model,
+                 const std::array<std::string, N_CAMERAS> &camera_param_files);
 
     ObjectPose detect_cube_single_thread(
         const std::array<cv::Mat, N_CAMERAS> &images);
@@ -55,7 +59,7 @@ public:
     cv::Mat create_debug_image(bool fill_faces = false) const;
 
 private:
-    CubeModel cube_model_;
+    BaseCuboidModel::ConstPtr cube_model_;
     std::array<ColorSegmenter, N_CAMERAS> color_segmenters_;
     PoseDetector pose_detector_;
 
@@ -68,7 +72,10 @@ private:
  *
  * Loads the camera calibration of the robot on which it is executed and creates
  * a CubeDetector instance for it.
+ *
+ * @param cube_model The model that is used for detecting the cube.
  */
-CubeDetector create_trifingerpro_cube_detector();
+CubeDetector create_trifingerpro_cube_detector(
+    BaseCuboidModel::ConstPtr cube_model);
 
 }  // namespace trifinger_object_tracking

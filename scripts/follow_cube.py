@@ -77,6 +77,14 @@ def real():
     argparser.add_argument(
         "--object-type", choices=["cube", "aruco"], default="cube"
     )
+    argparser.add_argument(
+        "--cube-model",
+        type=str,
+        default="cube_v2",
+        help="""Name of the model used for cube detection (only used if
+            --object-type=cube.  Default: %(default)s.
+        """,
+    )
     argparser.add_argument("--no-downsample", action="store_true")
     argparser.add_argument("--multi-process", action="store_true")
     args = argparser.parse_args()
@@ -102,10 +110,16 @@ def real():
         camera_data = tricamera.MultiProcessData("tricamera", False)
     else:
         camera_data = tricamera.SingleProcessData()
-        camera_driver = tricamera.TriCameraObjectTrackerDriver(
-            *camera_names, downsample_images=(not args.no_downsample)
+
+        model = trifinger_object_tracking.py_object_tracker.get_model_by_name(
+            args.cube_model
         )
-        camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
+        camera_driver = tricamera.TriCameraObjectTrackerDriver(
+            *camera_names,
+            cube_model=model,
+            downsample_images=(not args.no_downsample)
+        )
+        camera_backend = tricamera.Backend(camera_driver, camera_data)
     camera_frontend = tricamera.Frontend(camera_data)
 
     if args.object_type == "aruco":
@@ -196,6 +210,9 @@ def real():
             print("Tip goal:", np.round(goal, 3))
             print("Tip position:", np.round(tip_pos[0], 3))
             print("IK error:", np.round(err, 3))
+
+    if not args.multi_process:
+        camera_backend.shutdown()
 
 
 if __name__ == "__main__":

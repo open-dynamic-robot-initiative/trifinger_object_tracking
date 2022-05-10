@@ -4,11 +4,10 @@
  * @copyright Copyright (c) 2020, Max Planck Gesellschaft.
  */
 #include <gtest/gtest.h>
-#include <ament_index_cpp/get_package_share_directory.hpp>
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <memory>
 #include <opencv2/opencv.hpp>
-
 #include <trifinger_object_tracking/color_segmenter.hpp>
 #include <trifinger_object_tracking/cube_model.hpp>
 
@@ -28,9 +27,7 @@ protected:
     cv::Mat masks_[N_IMG][N_COLORS];
     cv::Mat images_[N_IMG];
 
-    CubeModel cube_model_;
-
-    void SetUp() override
+    void load_test_data(const std::string &object_name)
     {
         color_names_[RED] = "red";
         color_names_[GREEN] = "green";
@@ -41,9 +38,8 @@ protected:
 
         std::string package_path = ament_index_cpp::get_package_share_directory(
             "trifinger_object_tracking");
-        std::string test_image_dir = package_path +
-                                     "/test/images/segmentation/object_v" +
-                                     std::to_string(OBJECT_VERSION) + "/";
+        std::string test_image_dir =
+            package_path + "/test/images/segmentation/" + object_name + "/";
 
         // load test image with ground truth masks
         for (int i = 0; i < N_IMG; i++)
@@ -93,41 +89,61 @@ protected:
             }
         }
     }
-};
 
-TEST_F(TestColorSegmenter, get_mask)
-{
-    ColorSegmenter color_segmenter(cube_model_);
-
-    //! Ratio of pixels in the image that are allowed to be wrongly classified
-    //! in order for the test to succeed.
-    constexpr float MAX_WRONG_PIXEL_RATIO = 0.005;
-
-    for (size_t i = 0; i < N_IMG; i++)
+    void test_get_mask(BaseCuboidModel::ConstPtr model)
     {
-        color_segmenter.detect_colors(images_[i]);
+        load_test_data(model->get_name());
 
-        // check segmentation masks
-        for (auto color : {FaceColor::RED,
-                           FaceColor::GREEN,
-                           FaceColor::BLUE,
-                           FaceColor::CYAN,
-                           FaceColor::MAGENTA,
-                           FaceColor::YELLOW})
+        ColorSegmenter color_segmenter(model);
+
+        //! Ratio of pixels in the image that are allowed to be wrongly
+        //! classified in order for the test to succeed.
+        constexpr float MAX_WRONG_PIXEL_RATIO = 0.01;
+
+        for (size_t i = 0; i < N_IMG; i++)
         {
-            cv::Mat segmentation_mask = color_segmenter.get_mask(color);
+            color_segmenter.detect_colors(images_[i]);
 
-            int num_misclassified_pixels =
-                cv::countNonZero(masks_[i][color] != segmentation_mask);
+            // check segmentation masks
+            for (auto color : {FaceColor::RED,
+                               FaceColor::GREEN,
+                               FaceColor::BLUE,
+                               FaceColor::CYAN,
+                               FaceColor::MAGENTA,
+                               FaceColor::YELLOW})
+            {
+                cv::Mat segmentation_mask = color_segmenter.get_mask(color);
 
-            float mis_ratio = static_cast<float>(num_misclassified_pixels) /
-                              static_cast<float>(images_[i].total());
+                int num_misclassified_pixels =
+                    cv::countNonZero(masks_[i][color] != segmentation_mask);
 
-            // then number of wrongly segmented pixels has to be less than
-            // MAX_WRONG_PIXEL_RATIO
-            EXPECT_LT(mis_ratio, MAX_WRONG_PIXEL_RATIO);
+                float mis_ratio = static_cast<float>(num_misclassified_pixels) /
+                                  static_cast<float>(images_[i].total());
+
+                // then number of wrongly segmented pixels has to be less than
+                // MAX_WRONG_PIXEL_RATIO
+                EXPECT_LT(mis_ratio, MAX_WRONG_PIXEL_RATIO);
+            }
         }
     }
+};
+
+TEST_F(TestColorSegmenter, get_mask_cube_v1)
+{
+    auto cube_model = std::make_shared<const CubeV1Model>();
+    test_get_mask(cube_model);
+}
+
+TEST_F(TestColorSegmenter, get_mask_cube_v2)
+{
+    auto cube_model = std::make_shared<const CubeV2Model>();
+    test_get_mask(cube_model);
+}
+
+TEST_F(TestColorSegmenter, get_mask_cuboid_2x2x8_v2)
+{
+    auto cube_model = std::make_shared<const Cuboid2x2x8V2Model>();
+    test_get_mask(cube_model);
 }
 
 int main(int argc, char **argv)

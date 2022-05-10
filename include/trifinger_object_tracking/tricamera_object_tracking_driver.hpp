@@ -32,12 +32,14 @@ public:
      * @param device_id_1 device user id of first camera
      * @param device_id_2 likewise, the 2nd's
      * @param device_id_3 and the 3rd's
+     * @param cube_model The model that is used for detecting the cube.
      * @param downsample_images If set to true (default), images are
      *     downsampled to half their original size.
      */
     TriCameraObjectTrackerDriver(const std::string& device_id_1,
                                  const std::string& device_id_2,
                                  const std::string& device_id_3,
+                                 BaseCuboidModel::ConstPtr cube_model,
                                  bool downsample_images = true);
 
     /**

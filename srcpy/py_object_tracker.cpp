@@ -11,6 +11,7 @@
 #include <pybind11_opencv/cvbind.hpp>
 
 #include <trifinger_object_tracking/cube_detector.hpp>
+#include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/fake_object_tracker_backend.hpp>
 #include <trifinger_object_tracking/object_pose.hpp>
 #include <trifinger_object_tracking/object_tracker_data.hpp>
@@ -90,8 +91,35 @@ PYBIND11_MODULE(py_object_tracker, m)
              &ObjectTrackerFrontend::has_observations,
              pybind11::call_guard<pybind11::gil_scoped_release>());
 
+    pybind11::class_<BaseCuboidModel, BaseCuboidModel::Ptr>(m,
+                                                            "BaseCuboidModel")
+        .def("get_name",
+             &BaseCuboidModel::get_name,
+             pybind11::call_guard<pybind11::gil_scoped_release>());
+    pybind11::
+        class_<CubeV1Model, std::shared_ptr<CubeV1Model>, BaseCuboidModel>(
+            m, "CubeV1Model", pybind11::multiple_inheritance())
+            .def(pybind11::init())
+            .def("get_name",
+                 &CubeV1Model::get_name,
+                 pybind11::call_guard<pybind11::gil_scoped_release>());
+    pybind11::
+        class_<CubeV2Model, BaseCuboidModel, std::shared_ptr<CubeV2Model>>(
+            m, "CubeV2Model", pybind11::multiple_inheritance())
+            .def(pybind11::init());
+    pybind11::
+        class_<CubeV3Model, BaseCuboidModel, std::shared_ptr<CubeV3Model>>(
+            m, "CubeV3Model", pybind11::multiple_inheritance())
+            .def(pybind11::init());
+    pybind11::class_<Cuboid2x2x8V2Model,
+                     BaseCuboidModel,
+                     std::shared_ptr<Cuboid2x2x8V2Model>>(
+        m, "Cuboid2x2x8V2Model", pybind11::multiple_inheritance())
+        .def(pybind11::init());
+
     pybind11::class_<CubeDetector>(m, "CubeDetector")
         .def(pybind11::init<
+             BaseCuboidModel::ConstPtr,
              const std::array<std::string, CubeDetector::N_CAMERAS>>())
         .def("detect_cube_single_thread",
              &CubeDetector::detect_cube_single_thread,
@@ -103,6 +131,11 @@ PYBIND11_MODULE(py_object_tracker, m)
              &CubeDetector::create_debug_image,
              "fill_faces"_a = false,
              pybind11::call_guard<pybind11::gil_scoped_release>());
+
+    m.def("get_model_by_name",
+          &get_model_by_name,
+          "Get object model based on its name.",
+          pybind11::call_guard<pybind11::gil_scoped_release>());
 
     m.def("create_trifingerpro_cube_detector",
           &create_trifingerpro_cube_detector,

@@ -4,13 +4,14 @@
  * @copyright Copyright (c) 2020, Max Planck Gesellschaft.
  */
 #include <gtest/gtest.h>
+
 #include <ament_index_cpp/get_package_share_directory.hpp>
-
 #include <opencv2/opencv.hpp>
-
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/pose_detector.hpp>
 #include <trifinger_object_tracking/utils.hpp>
+
+#include "utils.hpp"
 
 using namespace trifinger_object_tracking;
 
@@ -20,15 +21,13 @@ using namespace trifinger_object_tracking;
 class TestPoseDetector : public ::testing::Test
 {
 protected:
-    CubeModel cube_model_;
-
     std::array<std::vector<FaceColor>, PoseDetector::N_CAMERAS>
         dominant_colors_;
     std::array<std::vector<cv::Mat>, PoseDetector::N_CAMERAS> masks_;
     std::array<trifinger_cameras::CameraParameters, PoseDetector::N_CAMERAS>
         camera_parameters_;
 
-    void SetUp() override
+    void load_test_data(const std::string &object_name)
     {
         std::map<FaceColor, std::string> color_names;
         color_names[RED] = "r";
@@ -43,9 +42,8 @@ protected:
 
         std::string package_path = ament_index_cpp::get_package_share_directory(
             "trifinger_object_tracking");
-        std::string test_image_dir = package_path +
-                                     "/test/images/pose_detection/object_v" +
-                                     std::to_string(OBJECT_VERSION) + "/";
+        std::string test_image_dir =
+            package_path + "/test/images/pose_detection/" + object_name + "/";
 
         // load the test images (only masks needed here)
         for (size_t i = 0; i < PoseDetector::N_CAMERAS; i++)
@@ -76,38 +74,73 @@ protected:
     }
 };
 
-TEST_F(TestPoseDetector, find_pose)
+TEST_F(TestPoseDetector, find_pose_cube_v1)
 {
-    PoseDetector pose_detector(cube_model_, camera_parameters_);
+    auto cube_model = std::make_shared<const CubeV1Model>();
+    load_test_data(cube_model->get_name());
+
+    PoseDetector pose_detector(cube_model, camera_parameters_);
 
     Pose pose = pose_detector.find_pose(dominant_colors_, masks_);
 
     cv::Vec3f actual_translation, actual_rotation;
 
-#if OBJECT_VERSION == 1
     // FIXME the detected translation is actually a bit off here.  The cube is
     // on the ground, so the height would need to be 0.0325.
     actual_translation = cv::Vec3f(-0.014, -0.024, 0.028);
     actual_rotation = cv::Vec3f(1.48171, 0.941179, -1.55799);
-#elif OBJECT_VERSION == 2
-    // same issue with height as for version 1 (see above)
-    actual_translation = cv::Vec3f(-0.063, -0.136, 0.025);
-    actual_rotation = cv::Vec3f(0.265606, 1.53383, -0.316957);
-#elif OBJECT_VERSION == 4
-    actual_translation = cv::Vec3f(-0.007, -0.008, 0.04);
-    actual_rotation = cv::Vec3f(1.51, -0.33, -0.34);  // TODO
-#else
-    FAIL() << "No ground truth given for this object version.";
-#endif
 
     EXPECT_NEAR(pose.translation[0], actual_translation[0], 0.01);
     EXPECT_NEAR(pose.translation[1], actual_translation[1], 0.01);
     EXPECT_NEAR(pose.translation[2], actual_translation[2], 0.01);
+    EXPECT_LT(get_rotation_error(actual_rotation, pose.rotation), 0.1);
 
-    // What is a good way to compare rotation vectors?
-    // EXPECT_NEAR(pose.rotation[0], actual_rotation[0], 0.01);
-    // EXPECT_NEAR(pose.rotation[1], actual_rotation[1], 0.01);
-    // EXPECT_NEAR(pose.rotation[2], actual_rotation[2], 0.01);
+    EXPECT_GT(pose.confidence, 0.8);
+}
+
+TEST_F(TestPoseDetector, find_pose_cube_v2)
+{
+    auto cube_model = std::make_shared<const CubeV2Model>();
+    load_test_data(cube_model->get_name());
+
+    PoseDetector pose_detector(cube_model, camera_parameters_);
+
+    Pose pose = pose_detector.find_pose(dominant_colors_, masks_);
+
+    cv::Vec3f actual_translation, actual_rotation;
+
+    // same issue with height as for version 1 (see above)
+    actual_translation = cv::Vec3f(-0.063, -0.136, 0.025);
+    actual_rotation = cv::Vec3f(0.265606, 1.53383, -0.316957);
+
+    EXPECT_NEAR(pose.translation[0], actual_translation[0], 0.01);
+    EXPECT_NEAR(pose.translation[1], actual_translation[1], 0.01);
+    EXPECT_NEAR(pose.translation[2], actual_translation[2], 0.01);
+    EXPECT_LT(get_rotation_error(actual_rotation, pose.rotation), 0.1);
+
+    EXPECT_GT(pose.confidence, 0.8);
+}
+
+TEST_F(TestPoseDetector, find_pose_cuboid_2x2x8_v2)
+{
+    auto cube_model = std::make_shared<const Cuboid2x2x8V2Model>();
+    load_test_data(cube_model->get_name());
+
+    PoseDetector pose_detector(cube_model, camera_parameters_);
+
+    Pose pose = pose_detector.find_pose(dominant_colors_, masks_);
+
+    cv::Vec3f actual_translation, actual_rotation;
+
+    actual_translation = cv::Vec3f(-0.007, -0.008, 0.04);
+    actual_rotation = cv::Vec3f(1.51, -0.33, -0.34);  // TODO
+
+    EXPECT_NEAR(pose.translation[0], actual_translation[0], 0.01);
+    EXPECT_NEAR(pose.translation[1], actual_translation[1], 0.01);
+    EXPECT_NEAR(pose.translation[2], actual_translation[2], 0.01);
+    // orientation is pretty unreliable for the small cuboid, so don't check
+    // that here
+    // EXPECT_LT(get_rotation_error(actual_rotation, pose.rotation), 0.1);
 
     EXPECT_GT(pose.confidence, 0.8);
 }

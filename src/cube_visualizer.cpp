@@ -42,7 +42,7 @@ std::array<cv::Mat, CubeVisualizer::N_CAMERAS> CubeVisualizer::draw_cube(
             for (auto [color, corner_indices] :
                  pose_detector_.get_visible_faces(i))
             {
-                auto rgb = cube_model_.get_rgb(color);
+                auto rgb = cube_model_->get_rgb(color);
 
                 std::vector<cv::Point> corners = {imgpoints[corner_indices[0]],
                                                   imgpoints[corner_indices[1]],
@@ -56,7 +56,7 @@ std::array<cv::Mat, CubeVisualizer::N_CAMERAS> CubeVisualizer::draw_cube(
         else
         {
             // draw all the cube edges in the out_images[i]
-            for (auto &it : cube_model_.edges)
+            for (auto &it : cube_model_->edges)
             {
                 cv::line(out_images[i],
                          imgpoints[it.second.c1],

@@ -13,10 +13,12 @@
 #include <opencv2/opencv.hpp>
 #include <robot_interfaces/sensors/sensor_log_reader.hpp>
 #include <string>
+
 // TODO: not sure why but if "sensor_logger.hpp" is not included, the log reader
 // will have a cereal-related build error.
 #include <robot_interfaces/sensors/sensor_logger.hpp>
 #include <trifinger_object_tracking/cube_detector.hpp>
+#include <trifinger_object_tracking/program_options.hpp>
 #include <trifinger_object_tracking/tricamera_object_observation.hpp>
 #include <trifinger_object_tracking/utils.hpp>
 
@@ -39,30 +41,75 @@ bool open_video_writer(cv::VideoWriter &writer,
     return true;
 }
 
+class Args : public trifinger_object_tracking::ProgramOptions
+{
+public:
+    std::string data_dir, debug_video_file, cube_model_name;
+
+    std::string help() const override
+    {
+        return R"HELP(Run object tracker on a camera logfile.
+ 
+Expects as argument <data-dir> the path to the directory containing the
+following files:
+
+- camera_data.dat: Camera log file (TriCameraObjectObservation)
+- camera60.yml: Calibration parameters of camera60
+- camera180.yml: Calibration parameters of camera180
+- camera300.yml: Calibration parameters of camera300
+
+Usage:  run_on_logfile [options] <data-dir>
+
+)HELP";
+    }
+
+    void add_options(boost::program_options::options_description &options,
+                     boost::program_options::positional_options_description
+                         &positional) override
+    {
+        namespace po = boost::program_options;
+        // clang-format off
+        options.add_options()
+            ("data-dir,d",
+             po::value<std::string>(&data_dir)->required(),
+             "Directory in which the logfiles are stored.")
+            ("object-model,o",
+             po::value<std::string>(&cube_model_name)->required(),
+             "Name of the object model (e.g. 'cube_v2').")
+            ("save-video",
+             po::value<std::string>(&debug_video_file),
+             "Save debug video to the specified path.")
+            ;
+        // clang-format on
+
+        positional.add("data-dir", 1);
+    }
+};
+
 int main(int argc, char **argv)
 {
-    if (argc != 2 && argc != 3)
+    // read command line arguments
+    Args args;
+    if (!args.parse_args(argc, argv))
     {
-        std::cout << "Invalid number of arguments." << std::endl;
-        std::cout << "Usage: " << argv[0] << " data_directory [out_video]"
-                  << std::endl;
         return 1;
     }
-    const std::string data_dir = argv[1];
-    const std::string debug_video_file = argc > 2 ? argv[2] : "";
 
     std::array<trifinger_cameras::CameraParameters, 3> camera_params =
         trifinger_object_tracking::load_camera_parameters({
-            data_dir + "/camera60.yml",
-            data_dir + "/camera180.yml",
-            data_dir + "/camera300.yml",
+            args.data_dir + "/camera60.yml",
+            args.data_dir + "/camera180.yml",
+            args.data_dir + "/camera300.yml",
         });
 
-    trifinger_object_tracking::CubeDetector cube_detector(camera_params);
+    auto cube_model =
+        trifinger_object_tracking::get_model_by_name(args.cube_model_name);
+    trifinger_object_tracking::CubeDetector cube_detector(cube_model,
+                                                          camera_params);
 
     robot_interfaces::SensorLogReader<
         trifinger_object_tracking::TriCameraObjectObservation>
-        log_reader(data_dir + "/camera_data.dat");
+        log_reader(args.data_dir + "/camera_data.dat");
 
     cv::VideoWriter debug_video;
     cv::namedWindow("Object Tracking", cv::WINDOW_NORMAL);
@@ -87,12 +134,12 @@ int main(int argc, char **argv)
             first_iteration = false;
             cv::resizeWindow("Object Tracking", debug_img.cols, debug_img.rows);
 
-            if (!debug_video_file.empty())
+            if (!args.debug_video_file.empty())
             {
                 constexpr double FPS = 10.0;
                 bool ok = open_video_writer(
                     debug_video,
-                    debug_video_file,
+                    args.debug_video_file,
                     cv::VideoWriter::fourcc('X', 'V', 'I', 'D'),
                     FPS,
                     debug_img.size());
@@ -103,7 +150,7 @@ int main(int argc, char **argv)
             }
         }
 
-        if (!debug_video_file.empty())
+        if (!args.debug_video_file.empty())
         {
             debug_video.write(debug_img);
         }

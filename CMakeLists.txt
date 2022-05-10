@@ -15,16 +15,6 @@ string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors -Werror=return-type
 # always enable optimization, otherwise object tracking is too slow
 string(APPEND CMAKE_CXX_FLAGS " -O3")
 
-
-# Specify for which cube version to build the object tracker
-#
-# Currently supported object versions:
-#  - 1: CUBE_V1
-#  - 2: CUBE_V2
-#  - 3: CUBE_V3
-#  - 4: CUBOID_2x2x8
-set(OBJECT_VERSION 2)
-
 find_package(ament_cmake REQUIRED)
 find_package(mpi_cmake_modules REQUIRED)
 find_package(pybind11 REQUIRED)
@@ -39,6 +29,7 @@ find_package(LAPACK REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Armadillo REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
 
 
 if (${HAS_PYLON_DRIVERS})
@@ -47,18 +38,6 @@ endif()
 
 
 ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR python/${PROJECT_NAME})
-
-
-add_definitions(-DOBJECT_VERSION=${OBJECT_VERSION})
-if (${OBJECT_VERSION} EQUAL 1)
-    set(cube_model_dir src/cube_v1/)
-elseif(${OBJECT_VERSION} EQUAL 2)
-    set(cube_model_dir src/cube_v2/)
-elseif(${OBJECT_VERSION} EQUAL 4)
-    set(cube_model_dir src/cuboid_2x2x8/)
-else()
-    message(FATAL_ERROR "Invalid OBJECT_VERSION '${OBJECT_VERSION}'")
-endif()
 
 
 add_library(cv_sub_images src/cv_sub_images.cpp)
@@ -76,7 +55,9 @@ add_library(cube_detector
     src/pose_detector.cpp
     src/utils.cpp
     src/cube_model.cpp
-    ${cube_model_dir}/xgboost_classifier.cpp
+    src/cube_v1/xgboost_classifier.cpp
+    src/cube_v2/xgboost_classifier.cpp
+    src/cuboid_2x2x8/xgboost_classifier.cpp
 )
 target_include_directories(cube_detector PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -194,6 +175,18 @@ target_link_libraries(lightblue_segmenter
 )
 
 
+add_library(program_options
+    src/program_options.cpp
+)
+target_include_directories(program_options PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(program_options
+    Boost::program_options
+)
+
+
 # Python Bindings
 add_pybind11_module(py_object_tracker srcpy/py_object_tracker.cpp
     LINK_LIBRARIES
@@ -224,6 +217,7 @@ target_include_directories(single_observation PUBLIC
 )
 target_link_libraries(single_observation
     cube_detector
+    program_options
 )
 
 
@@ -236,6 +230,7 @@ target_include_directories(run_on_logfile PRIVATE
 target_link_libraries(run_on_logfile
     robot_interfaces::robot_interfaces
     cube_detector
+    program_options
 )
 
 
@@ -247,6 +242,7 @@ target_include_directories(benchmark_with_logfile PUBLIC
 target_link_libraries(benchmark_with_logfile
     robot_interfaces::robot_interfaces
     cube_detector
+    program_options
 )
 
 
@@ -302,7 +298,6 @@ install_scripts(
     scripts/tricamera_log_extract_object_poses.py
     scripts/tricamera_log_viewer.py
     scripts/view_masks.py
-    scripts/visualise_cube_target_pose.py
 
     DESTINATION lib/${PROJECT_NAME}
 )
@@ -335,12 +330,26 @@ if (BUILD_TESTING)
     )
     install(TARGETS test_color_segmenter DESTINATION lib/${PROJECT_NAME})
 
+    ament_add_gtest(test_cube_model test/test_cube_model.cpp src/cube_model.cpp)
+    target_include_directories(test_cube_model PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
+    install(TARGETS test_cube_model DESTINATION lib/${PROJECT_NAME})
+
     ament_add_gtest(test_pose_detector test/test_pose_detector.cpp)
     target_link_libraries(test_pose_detector cube_detector)
     ament_target_dependencies(test_pose_detector
         ament_index_cpp
     )
     install(TARGETS test_pose_detector DESTINATION lib/${PROJECT_NAME})
+
+    ament_add_gtest(test_cube_detector test/test_cube_detector.cpp)
+    target_link_libraries(test_cube_detector cube_detector)
+    ament_target_dependencies(test_cube_detector
+        ament_index_cpp
+    )
+    install(TARGETS test_cube_detector DESTINATION lib/${PROJECT_NAME})
 
     ament_add_pytest_test(test_lightblue_segmenter_py
         test/test_lightblue_segmenter.py

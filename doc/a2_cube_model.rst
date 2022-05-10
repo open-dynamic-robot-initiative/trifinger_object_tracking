@@ -1,3 +1,5 @@
+.. _object_model:
+
 ************
 Object Model
 ************
@@ -52,17 +54,17 @@ Supported Object Versions
 CUBE_V1-3
 ---------
 
-- v1:
+- :cpp:class:`~trifinger_object_tracking::CubeV1Model`:
 
   .. image:: images/cube_v1.jpg
      :alt: CUBE_V1
 
-- v2:
+- :cpp:class:`~trifinger_object_tracking::CubeV2Model`:
 
   .. image:: images/cube_v2.jpg
      :alt: CUBE_V2
 
-- v3:
+- :cpp:class:`~trifinger_object_tracking::CubeV3Model`:
 
   .. image:: images/cube_v3.jpg
      :alt: CUBE_V3
@@ -73,12 +75,16 @@ thus need different colour segmentation models.
 
 Further v1 has a different colour-to-face mapping as the other two.
 
-Note: v3 is not supported at the moment as the segmentation model for this cube
-has not been integrated into the software.
+.. note::
+
+    v3 is not supported at the moment as the segmentation model for this cube
+    has not been integrated into the software.
 
 
 CUBOID_2x2x8
 ------------
+
+:cpp:class:`~trifinger_object_tracking::Cuboid2x2x8V2Model`
 
 .. image:: images/cuboid_2x2x8.jpg
    :alt: CUBOID_2x2x8
