@@ -39,6 +39,10 @@ std::ostream& operator<<(std::ostream& os, const FaceColor& color);
 
 /**
  * @brief Base class for all cuboid object models
+ *
+ * @verbatim embed:rst:leading-asterisk
+ * See :ref:`object_model` for more information on the available object models.
+ * @endverbatim
  */
 class BaseCuboidModel
 {
