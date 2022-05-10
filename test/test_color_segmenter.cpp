@@ -98,8 +98,6 @@ protected:
 
         //! Ratio of pixels in the image that are allowed to be wrongly
         //! classified in order for the test to succeed.
-        //constexpr float MAX_WRONG_PIXEL_RATIO = 0.005;
-        // FIXME
         constexpr float MAX_WRONG_PIXEL_RATIO = 0.01;
 
         for (size_t i = 0; i < N_IMG; i++)
