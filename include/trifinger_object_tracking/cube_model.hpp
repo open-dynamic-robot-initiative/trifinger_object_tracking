@@ -58,14 +58,14 @@ public:
     //! @brief Number of faces of the cuboid.
     static constexpr unsigned int N_FACES = 6;
 
-    typedef std::array<std::array<float, 4>, 8> corners_t;  // FIXME name
+    typedef std::array<std::array<float, 4>, 8> CornerPositionArray;
     typedef std::array<CubeFace, N_FACES> CubeFaceArray;
 
     //! @brief Get name of the model.
     virtual std::string get_name() const = 0;
 
     //! @brief Get homogeneous coordinates (x, y, z, 1) of the cube corners.
-    virtual corners_t get_corners() const = 0;
+    virtual CornerPositionArray get_corners() const = 0;
 
     //! @brief Get the cuboid face that has the specified colour.
     virtual CubeFace map_color_to_face(FaceColor color) const = 0;
@@ -232,7 +232,7 @@ public:
     static constexpr float HALF_WIDTH = WIDTH / 2.0;
 
     //! Cube corner positions in cube frame
-    static constexpr corners_t cube_corners{
+    static constexpr CornerPositionArray cube_corners{
         {{+HALF_WIDTH, -HALF_WIDTH, +HALF_WIDTH, 1},
          {+HALF_WIDTH, +HALF_WIDTH, +HALF_WIDTH, 1},
          {-HALF_WIDTH, +HALF_WIDTH, +HALF_WIDTH, 1},
@@ -242,7 +242,7 @@ public:
          {-HALF_WIDTH, +HALF_WIDTH, -HALF_WIDTH, 1},
          {-HALF_WIDTH, -HALF_WIDTH, -HALF_WIDTH, 1}}};
 
-    corners_t get_corners() const override
+    CornerPositionArray get_corners() const override
     {
         return cube_corners;
     }
@@ -373,7 +373,7 @@ public:
     static constexpr float SHORT_HALF_WIDTH = WIDTH / 2.0;
 
     //! Cube corner positions in cube frame
-    static constexpr corners_t cube_corners = {
+    static constexpr CornerPositionArray cube_corners = {
         {{+SHORT_HALF_WIDTH, -LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
          {+SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
          {-SHORT_HALF_WIDTH, +LONG_HALF_WIDTH, +SHORT_HALF_WIDTH, 1},
@@ -388,7 +388,7 @@ public:
         return "cuboid_2x2x8_v2";
     }
 
-    corners_t get_corners() const override
+    CornerPositionArray get_corners() const override
     {
         return cube_corners;
     }
@@ -403,7 +403,8 @@ public:
  * @brief Get object model instance by name
  *
  * @param name Name of the model type.  One of cube_v1, cube_v2, cube_v3,
- *      cuboid_2x2x8_v2 (same names as returned by @ref BaseCuboidModel::get_name()).
+ *      cuboid_2x2x8_v2 (same names as returned by @ref
+ * BaseCuboidModel::get_name()).
  *
  * @return Instance of the specified model.
  */
