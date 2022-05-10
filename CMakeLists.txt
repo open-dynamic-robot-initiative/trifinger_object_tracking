@@ -330,6 +330,13 @@ if (BUILD_TESTING)
     )
     install(TARGETS test_color_segmenter DESTINATION lib/${PROJECT_NAME})
 
+    ament_add_gtest(test_cube_model test/test_cube_model.cpp src/cube_model.cpp)
+    target_include_directories(test_cube_model PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
+    install(TARGETS test_cube_model DESTINATION lib/${PROJECT_NAME})
+
     ament_add_gtest(test_pose_detector test/test_pose_detector.cpp)
     target_link_libraries(test_pose_detector cube_detector)
     ament_target_dependencies(test_pose_detector

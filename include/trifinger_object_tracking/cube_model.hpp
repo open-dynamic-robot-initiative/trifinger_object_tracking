@@ -409,6 +409,5 @@ public:
  * @return Instance of the specified model.
  */
 BaseCuboidModel::ConstPtr get_model_by_name(const std::string& name);
-// TODO: unit test for get_model_by_name()
 
 }  // namespace trifinger_object_tracking
