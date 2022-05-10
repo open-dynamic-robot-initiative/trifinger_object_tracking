@@ -40,8 +40,7 @@ ObjectPose CubeDetector::detect_cube(
     {
         threads[i] = std::thread(
             [this, &dominant_colors, &masks](int camera_idx,
-                                             const cv::Mat &image)
-            {
+                                             const cv::Mat &image) {
                 color_segmenters_[camera_idx].detect_colors(image);
 
                 dominant_colors[camera_idx] =

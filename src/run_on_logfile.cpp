@@ -18,8 +18,8 @@
 // will have a cereal-related build error.
 #include <robot_interfaces/sensors/sensor_logger.hpp>
 #include <trifinger_object_tracking/cube_detector.hpp>
-#include <trifinger_object_tracking/tricamera_object_observation.hpp>
 #include <trifinger_object_tracking/program_options.hpp>
+#include <trifinger_object_tracking/tricamera_object_observation.hpp>
 #include <trifinger_object_tracking/utils.hpp>
 
 constexpr unsigned N_CAMERAS = 3;
@@ -40,7 +40,6 @@ bool open_video_writer(cv::VideoWriter &writer,
 
     return true;
 }
-
 
 class Args : public trifinger_object_tracking::ProgramOptions
 {

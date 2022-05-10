@@ -13,9 +13,8 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
-#include <robot_interfaces/sensors/sensor_log_reader.hpp>
 #include <real_time_tools/timer.hpp>
-
+#include <robot_interfaces/sensors/sensor_log_reader.hpp>
 
 // TODO: not sure why but if "sensor_logger.hpp" is not included, the log reader
 // will have a cereal-related build error.
