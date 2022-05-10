@@ -44,6 +44,12 @@ def main():
         help="Visualize goal from the specified JSON file.",
     )
     parser.add_argument(
+        "--object",
+        type=str,
+        default="cube_v2",
+        help="Name of the object model used for visualisation.  Default: %(default)s.",
+    )
+    parser.add_argument(
         "--show-confidence",
         action="store_true",
         help="Print the object pose confidence in the images.",
@@ -102,7 +108,11 @@ def main():
             else:
                 print("{} does not exist.".format(calib_file))
                 sys.exit(1)
-        cube_visualizer = tricamera.CubeVisualizer(calib_files)
+
+        model = trifinger_object_tracking.py_object_tracker.get_model_by_name(
+            args.object
+        )
+        cube_visualizer = tricamera.CubeVisualizer(model, calib_files)
 
     log_reader = tricamera.LogReader(args.filename)
 
