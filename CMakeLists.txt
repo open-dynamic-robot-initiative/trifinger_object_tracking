@@ -298,7 +298,6 @@ install_scripts(
     scripts/tricamera_log_extract_object_poses.py
     scripts/tricamera_log_viewer.py
     scripts/view_masks.py
-    scripts/visualise_cube_target_pose.py
 
     DESTINATION lib/${PROJECT_NAME}
 )
