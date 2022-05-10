@@ -349,7 +349,7 @@ if (BUILD_TESTING)
     ament_target_dependencies(test_cube_detector
         ament_index_cpp
     )
-    install(TARGETS test_pose_detector DESTINATION lib/${PROJECT_NAME})
+    install(TARGETS test_cube_detector DESTINATION lib/${PROJECT_NAME})
 
     ament_add_pytest_test(test_lightblue_segmenter_py
         test/test_lightblue_segmenter.py

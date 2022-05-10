@@ -11,6 +11,8 @@
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/utils.hpp>
 
+#include "utils.hpp"
+
 using namespace trifinger_object_tracking;
 
 /**
@@ -59,19 +61,13 @@ TEST_F(TestCubeDetector, find_pose_cube_v1)
     // FIXME the detected position is actually a bit off here.  The cube is
     // on the ground, so the height would need to be 0.0325.
     cv::Vec3f actual_position(-0.014, -0.024, 0.028);
-    cv::Vec4f actual_orientation(
+    Eigen::Vector4d actual_orientation(
         0.58214203, 0.36977536, -0.61211132, 0.38690641);
-    //= cv::Vec3f(1.48171, 0.941179, -1.55799);
 
     EXPECT_NEAR(pose.position[0], actual_position[0], 0.01);
     EXPECT_NEAR(pose.position[1], actual_position[1], 0.01);
     EXPECT_NEAR(pose.position[2], actual_position[2], 0.01);
-
-    // FIXME What is a good way to compare orientation vectors?
-    // EXPECT_NEAR(pose.orientation[0], actual_orientation[0], 0.01);
-    // EXPECT_NEAR(pose.orientation[1], actual_orientation[1], 0.01);
-    // EXPECT_NEAR(pose.orientation[2], actual_orientation[2], 0.01);
-    // EXPECT_NEAR(pose.orientation[3], actual_orientation[2], 0.01);
+    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.1);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
@@ -87,19 +83,13 @@ TEST_F(TestCubeDetector, find_pose_cube_v1_multithread)
     // FIXME the detected position is actually a bit off here.  The cube is
     // on the ground, so the height would need to be 0.0325.
     cv::Vec3f actual_position(-0.014, -0.024, 0.028);
-    cv::Vec4f actual_orientation(
+    Eigen::Vector4d actual_orientation(
         0.58214203, 0.36977536, -0.61211132, 0.38690641);
-    //= cv::Vec3f(1.48171, 0.941179, -1.55799);
 
     EXPECT_NEAR(pose.position[0], actual_position[0], 0.01);
     EXPECT_NEAR(pose.position[1], actual_position[1], 0.01);
     EXPECT_NEAR(pose.position[2], actual_position[2], 0.01);
-
-    // FIXME What is a good way to compare orientation vectors?
-    // EXPECT_NEAR(pose.orientation[0], actual_orientation[0], 0.01);
-    // EXPECT_NEAR(pose.orientation[1], actual_orientation[1], 0.01);
-    // EXPECT_NEAR(pose.orientation[2], actual_orientation[2], 0.01);
-    // EXPECT_NEAR(pose.orientation[3], actual_orientation[2], 0.01);
+    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.1);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
@@ -115,19 +105,13 @@ TEST_F(TestCubeDetector, find_pose_cube_v1_load_camera_params_from_files)
     // FIXME the detected position is actually a bit off here.  The cube is
     // on the ground, so the height would need to be 0.0325.
     cv::Vec3f actual_position(-0.014, -0.024, 0.028);
-    cv::Vec4f actual_orientation(
+    Eigen::Vector4d actual_orientation(
         0.58214203, 0.36977536, -0.61211132, 0.38690641);
-    //= cv::Vec3f(1.48171, 0.941179, -1.55799);
 
     EXPECT_NEAR(pose.position[0], actual_position[0], 0.01);
     EXPECT_NEAR(pose.position[1], actual_position[1], 0.01);
     EXPECT_NEAR(pose.position[2], actual_position[2], 0.01);
-
-    // FIXME What is a good way to compare orientation vectors?
-    // EXPECT_NEAR(pose.orientation[0], actual_orientation[0], 0.01);
-    // EXPECT_NEAR(pose.orientation[1], actual_orientation[1], 0.01);
-    // EXPECT_NEAR(pose.orientation[2], actual_orientation[2], 0.01);
-    // EXPECT_NEAR(pose.orientation[3], actual_orientation[2], 0.01);
+    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.1);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
@@ -142,17 +126,13 @@ TEST_F(TestCubeDetector, find_pose_cube_v2)
 
     // same issue with height as for version 1 (see above)
     cv::Vec3f actual_position(-0.063, -0.136, 0.025);
-    cv::Vec4f actual_orientation(0.1192724, 0.6887785, -0.1423320, 0.7007851);
+    Eigen::Vector4d actual_orientation(
+        0.1192724, 0.6887785, -0.1423320, 0.7007851);
 
     EXPECT_NEAR(pose.position[0], actual_position[0], 0.01);
     EXPECT_NEAR(pose.position[1], actual_position[1], 0.01);
     EXPECT_NEAR(pose.position[2], actual_position[2], 0.01);
-
-    // What is a good way to compare orientations?
-    // EXPECT_NEAR(pose.orientation[0], actual_orientation[0], 0.01);
-    // EXPECT_NEAR(pose.orientation[1], actual_orientation[1], 0.01);
-    // EXPECT_NEAR(pose.orientation[2], actual_orientation[2], 0.01);
-    // EXPECT_NEAR(pose.orientation[3], actual_orientation[2], 0.01);
+    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.1);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
@@ -166,17 +146,15 @@ TEST_F(TestCubeDetector, find_pose_cuboid_2x2x8_v2)
     ObjectPose pose = cube_detector.detect_cube_single_thread(images_);
 
     cv::Vec3f actual_position(-0.007, -0.008, 0.04);
-    cv::Vec4f actual_orientation(0.67863974, -0.148312, -0.1528063, 0.70292382);
+    Eigen::Vector4d actual_orientation(
+        0.67863974, -0.148312, -0.1528063, 0.70292382);
 
     EXPECT_NEAR(pose.position[0], actual_position[0], 0.01);
     EXPECT_NEAR(pose.position[1], actual_position[1], 0.01);
     EXPECT_NEAR(pose.position[2], actual_position[2], 0.01);
-
-    // What is a good way to compare orientation vectors?
-    // EXPECT_NEAR(pose.orientation[0], actual_orientation[0], 0.01);
-    // EXPECT_NEAR(pose.orientation[1], actual_orientation[1], 0.01);
-    // EXPECT_NEAR(pose.orientation[2], actual_orientation[2], 0.01);
-    // EXPECT_NEAR(pose.orientation[3], actual_orientation[2], 0.01);
+    // orientation is pretty unreliable for the small cuboid, so don't check
+    // that here
+    // EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.1);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
