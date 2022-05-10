@@ -248,7 +248,6 @@ float PoseDetector::cost_function(
                     }
                     else
                     {
-                        // FIXME check type, not name
                         if (cube_model_->get_name() == "cuboid_2x2x8_v2")
                         {
                             // we would like the borders to be close to some
@@ -282,7 +281,6 @@ float PoseDetector::cost_function(
         }
     }
 
-    // FIXME check type, not name
     if (cube_model_->get_name() == "cuboid_2x2x8_v2")
     {
         // simple height cost (assume that it is more likely that the object is
