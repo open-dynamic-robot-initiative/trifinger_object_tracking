@@ -67,7 +67,7 @@ TEST_F(TestCubeDetector, find_pose_cube_v1)
     EXPECT_NEAR(pose.position[0], actual_position[0], 0.01);
     EXPECT_NEAR(pose.position[1], actual_position[1], 0.01);
     EXPECT_NEAR(pose.position[2], actual_position[2], 0.01);
-    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.1);
+    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.2);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
@@ -89,7 +89,7 @@ TEST_F(TestCubeDetector, find_pose_cube_v1_multithread)
     EXPECT_NEAR(pose.position[0], actual_position[0], 0.01);
     EXPECT_NEAR(pose.position[1], actual_position[1], 0.01);
     EXPECT_NEAR(pose.position[2], actual_position[2], 0.01);
-    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.1);
+    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.2);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
@@ -111,7 +111,7 @@ TEST_F(TestCubeDetector, find_pose_cube_v1_load_camera_params_from_files)
     EXPECT_NEAR(pose.position[0], actual_position[0], 0.01);
     EXPECT_NEAR(pose.position[1], actual_position[1], 0.01);
     EXPECT_NEAR(pose.position[2], actual_position[2], 0.01);
-    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.1);
+    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.2);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
@@ -132,7 +132,7 @@ TEST_F(TestCubeDetector, find_pose_cube_v2)
     EXPECT_NEAR(pose.position[0], actual_position[0], 0.01);
     EXPECT_NEAR(pose.position[1], actual_position[1], 0.01);
     EXPECT_NEAR(pose.position[2], actual_position[2], 0.01);
-    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.1);
+    EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.2);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
@@ -146,15 +146,15 @@ TEST_F(TestCubeDetector, find_pose_cuboid_2x2x8_v2)
     ObjectPose pose = cube_detector.detect_cube_single_thread(images_);
 
     cv::Vec3f actual_position(-0.007, -0.008, 0.04);
-    Eigen::Vector4d actual_orientation(
-        0.67863974, -0.148312, -0.1528063, 0.70292382);
+    // Eigen::Vector4d actual_orientation(
+    //    0.67863974, -0.148312, -0.1528063, 0.70292382);
 
     EXPECT_NEAR(pose.position[0], actual_position[0], 0.01);
     EXPECT_NEAR(pose.position[1], actual_position[1], 0.01);
     EXPECT_NEAR(pose.position[2], actual_position[2], 0.01);
     // orientation is pretty unreliable for the small cuboid, so don't check
     // that here
-    // EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.1);
+    // EXPECT_LT(get_rotation_error(actual_orientation, pose.orientation), 0.2);
 
     EXPECT_GT(pose.confidence, 0.8);
 }

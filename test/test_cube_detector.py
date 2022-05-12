@@ -1,5 +1,6 @@
 import pathlib
 
+import pytest
 import cv2
 import numpy as np
 from scipy.spatial.transform import Rotation
@@ -28,6 +29,21 @@ def load_test_data(object_name):
     return {"images": images, "camera_parameter_files": camera_parameter_files}
 
 
+def test_rotation_error():
+    base = Rotation.from_euler("x", 0)
+    x90 = Rotation.from_euler("x", 90, degrees=True)
+    y90 = Rotation.from_euler("y", 90, degrees=True)
+    ym90 = Rotation.from_euler("y", -90, degrees=True)
+    z180 = Rotation.from_euler("z", 180, degrees=True)
+
+    assert rotation_error(base, base) == pytest.approx(0.0)
+    assert rotation_error(x90, x90) == pytest.approx(0.0)
+    assert rotation_error(base, x90) == pytest.approx(np.pi / 2)
+    assert rotation_error(base, y90) == pytest.approx(np.pi / 2)
+    assert rotation_error(base, ym90) == pytest.approx(np.pi / 2)
+    assert rotation_error(base, z180) == pytest.approx(np.pi)
+
+
 def test_find_pose_cube_v1():
     model = object_tracker.CubeV1Model()
     test_data = load_test_data(model.get_name())
@@ -48,7 +64,7 @@ def test_find_pose_cube_v1():
     np.testing.assert_array_almost_equal(pose.position, expected_position, 2)
 
     actual_orientation = Rotation.from_quat(pose.orientation)
-    assert rotation_error(actual_orientation, expected_orientation) < 0.1
+    assert rotation_error(actual_orientation, expected_orientation) < 0.2
 
     assert pose.confidence > 0.8
 
@@ -73,7 +89,7 @@ def test_find_pose_cube_v1_multithread():
     np.testing.assert_array_almost_equal(pose.position, expected_position, 2)
 
     actual_orientation = Rotation.from_quat(pose.orientation)
-    assert rotation_error(actual_orientation, expected_orientation) < 0.1
+    assert rotation_error(actual_orientation, expected_orientation) < 0.2
 
     assert pose.confidence > 0.8
 
@@ -98,7 +114,7 @@ def test_find_pose_cube_v2():
     np.testing.assert_array_almost_equal(pose.position, expected_position, 2)
 
     actual_orientation = Rotation.from_quat(pose.orientation)
-    assert rotation_error(actual_orientation, expected_orientation) < 0.1
+    assert rotation_error(actual_orientation, expected_orientation) < 0.2
 
     assert pose.confidence > 0.8
 
@@ -116,14 +132,14 @@ def test_find_pose_cuboid_2x2x8_v2():
     # TODO the detected position is actually a bit off here.  The cube is
     # on the ground, so the height would need to be 0.0325.
     expected_position = np.array([-0.007, -0.008, 0.04])
-    expected_orientation = Rotation.from_quat(
-        [0.67863974, -0.148312, -0.1528063, 0.70292382]
-    )
+    # expected_orientation = Rotation.from_quat(
+    #     [0.67863974, -0.148312, -0.1528063, 0.70292382]
+    # )
 
     np.testing.assert_array_almost_equal(pose.position, expected_position, 2)
 
     # orientation for the small cuboid can be very off, so don't check this here
     # actual_orientation = Rotation.from_quat(pose.orientation)
-    # assert rotation_error(actual_orientation, expected_orientation) < 0.1
+    # assert rotation_error(actual_orientation, expected_orientation) < 0.2
 
     assert pose.confidence > 0.8

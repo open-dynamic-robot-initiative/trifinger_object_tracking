@@ -93,7 +93,7 @@ TEST_F(TestPoseDetector, find_pose_cube_v1)
     EXPECT_NEAR(pose.translation[0], actual_translation[0], 0.01);
     EXPECT_NEAR(pose.translation[1], actual_translation[1], 0.01);
     EXPECT_NEAR(pose.translation[2], actual_translation[2], 0.01);
-    EXPECT_LT(get_rotation_error(actual_rotation, pose.rotation), 0.1);
+    EXPECT_LT(get_rotation_error(actual_rotation, pose.rotation), 0.2);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
@@ -116,7 +116,7 @@ TEST_F(TestPoseDetector, find_pose_cube_v2)
     EXPECT_NEAR(pose.translation[0], actual_translation[0], 0.01);
     EXPECT_NEAR(pose.translation[1], actual_translation[1], 0.01);
     EXPECT_NEAR(pose.translation[2], actual_translation[2], 0.01);
-    EXPECT_LT(get_rotation_error(actual_rotation, pose.rotation), 0.1);
+    EXPECT_LT(get_rotation_error(actual_rotation, pose.rotation), 0.2);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
@@ -140,7 +140,7 @@ TEST_F(TestPoseDetector, find_pose_cuboid_2x2x8_v2)
     EXPECT_NEAR(pose.translation[2], actual_translation[2], 0.01);
     // orientation is pretty unreliable for the small cuboid, so don't check
     // that here
-    // EXPECT_LT(get_rotation_error(actual_rotation, pose.rotation), 0.1);
+    // EXPECT_LT(get_rotation_error(actual_rotation, pose.rotation), 0.2);
 
     EXPECT_GT(pose.confidence, 0.8);
 }
