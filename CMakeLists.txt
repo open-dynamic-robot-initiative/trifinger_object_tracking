@@ -323,6 +323,10 @@ if (BUILD_TESTING)
         DESTINATION share/${PROJECT_NAME}/test
     )
 
+    ament_add_gtest(test_test_utils test/test_test_utils.cpp)
+    target_link_libraries(test_test_utils ${OpenCV_LIBS} Eigen3::Eigen)
+    install(TARGETS test_test_utils DESTINATION lib/${PROJECT_NAME})
+
     ament_add_gtest(test_color_segmenter test/test_color_segmenter.cpp)
     target_link_libraries(test_color_segmenter cube_detector)
     ament_target_dependencies(test_color_segmenter
