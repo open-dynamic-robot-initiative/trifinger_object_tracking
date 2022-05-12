@@ -64,7 +64,7 @@ def test_find_pose_cube_v1():
     np.testing.assert_array_almost_equal(pose.position, expected_position, 2)
 
     actual_orientation = Rotation.from_quat(pose.orientation)
-    assert rotation_error(actual_orientation, expected_orientation) < 0.1
+    assert rotation_error(actual_orientation, expected_orientation) < 0.2
 
     assert pose.confidence > 0.8
 
@@ -89,7 +89,7 @@ def test_find_pose_cube_v1_multithread():
     np.testing.assert_array_almost_equal(pose.position, expected_position, 2)
 
     actual_orientation = Rotation.from_quat(pose.orientation)
-    assert rotation_error(actual_orientation, expected_orientation) < 0.1
+    assert rotation_error(actual_orientation, expected_orientation) < 0.2
 
     assert pose.confidence > 0.8
 
@@ -114,7 +114,7 @@ def test_find_pose_cube_v2():
     np.testing.assert_array_almost_equal(pose.position, expected_position, 2)
 
     actual_orientation = Rotation.from_quat(pose.orientation)
-    assert rotation_error(actual_orientation, expected_orientation) < 0.1
+    assert rotation_error(actual_orientation, expected_orientation) < 0.2
 
     assert pose.confidence > 0.8
 
@@ -140,6 +140,6 @@ def test_find_pose_cuboid_2x2x8_v2():
 
     # orientation for the small cuboid can be very off, so don't check this here
     # actual_orientation = Rotation.from_quat(pose.orientation)
-    # assert rotation_error(actual_orientation, expected_orientation) < 0.1
+    # assert rotation_error(actual_orientation, expected_orientation) < 0.2
 
     assert pose.confidence > 0.8
