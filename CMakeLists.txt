@@ -363,7 +363,9 @@ endif()
 
 
 # Build the sphinx documentation
-add_documentation()
+add_documentation(
+    DOXYGEN_EXCLUDE_PATTERNS ${PROJECT_SOURCE_DIR}/include/optim/*
+)
 
 
 ament_export_include_directories(include)
