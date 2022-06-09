@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 
 #include <trifinger_object_tracking/color_segmenter.hpp>
 
@@ -11,225 +10,241 @@ std::array<float, XGB_NUM_CLASSES> xgb_classify_cube_v2(
   std::array<float, XGB_NUM_CLASSES> sum;
   sum.fill(0.0);
 
-  if (sample[4] <85) {
-    if (sample[4] <73) {
-      if (sample[4] <63) {
-        if (sample[4] <56) {
-          sum[0] += 3.49971128;
+  if (sample[4] <78) {
+    if (sample[4] <56) {
+      if (sample[4] <47) {
+        if (sample[4] <39) {
+          sum[0] += 3.49921942;
         } else {
-          if (sample[3] <84) {
-            sum[0] += 3.49603295;
-          } else {
-            if (sample[2] <74) {
-              sum[0] += 3.41082644;
+          if (sample[3] <98) {
+            if (sample[3] <90) {
+              sum[0] += 3.49249029;
             } else {
-              sum[0] += 3.02998114;
+              sum[0] += 3.38680482;
+            }
+          } else {
+            if (sample[1] <81) {
+              sum[0] += 2.62602401;
+            } else {
+              sum[0] += 3.47406745;
             }
           }
         }
       } else {
-        if (sample[0] <93) {
-          if (sample[3] <100) {
-            if (sample[0] <90) {
-              sum[0] += 3.49513483;
+        if (sample[3] <100) {
+          if (sample[1] <93) {
+            if (sample[3] <91) {
+              sum[0] += 3.49608135;
             } else {
-              sum[0] += 3.02015162;
+              sum[0] += 2.96746278;
             }
           } else {
-            if (sample[2] <70) {
-              sum[0] += 3.24593997;
+            if (sample[2] <89) {
+              sum[0] += 2.32025337;
             } else {
-              sum[0] += 1.55148768;
+              sum[0] += 3.34029818;
             }
           }
         } else {
-          if (sample[3] <70) {
-            sum[0] += 3.47853351;
-          } else {
-            if (sample[3] <95) {
-              sum[0] += 0.596619666;
+          if (sample[1] <73) {
+            if (sample[1] <53) {
+              sum[0] += 3.07400298;
             } else {
-              sum[0] += 2.72099733;
+              sum[0] += 0.7576285;
+            }
+          } else {
+            if (sample[3] <130) {
+              sum[0] += 3.43166447;
+            } else {
+              sum[0] += 1.87913048;
             }
           }
         }
       }
     } else {
-      if (sample[0] <86) {
-        if (sample[3] <133) {
-          if (sample[3] <98) {
-            if (sample[0] <78) {
-              sum[0] += 3.49565125;
+      if (sample[0] <70) {
+        if (sample[3] <98) {
+          if (sample[1] <87) {
+            if (sample[3] <8.99999905) {
+              sum[0] += 2.48268437;
             } else {
-              sum[0] += 2.87385678;
+              sum[0] += 3.49261522;
             }
           } else {
-            if (sample[1] <43) {
-              sum[0] += 3.315727;
+            if (sample[3] <45) {
+              sum[0] += 3.27984357;
             } else {
-              sum[0] += 2.90229321;
+              sum[0] += 0.167358533;
             }
           }
         } else {
-          if (sample[0] <70) {
-            if (sample[2] <60) {
-              sum[0] += 3.43414736;
+          if (sample[3] <113) {
+            if (sample[1] <45) {
+              sum[0] += 3.19563913;
             } else {
-              sum[0] += 1.90469253;
+              sum[0] += 1.06137753;
             }
           } else {
-            if (sample[3] <163) {
-              sum[0] += -0.291080534;
+            if (sample[0] <63) {
+              sum[0] += 3.41188002;
             } else {
-              sum[0] += 2.19942594;
+              sum[0] += 2.8171525;
             }
           }
         }
       } else {
-        if (sample[3] <65) {
-          if (sample[1] <95) {
-            sum[0] += 1.02752292;
-          } else {
-            sum[0] += 3.45945621;
-          }
-        } else {
-          if (sample[2] <68) {
-            if (sample[1] <98) {
-              sum[0] += 3.0273931;
+        if (sample[3] <130) {
+          if (sample[1] <97) {
+            if (sample[1] <68) {
+              sum[0] += 1.78415203;
             } else {
-              sum[0] += 0.187221378;
+              sum[0] += 3.00617409;
             }
           } else {
-            if (sample[3] <95) {
-              sum[0] += -0.285285175;
+            if (sample[3] <45) {
+              sum[0] += 2.53264499;
             } else {
-              sum[0] += 0.455409735;
+              sum[0] += 0.90244621;
+            }
+          }
+        } else {
+          if (sample[3] <163) {
+            if (sample[2] <72) {
+              sum[0] += 1.7706548;
+            } else {
+              sum[0] += -0.483549863;
+            }
+          } else {
+            if (sample[4] <67) {
+              sum[0] += 3.23955488;
+            } else {
+              sum[0] += 2.48472142;
             }
           }
         }
       }
     }
   } else {
-    if (sample[5] <73) {
-      if (sample[3] <95) {
-        if (sample[3] <84) {
-          if (sample[5] <66) {
-            if (sample[3] <80) {
-              sum[0] += 3.49814153;
+    if (sample[5] <75) {
+      if (sample[3] <98) {
+        if (sample[3] <80) {
+          if (sample[1] <68) {
+            if (sample[5] <64) {
+              sum[0] += 3.49826622;
             } else {
-              sum[0] += 3.14161468;
+              sum[0] += 3.30189228;
             }
           } else {
-            if (sample[1] <31.9999981) {
-              sum[0] += 1.30080271;
+            if (sample[4] <178) {
+              sum[0] += 3.40314913;
             } else {
-              sum[0] += 3.36031175;
+              sum[0] += -0.324050456;
             }
           }
         } else {
-          if (sample[1] <31.9999981) {
-            if (sample[4] <162) {
-              sum[0] += 2.24457693;
+          if (sample[4] <178) {
+            if (sample[1] <64) {
+              sum[0] += 3.14834261;
             } else {
-              sum[0] += -0.270013392;
+              sum[0] += 2.2804842;
             }
           } else {
-            if (sample[2] <14.999999) {
-              sum[0] += 1.88007677;
+            if (sample[0] <15.999999) {
+              sum[0] += 3.29173732;
             } else {
-              sum[0] += 3.3082757;
+              sum[0] += 0.563766718;
             }
           }
         }
       } else {
         if (sample[3] <113) {
-          if (sample[4] <134) {
+          if (sample[4] <120) {
             if (sample[3] <103) {
-              sum[0] += 2.79399824;
+              sum[0] += 2.41179514;
             } else {
-              sum[0] += 0.723330557;
+              sum[0] += 1.02725232;
             }
           } else {
-            if (sample[0] <13.999999) {
-              sum[0] += 3.37925339;
+            if (sample[0] <35) {
+              sum[0] += 1.56779027;
             } else {
-              sum[0] += -0.230451748;
+              sum[0] += -0.403097808;
             }
           }
         } else {
-          if (sample[5] <60) {
-            if (sample[3] <115) {
-              sum[0] += 2.81401086;
+          if (sample[5] <61) {
+            if (sample[2] <57) {
+              sum[0] += 3.42846107;
             } else {
-              sum[0] += 3.47262907;
+              sum[0] += 1.88141143;
             }
           } else {
-            if (sample[2] <57) {
-              sum[0] += 1.45607865;
+            if (sample[4] <89) {
+              sum[0] += 2.27202368;
             } else {
-              sum[0] += -0.325177521;
+              sum[0] += 0.211807564;
             }
           }
         }
       }
     } else {
-      if (sample[5] <84) {
-        if (sample[3] <105) {
-          if (sample[1] <34) {
-            if (sample[4] <255) {
-              sum[0] += 1.36229789;
+      if (sample[5] <89) {
+        if (sample[3] <40) {
+          if (sample[3] <14.999999) {
+            if (sample[3] <11.999999) {
+              sum[0] += 0.246853918;
             } else {
-              sum[0] += -0.126468167;
+              sum[0] += 1.64220035;
             }
           } else {
-            if (sample[1] <82) {
-              sum[0] += 2.82626677;
+            if (sample[2] <68) {
+              sum[0] += 0.219411567;
             } else {
-              sum[0] += 0.159378365;
+              sum[0] += 3.32785749;
             }
           }
         } else {
-          if (sample[1] <54) {
-            if (sample[4] <112) {
-              sum[0] += -0.0896220356;
+          if (sample[4] <104) {
+            if (sample[2] <63) {
+              sum[0] += 2.44842172;
             } else {
-              sum[0] += -0.572483122;
+              sum[0] += 0.0334044769;
             }
           } else {
-            if (sample[0] <83) {
-              sum[0] += 2.04743075;
+            if (sample[4] <120) {
+              sum[0] += 0.305971086;
             } else {
-              sum[0] += -0.0554675274;
+              sum[0] += -0.522308111;
             }
           }
         }
       } else {
-        if (sample[4] <100) {
-          if (sample[3] <75) {
-            if (sample[3] <36) {
-              sum[0] += 3.42316818;
+        if (sample[4] <104) {
+          if (sample[3] <45) {
+            if (sample[1] <172) {
+              sum[0] += 1.79192376;
             } else {
-              sum[0] += 2.7879467;
+              sum[0] += -0.0846736431;
             }
           } else {
-            if (sample[2] <60) {
-              sum[0] += 1.91580677;
+            if (sample[2] <96) {
+              sum[0] += -0.101765171;
             } else {
-              sum[0] += -0.395401388;
+              sum[0] += -0.509298623;
             }
           }
         } else {
           if (sample[3] <23.9999981) {
             if (sample[3] <14.999999) {
-              sum[0] += -0.428513139;
+              sum[0] += -0.461576581;
             } else {
-              sum[0] += 1.78236389;
+              sum[0] += 1.2102319;
             }
           } else {
-            if (sample[4] <134) {
-              sum[0] += -0.418182343;
+            if (sample[4] <151) {
+              sum[0] += -0.461130142;
             } else {
-              sum[0] += -0.569675803;
+              sum[0] += -0.575227618;
             }
           }
         }
@@ -238,1179 +253,1234 @@ std::array<float, XGB_NUM_CLASSES> xgb_classify_cube_v2(
   }
 
 
-  if (sample[2] <14.999999) {
-    if (sample[3] <84) {
+  if (sample[2] <15.999999) {
+    if (sample[0] <29.9999981) {
       if (sample[3] <80) {
         if (sample[3] <75) {
-          if (sample[3] <73) {
-            if (sample[1] <54) {
-              sum[1] += -0.582891583;
+          if (sample[3] <70) {
+            sum[1] += -0.583036959;
+          } else {
+            if (sample[1] <49) {
+              sum[1] += -0.556138039;
             } else {
               sum[1] += -0.0482758731;
             }
-          } else {
-            if (sample[1] <34) {
-              sum[1] += -0.543201447;
-            } else {
-              sum[1] += -0.44265154;
-            }
           }
         } else {
-          if (sample[1] <31.9999981) {
-            if (sample[1] <26.9999981) {
-              sum[1] += -0.378651291;
+          if (sample[5] <33) {
+            if (sample[4] <151) {
+              sum[1] += -0.476217926;
             } else {
-              sum[1] += -0.0385272503;
+              sum[1] += -0.106760912;
             }
           } else {
-            if (sample[1] <43) {
-              sum[1] += -0.47812739;
+            if (sample[1] <42) {
+              sum[1] += -0.429439813;
             } else {
-              sum[1] += 0.834196866;
+              sum[1] += 0.577981651;
             }
           }
         }
       } else {
-        if (sample[1] <31.9999981) {
-          if (sample[4] <203) {
-            if (sample[4] <162) {
-              sum[1] += 0.0277502295;
+        if (sample[3] <105) {
+          if (sample[4] <201) {
+            if (sample[4] <151) {
+              sum[1] += -0.261410803;
             } else {
-              sum[1] += 1.02293956;
+              sum[1] += 0.935402095;
             }
           } else {
-            if (sample[1] <26.9999981) {
-              sum[1] += 0.956033587;
+            if (sample[0] <15.999999) {
+              sum[1] += -0.467928231;
             } else {
-              sum[1] += 2.9586401;
+              sum[1] += 2.51887918;
             }
           }
         } else {
-          if (sample[4] <255) {
-            if (sample[4] <182) {
-              sum[1] += -0.44262293;
+          if (sample[3] <110) {
+            if (sample[4] <255) {
+              sum[1] += -0.53365159;
             } else {
-              sum[1] += -0.110399224;
+              sum[1] += 0.813623667;
             }
           } else {
-            if (sample[1] <34) {
-              sum[1] += -0.368421048;
+            if (sample[5] <27.9999981) {
+              sum[1] += -0.581164539;
             } else {
-              sum[1] += 1.84210515;
+              sum[1] += -0.463338077;
             }
           }
         }
       }
     } else {
-      if (sample[3] <115) {
-        if (sample[0] <37) {
-          if (sample[3] <107) {
-            if (sample[4] <203) {
-              sum[1] += 1.48357129;
+      if (sample[4] <178) {
+        if (sample[5] <44) {
+          if (sample[3] <111) {
+            if (sample[3] <91) {
+              sum[1] += -0.143902823;
             } else {
-              sum[1] += 3.1757338;
+              sum[1] += 1.2767868;
             }
           } else {
-            if (sample[4] <255) {
-              sum[1] += -0.376814574;
+            if (sample[3] <113) {
+              sum[1] += -0.0776340216;
             } else {
-              sum[1] += 2.10606694;
+              sum[1] += -0.56344527;
             }
           }
         } else {
-          if (sample[3] <98) {
-            if (sample[1] <38) {
-              sum[1] += 2.43033552;
+          if (sample[1] <39) {
+            if (sample[3] <114) {
+              sum[1] += 3.06308198;
             } else {
-              sum[1] += 0.496369034;
+              sum[1] += -0.204878047;
             }
           } else {
-            if (sample[5] <46) {
-              sum[1] += 3.23186994;
+            if (sample[1] <42) {
+              sum[1] += 0.22292991;
             } else {
-              sum[1] += 3.49156141;
+              sum[1] += -0.335463256;
             }
           }
         }
       } else {
-        if (sample[0] <50) {
-          if (sample[0] <47) {
-            sum[1] += -0.576118529;
+        if (sample[0] <35) {
+          if (sample[3] <107) {
+            if (sample[3] <90) {
+              sum[1] += 0.449213713;
+            } else {
+              sum[1] += 3.09540892;
+            }
           } else {
-            sum[1] += 0.12844035;
+            if (sample[4] <255) {
+              sum[1] += -0.440049589;
+            } else {
+              sum[1] += 2.31724119;
+            }
           }
         } else {
-          sum[1] += 3.11460662;
+          if (sample[3] <115) {
+            if (sample[3] <98) {
+              sum[1] += 2.4925139;
+            } else {
+              sum[1] += 3.43898273;
+            }
+          } else {
+            if (sample[0] <49) {
+              sum[1] += -0.525650561;
+            } else {
+              sum[1] += 2.85283017;
+            }
+          }
         }
       }
     }
   } else {
-    if (sample[4] <112) {
-      if (sample[4] <85) {
-        if (sample[4] <63) {
-          if (sample[4] <49) {
-            sum[1] += -0.583266556;
-          } else {
-            if (sample[3] <90) {
-              sum[1] += -0.582780659;
+    if (sample[4] <120) {
+      if (sample[4] <44) {
+        if (sample[4] <35) {
+          if (sample[1] <71) {
+            if (sample[3] <100) {
+              sum[1] += -0.581363738;
             } else {
-              sum[1] += -0.543683827;
+              sum[1] += -0.546907604;
             }
+          } else {
+            sum[1] += -0.583286166;
           }
         } else {
           if (sample[3] <98) {
             if (sample[3] <90) {
-              sum[1] += -0.582401872;
+              sum[1] += -0.582273364;
             } else {
-              sum[1] += -0.549822986;
+              sum[1] += -0.531285107;
             }
           } else {
-            if (sample[3] <124) {
-              sum[1] += -0.229287729;
+            if (sample[2] <68) {
+              sum[1] += 0.000482641364;
             } else {
-              sum[1] += -0.569238245;
+              sum[1] += -0.548511982;
             }
           }
         }
       } else {
         if (sample[3] <98) {
-          if (sample[3] <95) {
-            if (sample[3] <90) {
-              sum[1] += -0.582405329;
+          if (sample[3] <90) {
+            if (sample[2] <23.9999981) {
+              sum[1] += -0.559421122;
             } else {
-              sum[1] += -0.559824705;
+              sum[1] += -0.582221091;
             }
           } else {
-            if (sample[1] <43) {
-              sum[1] += 0.112952441;
+            if (sample[1] <58) {
+              sum[1] += -0.20927988;
             } else {
-              sum[1] += -0.556291401;
+              sum[1] += -0.570853412;
             }
           }
         } else {
-          if (sample[3] <120) {
-            if (sample[3] <103) {
-              sum[1] += -0.0611638464;
+          if (sample[2] <66) {
+            if (sample[3] <115) {
+              sum[1] += 1.36193788;
             } else {
-              sum[1] += 1.44986749;
+              sum[1] += -0.419321984;
             }
           } else {
-            if (sample[3] <123) {
-              sum[1] += 0.151783139;
+            if (sample[2] <76) {
+              sum[1] += -0.296085954;
             } else {
-              sum[1] += -0.580324113;
-            }
-          }
-        }
-      }
-    } else {
-      if (sample[3] <95) {
-        if (sample[3] <90) {
-          if (sample[3] <73) {
-            sum[1] += -0.583161294;
-          } else {
-            if (sample[5] <27.9999981) {
-              sum[1] += 1.4672488;
-            } else {
-              sum[1] += -0.566138387;
-            }
-          }
-        } else {
-          if (sample[2] <22.9999981) {
-            if (sample[1] <54) {
-              sum[1] += 0.0761130601;
-            } else {
-              sum[1] += 1.92830181;
-            }
-          } else {
-            if (sample[2] <36) {
-              sum[1] += -0.3547602;
-            } else {
-              sum[1] += -0.581660271;
-            }
-          }
-        }
-      } else {
-        if (sample[3] <120) {
-          if (sample[3] <103) {
-            if (sample[2] <31.9999981) {
-              sum[1] += 1.46276832;
-            } else {
-              sum[1] += -0.25512287;
-            }
-          } else {
-            if (sample[5] <46) {
-              sum[1] += 0.378785133;
-            } else {
-              sum[1] += 3.37826061;
-            }
-          }
-        } else {
-          if (sample[3] <128) {
-            if (sample[5] <57) {
-              sum[1] += -0.556939721;
-            } else {
-              sum[1] += 1.71244621;
-            }
-          } else {
-            if (sample[3] <133) {
-              sum[1] += -0.471035689;
-            } else {
-              sum[1] += -0.582321107;
-            }
-          }
-        }
-      }
-    }
-  }
-
-
-  if (sample[4] <73) {
-    if (sample[4] <63) {
-      if (sample[4] <56) {
-        if (sample[4] <48) {
-          sum[2] += -0.583300352;
-        } else {
-          if (sample[1] <95) {
-            sum[2] += -0.58313781;
-          } else {
-            if (sample[2] <94) {
-              sum[2] += -0.438481987;
-            } else {
-              sum[2] += -0.571941376;
-            }
-          }
-        }
-      } else {
-        if (sample[0] <96) {
-          if (sample[0] <86) {
-            sum[2] += -0.583018363;
-          } else {
-            if (sample[2] <84) {
-              sum[2] += -0.416640699;
-            } else {
-              sum[2] += -0.58202678;
-            }
-          }
-        } else {
-          if (sample[2] <101) {
-            if (sample[3] <95) {
-              sum[2] += 0.667311966;
-            } else {
-              sum[2] += -0.559476495;
-            }
-          } else {
-            if (sample[3] <75) {
-              sum[2] += -0.581754506;
-            } else {
-              sum[2] += -0.443820596;
-            }
-          }
-        }
-      }
-    } else {
-      if (sample[1] <102) {
-        if (sample[1] <98) {
-          if (sample[1] <95) {
-            if (sample[0] <76) {
-              sum[2] += -0.583189845;
-            } else {
-              sum[2] += -0.559362471;
-            }
-          } else {
-            if (sample[2] <74) {
-              sum[2] += 0.0157598313;
-            } else {
-              sum[2] += -0.566120982;
-            }
-          }
-        } else {
-          if (sample[2] <78) {
-            if (sample[0] <90) {
-              sum[2] += -0.265768528;
-            } else {
-              sum[2] += 1.81870937;
-            }
-          } else {
-            if (sample[2] <84) {
-              sum[2] += 0.00669854786;
-            } else {
-              sum[2] += -0.580287695;
-            }
-          }
-        }
-      } else {
-        if (sample[2] <98) {
-          if (sample[3] <75) {
-            if (sample[3] <65) {
-              sum[2] += -0.542301416;
-            } else {
-              sum[2] += 0.4138394;
-            }
-          } else {
-            if (sample[3] <95) {
-              sum[2] += 2.67875338;
-            } else {
-              sum[2] += -0.217012212;
-            }
-          }
-        } else {
-          if (sample[3] <70) {
-            if (sample[3] <62) {
-              sum[2] += -0.582886457;
-            } else {
-              sum[2] += -0.230769232;
-            }
-          } else {
-            if (sample[3] <95) {
-              sum[2] += 1.1774677;
-            } else {
-              sum[2] += -0.347144544;
-            }
-          }
-        }
-      }
-    }
-  } else {
-    if (sample[0] <100) {
-      if (sample[0] <78) {
-        if (sample[0] <65) {
-          if (sample[0] <62) {
-            if (sample[0] <55) {
-              sum[2] += -0.583283305;
-            } else {
-              sum[2] += -0.572862744;
-            }
-          } else {
-            if (sample[2] <53) {
-              sum[2] += -0.405780554;
-            } else {
-              sum[2] += -0.583098114;
-            }
-          }
-        } else {
-          if (sample[2] <60) {
-            if (sample[5] <79) {
-              sum[2] += -0.573939085;
-            } else {
-              sum[2] += 2.58894467;
-            }
-          } else {
-            if (sample[2] <72) {
-              sum[2] += -0.541576564;
-            } else {
-              sum[2] += -0.582781136;
-            }
-          }
-        }
-      } else {
-        if (sample[4] <134) {
-          if (sample[3] <95) {
-            if (sample[3] <68) {
-              sum[2] += -0.550890148;
-            } else {
-              sum[2] += 2.91659522;
-            }
-          } else {
-            if (sample[1] <88) {
-              sum[2] += -0.582928061;
-            } else {
-              sum[2] += -0.0452708304;
-            }
-          }
-        } else {
-          if (sample[0] <80) {
-            if (sample[2] <47) {
-              sum[2] += 0.103668161;
-            } else {
-              sum[2] += -0.582979679;
-            }
-          } else {
-            if (sample[2] <60) {
-              sum[2] += -0.513019621;
-            } else {
-              sum[2] += -0.583266258;
+              sum[1] += -0.574688017;
             }
           }
         }
       }
     } else {
       if (sample[3] <98) {
-        if (sample[3] <73) {
-          if (sample[3] <65) {
-            if (sample[2] <101) {
-              sum[2] += -1.34591129e-08;
-            } else {
-              sum[2] += -0.58311522;
-            }
+        if (sample[3] <91) {
+          if (sample[3] <75) {
+            sum[1] += -0.583046377;
           } else {
-            if (sample[1] <156) {
-              sum[2] += 0.457106233;
+            if (sample[2] <23.9999981) {
+              sum[1] += -0.43317166;
             } else {
-              sum[2] += 2.05251622;
+              sum[1] += -0.576484025;
             }
           }
         } else {
-          if (sample[3] <95) {
-            if (sample[2] <132) {
-              sum[2] += 3.4544208;
+          if (sample[2] <28.9999981) {
+            if (sample[4] <178) {
+              sum[1] += 0.242060363;
             } else {
-              sum[2] += -0.372712135;
+              sum[1] += 2.03225803;
             }
           } else {
-            if (sample[1] <115) {
-              sum[2] += 2.09363532;
+            if (sample[2] <34) {
+              sum[1] += -0.290299326;
             } else {
-              sum[2] += 0.553051353;
+              sum[1] += -0.578169167;
             }
           }
         }
       } else {
-        if (sample[3] <103) {
-          if (sample[1] <115) {
-            if (sample[1] <104) {
-              sum[2] += -0.308330685;
+        if (sample[3] <118) {
+          if (sample[3] <103) {
+            if (sample[2] <34) {
+              sum[1] += 2.00883579;
             } else {
-              sum[2] += 0.723258913;
+              sum[1] += -0.0720411763;
             }
           } else {
-            sum[2] += -0.502511084;
-          }
-        } else {
-          if (sample[1] <107) {
-            sum[2] += -0.582892179;
-          } else {
-            if (sample[5] <149) {
-              sum[2] += -0.0856470689;
+            if (sample[0] <46) {
+              sum[1] += 0.693330348;
             } else {
-              sum[2] += -0.562900007;
-            }
-          }
-        }
-      }
-    }
-  }
-
-
-  if (sample[4] <134) {
-    if (sample[4] <112) {
-      if (sample[4] <85) {
-        sum[3] += -0.583292127;
-      } else {
-        if (sample[1] <104) {
-          sum[3] += -0.58263427;
-        } else {
-          if (sample[0] <80) {
-            if (sample[3] <36) {
-              sum[3] += -0.384087145;
-            } else {
-              sum[3] += 0.451800317;
-            }
-          } else {
-            if (sample[3] <55) {
-              sum[3] += -0.416946441;
-            } else {
-              sum[3] += -0.583206892;
-            }
-          }
-        }
-      }
-    } else {
-      if (sample[1] <176) {
-        if (sample[1] <98) {
-          if (sample[1] <91) {
-            sum[3] += -0.581473112;
-          } else {
-            if (sample[0] <50) {
-              sum[3] += 0.944497526;
-            } else {
-              sum[3] += -0.568979561;
+              sum[1] += 3.43098617;
             }
           }
         } else {
-          if (sample[3] <55) {
-            if (sample[3] <36) {
-              sum[3] += -0.390878201;
-            } else {
-              sum[3] += 2.57849431;
-            }
-          } else {
-            if (sample[0] <55) {
-              sum[3] += 0.449056566;
-            } else {
-              sum[3] += -0.582855344;
-            }
-          }
-        }
-      } else {
-        if (sample[0] <110) {
-          if (sample[3] <36) {
-            if (sample[2] <177) {
-              sum[3] += -0.290566027;
-            } else {
-              sum[3] += -0.576267004;
-            }
-          } else {
-            if (sample[3] <55) {
-              sum[3] += 3.31238461;
-            } else {
-              sum[3] += -0.523908496;
-            }
-          }
-        } else {
-          if (sample[0] <113) {
-            if (sample[2] <155) {
-              sum[3] += 2.55248618;
-            } else {
-              sum[3] += -0.543689311;
-            }
-          } else {
-            sum[3] += -0.58182776;
-          }
-        }
-      }
-    }
-  } else {
-    if (sample[1] <88) {
-      if (sample[1] <71) {
-        if (sample[1] <68) {
-          if (sample[1] <57) {
-            sum[3] += -0.583321869;
-          } else {
-            if (sample[5] <71) {
-              sum[3] += -0.370935351;
-            } else {
-              sum[3] += -0.583208263;
-            }
-          }
-        } else {
-          if (sample[5] <71) {
-            if (sample[2] <50) {
-              sum[3] += 2.20185018;
-            } else {
-              sum[3] += -0.463576138;
-            }
-          } else {
-            sum[3] += -0.582693219;
-          }
-        }
-      } else {
-        if (sample[5] <90) {
-          if (sample[0] <27.9999981) {
-            if (sample[3] <36) {
-              sum[3] += -0.572559357;
-            } else {
-              sum[3] += 3.42852569;
-            }
-          } else {
-            if (sample[0] <50) {
-              sum[3] += 0.166033119;
-            } else {
-              sum[3] += -0.581634462;
-            }
-          }
-        } else {
-          sum[3] += -0.583219469;
-        }
-      }
-    } else {
-      if (sample[3] <29.9999981) {
-        if (sample[2] <110) {
-          if (sample[1] <102) {
-            if (sample[2] <101) {
-              sum[3] += -0.0297492724;
-            } else {
-              sum[3] += -0.524623573;
-            }
-          } else {
-            if (sample[0] <31.9999981) {
-              sum[3] += 0.773540795;
-            } else {
-              sum[3] += -0.558542907;
-            }
-          }
-        } else {
-          sum[3] += -0.58281821;
-        }
-      } else {
-        if (sample[3] <62) {
-          if (sample[3] <36) {
-            if (sample[2] <104) {
-              sum[3] += 3.28993011;
-            } else {
-              sum[3] += 1.03884542;
-            }
-          } else {
-            sum[3] += 3.49319363;
-          }
-        } else {
-          sum[3] += -0.582342088;
-        }
-      }
-    }
-  }
-
-
-  if (sample[3] <133) {
-    if (sample[3] <128) {
-      sum[4] += -0.583307385;
-    } else {
-      if (sample[4] <63) {
-        if (sample[4] <56) {
-          sum[4] += -0.583042264;
-        } else {
-          if (sample[2] <70) {
-            sum[4] += -0.543689311;
-          } else {
-            if (sample[0] <100) {
-              sum[4] += 0.0709938928;
-            } else {
-              sum[4] += -0.381818175;
-            }
-          }
-        }
-      } else {
-        if (sample[2] <68) {
-          if (sample[2] <63) {
+          if (sample[3] <120) {
             if (sample[0] <68) {
-              sum[4] += -0.581939638;
+              sum[1] += -0.521216989;
             } else {
-              sum[4] += -0.378258109;
+              sum[1] += 2.54162478;
             }
           } else {
-            if (sample[4] <73) {
-              sum[4] += -0.41420117;
+            if (sample[3] <130) {
+              sum[1] += -0.278045624;
             } else {
-              sum[4] += 0.373887211;
-            }
-          }
-        } else {
-          if (sample[0] <123) {
-            if (sample[5] <97) {
-              sum[4] += 1.00719416;
-            } else {
-              sum[4] += 2.6891036;
-            }
-          } else {
-            if (sample[1] <68) {
-              sum[4] += -0.470355719;
-            } else {
-              sum[4] += 0.855656624;
+              sum[1] += -0.579603314;
             }
           }
         }
       }
     }
-  } else {
-    if (sample[4] <73) {
-      if (sample[4] <63) {
-        if (sample[4] <52) {
-          if (sample[4] <42) {
-            if (sample[4] <31.9999981) {
-              sum[4] += -0.583263099;
-            } else {
-              sum[4] += -0.560654759;
-            }
-          } else {
-            if (sample[0] <74) {
-              sum[4] += -0.560123622;
-            } else {
-              sum[4] += -0.355043232;
-            }
-          }
+  }
+
+
+  if (sample[4] <67) {
+    if (sample[4] <58) {
+      if (sample[4] <48) {
+        if (sample[4] <40) {
+          sum[2] += -0.583249331;
         } else {
-          if (sample[0] <74) {
-            if (sample[0] <62) {
-              sum[4] += -0.54674381;
-            } else {
-              sum[4] += -0.272633493;
-            }
+          if (sample[0] <85) {
+            sum[2] += -0.582985342;
           } else {
-            if (sample[3] <163) {
-              sum[4] += 1.12296724;
+            if (sample[2] <89) {
+              sum[2] += -0.505681753;
             } else {
-              sum[4] += -0.387281388;
+              sum[2] += -0.579533875;
             }
           }
         }
       } else {
-        if (sample[0] <80) {
+        if (sample[0] <88) {
+          if (sample[0] <75) {
+            sum[2] += -0.582892597;
+          } else {
+            if (sample[2] <79) {
+              sum[2] += -0.532946229;
+            } else {
+              sum[2] += -0.579532087;
+            }
+          }
+        } else {
+          if (sample[2] <86) {
+            if (sample[1] <97) {
+              sum[2] += -0.493501812;
+            } else {
+              sum[2] += 0.51483655;
+            }
+          } else {
+            if (sample[2] <100) {
+              sum[2] += -0.471400648;
+            } else {
+              sum[2] += -0.576533914;
+            }
+          }
+        }
+      }
+    } else {
+      if (sample[0] <92) {
+        if (sample[0] <79) {
           if (sample[0] <70) {
-            if (sample[2] <60) {
-              sum[4] += -0.563455224;
-            } else {
-              sum[4] += -0.152038097;
-            }
+            sum[2] += -0.58310616;
           } else {
-            if (sample[1] <68) {
-              sum[4] += 1.02927768;
+            if (sample[2] <71) {
+              sum[2] += -0.514282346;
             } else {
-              sum[4] += -0.220630378;
+              sum[2] += -0.580617905;
             }
           }
         } else {
-          if (sample[3] <163) {
-            if (sample[1] <124) {
-              sum[4] += 2.93545914;
+          if (sample[2] <76) {
+            if (sample[1] <81) {
+              sum[2] += -0.566925406;
             } else {
-              sum[4] += -0.386206895;
+              sum[2] += -0.0619901121;
             }
           } else {
-            if (sample[1] <119) {
-              sum[4] += 0.306681246;
+            if (sample[2] <79) {
+              sum[2] += -0.495296746;
             } else {
-              sum[4] += -0.522388041;
-            }
-          }
-        }
-      }
-    } else {
-      if (sample[2] <60) {
-        if (sample[0] <62) {
-          if (sample[5] <57) {
-            sum[4] += -0.582411826;
-          } else {
-            if (sample[2] <53) {
-              sum[4] += -0.530499041;
-            } else {
-              sum[4] += 0.194199219;
-            }
-          }
-        } else {
-          if (sample[4] <100) {
-            sum[4] += -0.533795476;
-          } else {
-            if (sample[4] <134) {
-              sum[4] += 2.74572396;
-            } else {
-              sum[4] += 0.0341463275;
+              sum[2] += -0.574341893;
             }
           }
         }
       } else {
-        if (sample[0] <62) {
-          if (sample[0] <50) {
-            if (sample[1] <43) {
-              sum[4] += -0.532743335;
+        if (sample[2] <100) {
+          if (sample[3] <100) {
+            if (sample[3] <84) {
+              sum[2] += 0.255729198;
             } else {
-              sum[4] += 0.228486627;
+              sum[2] += 1.85796261;
             }
           } else {
-            if (sample[4] <85) {
-              sum[4] += 0.760986865;
+            if (sample[3] <103) {
+              sum[2] += 0.127764627;
             } else {
-              sum[4] += 2.66427279;
+              sum[2] += -0.570735633;
             }
           }
         } else {
-          if (sample[1] <119) {
-            if (sample[3] <179) {
-              sum[4] += 3.48608303;
+          if (sample[2] <121) {
+            if (sample[1] <143) {
+              sum[2] += -0.523711562;
             } else {
-              sum[4] += -0.41420117;
+              sum[2] += 0.755939484;
             }
           } else {
-            sum[4] += -0.484429061;
-          }
-        }
-      }
-    }
-  }
-
-
-  if (sample[4] <234) {
-    if (sample[4] <203) {
-      if (sample[4] <162) {
-        if (sample[4] <134) {
-          if (sample[4] <112) {
-            sum[5] += -0.58326304;
-          } else {
-            if (sample[3] <11.999999) {
-              sum[5] += 0.87732023;
+            if (sample[0] <158) {
+              sum[2] += -0.580229044;
             } else {
-              sum[5] += -0.581513405;
+              sum[2] += -0.517157674;
             }
           }
-        } else {
-          if (sample[3] <14.999999) {
-            if (sample[2] <84) {
-              sum[5] += -0.126015618;
-            } else {
-              sum[5] += 2.64332032;
-            }
-          } else {
-            if (sample[3] <17.9999981) {
-              sum[5] += -0.368050575;
-            } else {
-              sum[5] += -0.583074152;
-            }
-          }
-        }
-      } else {
-        if (sample[3] <14.999999) {
-          if (sample[2] <91) {
-            if (sample[2] <72) {
-              sum[5] += -0.504693687;
-            } else {
-              sum[5] += 0.792486191;
-            }
-          } else {
-            if (sample[1] <71) {
-              sum[5] += 3.0647428;
-            } else {
-              sum[5] += 1.92945087;
-            }
-          }
-        } else {
-          if (sample[3] <17.9999981) {
-            if (sample[2] <81) {
-              sum[5] += -0.440590084;
-            } else {
-              sum[5] += 0.0760536045;
-            }
-          } else {
-            if (sample[3] <19.9999981) {
-              sum[5] += -0.544321656;
-            } else {
-              sum[5] += -0.583272994;
-            }
-          }
-        }
-      }
-    } else {
-      if (sample[3] <14.999999) {
-        if (sample[2] <91) {
-          if (sample[5] <75) {
-            if (sample[2] <70) {
-              sum[5] += -0.537769914;
-            } else {
-              sum[5] += -0.165465564;
-            }
-          } else {
-            if (sample[0] <9.99999905) {
-              sum[5] += 1.39791083;
-            } else {
-              sum[5] += 0.744396389;
-            }
-          }
-        } else {
-          if (sample[5] <97) {
-            if (sample[1] <50) {
-              sum[5] += 2.46054888;
-            } else {
-              sum[5] += 0.659068346;
-            }
-          } else {
-            if (sample[3] <11.999999) {
-              sum[5] += 3.38984609;
-            } else {
-              sum[5] += 3.10830545;
-            }
-          }
-        }
-      } else {
-        if (sample[3] <17.9999981) {
-          if (sample[2] <104) {
-            if (sample[2] <76) {
-              sum[5] += -0.541759014;
-            } else {
-              sum[5] += -0.212038234;
-            }
-          } else {
-            if (sample[1] <68) {
-              sum[5] += 2.89958501;
-            } else {
-              sum[5] += 0.174148157;
-            }
-          }
-        } else {
-          sum[5] += -0.58295089;
         }
       }
     }
   } else {
-    if (sample[2] <81) {
-      if (sample[2] <72) {
-        if (sample[2] <68) {
-          if (sample[2] <60) {
-            if (sample[2] <57) {
-              sum[5] += -0.583295703;
-            } else {
-              sum[5] += -0.555466533;
-            }
+    if (sample[0] <92) {
+      if (sample[3] <75) {
+        if (sample[3] <70) {
+          if (sample[0] <77) {
+            sum[2] += -0.583117008;
           } else {
-            if (sample[1] <31.9999981) {
-              sum[5] += -0.202866942;
+            if (sample[3] <65) {
+              sum[2] += -0.582031071;
             } else {
-              sum[5] += -0.527261794;
+              sum[2] += 0.665916085;
             }
           }
         } else {
-          if (sample[1] <31.9999981) {
-            if (sample[4] <255) {
-              sum[5] += 0.0709938928;
+          if (sample[1] <81) {
+            if (sample[1] <78) {
+              sum[2] += -0.582192481;
             } else {
-              sum[5] += 2.088938;
+              sum[2] += -0.116612688;
             }
           } else {
-            if (sample[1] <34) {
-              sum[5] += -0.14936398;
+            if (sample[2] <48) {
+              sum[2] += 2.84452271;
             } else {
-              sum[5] += -0.551821947;
+              sum[2] += 0.762806118;
             }
           }
         }
       } else {
-        if (sample[1] <34) {
-          if (sample[1] <31.9999981) {
-            if (sample[4] <255) {
-              sum[5] += 1.41587889;
+        if (sample[1] <81) {
+          if (sample[1] <64) {
+            if (sample[1] <61) {
+              sum[2] += -0.582454145;
             } else {
-              sum[5] += 3.03639698;
+              sum[2] += -0.453024805;
             }
           } else {
-            if (sample[5] <75) {
-              sum[5] += 0.916722596;
+            if (sample[2] <36) {
+              sum[2] += 2.32465696;
             } else {
-              sum[5] += 2.4750092;
+              sum[2] += -0.129732981;
             }
           }
         } else {
-          if (sample[3] <14.999999) {
-            if (sample[2] <76) {
-              sum[5] += 0.115463898;
+          if (sample[4] <89) {
+            if (sample[1] <100) {
+              sum[2] += 0.479237407;
             } else {
-              sum[5] += 1.29860222;
+              sum[2] += 2.75573444;
             }
           } else {
-            if (sample[1] <43) {
-              sum[5] += -0.259819627;
+            if (sample[4] <104) {
+              sum[2] += 2.31067944;
             } else {
-              sum[5] += -0.572058499;
+              sum[2] += 3.40367174;
             }
           }
         }
       }
     } else {
-      if (sample[3] <14.999999) {
-        if (sample[2] <91) {
-          if (sample[1] <34) {
-            sum[5] += 3.41845202;
-          } else {
-            if (sample[2] <84) {
-              sum[5] += 2.29685473;
+      if (sample[3] <103) {
+        if (sample[3] <75) {
+          if (sample[3] <68) {
+            if (sample[3] <65) {
+              sum[2] += -0.583063364;
             } else {
-              sum[5] += 2.9767158;
+              sum[2] += -0.063189581;
+            }
+          } else {
+            if (sample[4] <78) {
+              sum[2] += 0.200832918;
+            } else {
+              sum[2] += 1.19096351;
             }
           }
         } else {
-          if (sample[2] <113) {
-            if (sample[3] <11.999999) {
-              sum[5] += 3.47709656;
+          if (sample[3] <100) {
+            if (sample[4] <78) {
+              sum[2] += 2.65477777;
             } else {
-              sum[5] += 3.31400156;
-            }
-          } else {
-            sum[5] += 3.4922626;
-          }
-        }
-      } else {
-        if (sample[2] <101) {
-          if (sample[3] <17.9999981) {
-            if (sample[5] <90) {
-              sum[5] += -0.280177414;
-            } else {
-              sum[5] += 0.73481369;
-            }
-          } else {
-            if (sample[1] <60) {
-              sum[5] += -0.407230675;
-            } else {
-              sum[5] += -0.581734776;
-            }
-          }
-        } else {
-          if (sample[3] <17.9999981) {
-            if (sample[1] <63) {
-              sum[5] += 2.99466467;
-            } else {
-              sum[5] += 1.63574958;
-            }
-          } else {
-            sum[5] += -0.578233719;
-          }
-        }
-      }
-    }
-  }
-
-
-  if (sample[4] <134) {
-    if (sample[4] <112) {
-      if (sample[4] <85) {
-        sum[6] += -0.583321154;
-      } else {
-        if (sample[2] <177) {
-          if (sample[2] <121) {
-            sum[6] += -0.582667232;
-          } else {
-            if (sample[3] <40) {
-              sum[6] += -0.414632767;
-            } else {
-              sum[6] += -0.583195686;
-            }
-          }
-        } else {
-          if (sample[3] <29.9999981) {
-            if (sample[4] <100) {
-              sum[6] += -0.569250286;
-            } else {
-              sum[6] += -0.302685469;
+              sum[2] += 3.4238565;
             }
           } else {
             if (sample[0] <121) {
-              sum[6] += 1.41587889;
+              sum[2] += 1.95740211;
             } else {
-              sum[6] += -0.419083238;
+              sum[2] += -0.0463261642;
+            }
+          }
+        }
+      } else {
+        if (sample[3] <107) {
+          if (sample[0] <102) {
+            if (sample[1] <83) {
+              sum[2] += -0.496372551;
+            } else {
+              sum[2] += -0.0197183266;
+            }
+          } else {
+            if (sample[1] <103) {
+              sum[2] += -0.571992397;
+            } else {
+              sum[2] += -0.440413773;
+            }
+          }
+        } else {
+          if (sample[1] <106) {
+            if (sample[3] <108) {
+              sum[2] += -0.531042278;
+            } else {
+              sum[2] += -0.583149493;
+            }
+          } else {
+            if (sample[2] <109) {
+              sum[2] += -0.167886898;
+            } else {
+              sum[2] += -0.581256449;
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+  if (sample[4] <120) {
+    if (sample[4] <58) {
+      if (sample[4] <52) {
+        if (sample[4] <44) {
+          sum[3] += -0.583303154;
+        } else {
+          if (sample[1] <90) {
+            sum[3] += -0.583159924;
+          } else {
+            if (sample[0] <82) {
+              sum[3] += -0.278599948;
+            } else {
+              sum[3] += -0.565216482;
+            }
+          }
+        }
+      } else {
+        if (sample[1] <93) {
+          if (sample[1] <87) {
+            if (sample[1] <81) {
+              sum[3] += -0.583259523;
+            } else {
+              sum[3] += -0.559101403;
+            }
+          } else {
+            if (sample[0] <73) {
+              sum[3] += -0.325014502;
+            } else {
+              sum[3] += -0.571847856;
+            }
+          }
+        } else {
+          if (sample[0] <82) {
+            if (sample[3] <45) {
+              sum[3] += -0.52706778;
+            } else {
+              sum[3] += 2.18878412;
+            }
+          } else {
+            if (sample[1] <147) {
+              sum[3] += -0.5663715;
+            } else {
+              sum[3] += -0.204942808;
             }
           }
         }
       }
     } else {
-      if (sample[2] <192) {
-        if (sample[3] <29.9999981) {
-          if (sample[1] <120) {
-            if (sample[1] <104) {
-              sum[6] += -0.568522632;
-            } else {
-              sum[6] += 0.0608350448;
-            }
+      if (sample[1] <83) {
+        if (sample[1] <81) {
+          if (sample[1] <78) {
+            sum[3] += -0.583121717;
           } else {
-            if (sample[0] <68) {
-              sum[6] += 3.1029284;
+            if (sample[0] <59) {
+              sum[3] += -0.529007435;
             } else {
-              sum[6] += 1.1717118;
+              sum[3] += -0.58167845;
             }
           }
         } else {
-          if (sample[2] <177) {
-            if (sample[3] <36) {
-              sum[6] += -0.508698225;
+          if (sample[0] <59) {
+            if (sample[3] <40) {
+              sum[3] += -0.574748218;
             } else {
-              sum[6] += -0.582893074;
+              sum[3] += 0.934664667;
             }
           } else {
-            if (sample[3] <36) {
-              sum[6] += 2.88822818;
+            if (sample[0] <65) {
+              sum[3] += -0.501897931;
             } else {
-              sum[6] += -0.534752667;
+              sum[3] += -0.582865894;
             }
           }
         }
       } else {
-        if (sample[3] <23.9999981) {
-          if (sample[0] <103) {
-            sum[6] += 0.462809891;
-          } else {
-            if (sample[1] <188) {
-              sum[6] += -0.506702423;
+        if (sample[3] <60) {
+          if (sample[3] <43) {
+            if (sample[3] <38) {
+              sum[3] += -0.562148809;
             } else {
-              sum[6] += 0.0725388452;
+              sum[3] += 0.0552829765;
+            }
+          } else {
+            if (sample[3] <56) {
+              sum[3] += 3.02623844;
+            } else {
+              sum[3] += 0.895228207;
             }
           }
         } else {
-          if (sample[0] <128) {
-            if (sample[3] <29.9999981) {
-              sum[6] += 3.17018533;
+          if (sample[3] <65) {
+            if (sample[1] <97) {
+              sum[3] += -0.122653328;
             } else {
-              sum[6] += 1.72573185;
+              sum[3] += -0.560293913;
             }
           } else {
-            if (sample[0] <129) {
-              sum[6] += -0.386206895;
+            if (sample[3] <68) {
+              sum[3] += -0.525962114;
             } else {
-              sum[6] += -0.124260366;
+              sum[3] += -0.583280265;
             }
           }
         }
       }
     }
   } else {
-    if (sample[2] <192) {
-      if (sample[1] <98) {
-        if (sample[1] <78) {
-          if (sample[1] <73) {
-            if (sample[1] <57) {
-              sum[6] += -0.583295226;
-            } else {
-              sum[6] += -0.574758768;
-            }
+    if (sample[1] <90) {
+      if (sample[1] <68) {
+        if (sample[1] <64) {
+          if (sample[1] <61) {
+            sum[3] += -0.583239555;
           } else {
-            if (sample[0] <13.999999) {
-              sum[6] += -0.217516601;
+            if (sample[5] <64) {
+              sum[3] += -0.323589385;
             } else {
-              sum[6] += -0.575798094;
+              sum[3] += -0.583136559;
             }
           }
         } else {
-          if (sample[3] <36) {
-            if (sample[3] <19.9999981) {
-              sum[6] += -0.570397377;
+          if (sample[5] <69) {
+            if (sample[0] <15.999999) {
+              sum[3] += 2.97872329;
             } else {
-              sum[6] += 1.18559039;
+              sum[3] += -0.484135628;
             }
           } else {
-            if (sample[3] <40) {
-              sum[6] += -0.433548391;
-            } else {
-              sum[6] += -0.582000911;
-            }
+            sum[3] += -0.583147407;
           }
         }
       } else {
-        if (sample[3] <29.9999981) {
-          if (sample[3] <19.9999981) {
-            if (sample[3] <17.9999981) {
-              sum[6] += -0.495088398;
+        if (sample[5] <92) {
+          if (sample[0] <26.9999981) {
+            if (sample[3] <30.9999981) {
+              sum[3] += -0.579095602;
             } else {
-              sum[6] += 1.22143483;
+              sum[3] += 3.39296293;
             }
           } else {
-            if (sample[4] <162) {
-              sum[6] += 3.28091407;
+            if (sample[0] <35) {
+              sum[3] += 0.154303461;
             } else {
-              sum[6] += 3.48846292;
+              sum[3] += -0.52688992;
             }
           }
         } else {
-          if (sample[3] <36) {
-            if (sample[2] <101) {
-              sum[6] += -0.493927211;
-            } else {
-              sum[6] += 1.53802478;
-            }
-          } else {
-            if (sample[3] <40) {
-              sum[6] += -0.566823244;
-            } else {
-              sum[6] += -0.583136916;
-            }
-          }
+          sum[3] += -0.58285749;
         }
       }
     } else {
-      if (sample[1] <123) {
-        sum[6] += -0.583126128;
-      } else {
-        if (sample[3] <19.9999981) {
-          sum[6] += -0.401273876;
+      if (sample[3] <30.9999981) {
+        if (sample[2] <106) {
+          if (sample[1] <100) {
+            if (sample[1] <97) {
+              sum[3] += -0.495293021;
+            } else {
+              sum[3] += -0.0299074445;
+            }
+          } else {
+            if (sample[0] <35) {
+              sum[3] += 1.91126263;
+            } else {
+              sum[3] += 0.553406179;
+            }
+          }
         } else {
-          sum[6] += 3.49943638;
+          if (sample[5] <121) {
+            if (sample[1] <117) {
+              sum[3] += -0.530116379;
+            } else {
+              sum[3] += 0.62236774;
+            }
+          } else {
+            if (sample[3] <26.9999981) {
+              sum[3] += -0.583309591;
+            } else {
+              sum[3] += -0.571256459;
+            }
+          }
+        }
+      } else {
+        if (sample[3] <56) {
+          if (sample[3] <38) {
+            if (sample[4] <151) {
+              sum[3] += 3.05234981;
+            } else {
+              sum[3] += 3.35734868;
+            }
+          } else {
+            if (sample[3] <53) {
+              sum[3] += 3.48624039;
+            } else {
+              sum[3] += 2.81440949;
+            }
+          }
+        } else {
+          if (sample[0] <56) {
+            if (sample[1] <97) {
+              sum[3] += -0.45161289;
+            } else {
+              sum[3] += 1.94936693;
+            }
+          } else {
+            if (sample[3] <60) {
+              sum[3] += -0.335463256;
+            } else {
+              sum[3] += -0.58300823;
+            }
+          }
         }
       }
     }
   }
 
+
+  if (sample[3] <130) {
+    sum[4] += -0.583275437;
+  } else {
+    if (sample[4] <52) {
+      if (sample[4] <44) {
+        if (sample[4] <35) {
+          if (sample[4] <27.9999981) {
+            if (sample[4] <22.9999981) {
+              sum[4] += -0.583289981;
+            } else {
+              sum[4] += -0.570532918;
+            }
+          } else {
+            if (sample[0] <109) {
+              sum[4] += -0.490373284;
+            } else {
+              sum[4] += -0.56681639;
+            }
+          }
+        } else {
+          if (sample[0] <73) {
+            if (sample[5] <69) {
+              sum[4] += -0.579121649;
+            } else {
+              sum[4] += -0.483317256;
+            }
+          } else {
+            if (sample[1] <71) {
+              sum[4] += 0.585546911;
+            } else {
+              sum[4] += -0.401624084;
+            }
+          }
+        }
+      } else {
+        if (sample[0] <73) {
+          if (sample[0] <68) {
+            if (sample[0] <65) {
+              sum[4] += -0.569616437;
+            } else {
+              sum[4] += -0.422110558;
+            }
+          } else {
+            if (sample[3] <163) {
+              sum[4] += 0.0137704741;
+            } else {
+              sum[4] += -0.555663109;
+            }
+          }
+        } else {
+          if (sample[2] <89) {
+            if (sample[3] <163) {
+              sum[4] += 2.50617695;
+            } else {
+              sum[4] += -0.430639327;
+            }
+          } else {
+            if (sample[3] <163) {
+              sum[4] += 0.626567185;
+            } else {
+              sum[4] += -0.569550514;
+            }
+          }
+        }
+      }
+    } else {
+      if (sample[0] <59) {
+        if (sample[2] <57) {
+          if (sample[2] <54) {
+            sum[4] += -0.581475914;
+          } else {
+            if (sample[0] <40) {
+              sum[4] += 0.758122683;
+            } else {
+              sum[4] += -0.446665049;
+            }
+          }
+        } else {
+          if (sample[4] <78) {
+            if (sample[3] <163) {
+              sum[4] += 0.168510064;
+            } else {
+              sum[4] += -0.466450334;
+            }
+          } else {
+            if (sample[0] <52) {
+              sum[4] += 0.457186908;
+            } else {
+              sum[4] += 2.22837353;
+            }
+          }
+        }
+      } else {
+        if (sample[2] <68) {
+          if (sample[4] <89) {
+            if (sample[2] <63) {
+              sum[4] += -0.230691239;
+            } else {
+              sum[4] += 0.844274759;
+            }
+          } else {
+            if (sample[2] <57) {
+              sum[4] += 0.379903227;
+            } else {
+              sum[4] += 2.88092613;
+            }
+          }
+        } else {
+          if (sample[1] <124) {
+            if (sample[0] <73) {
+              sum[4] += 2.59152818;
+            } else {
+              sum[4] += 3.45460439;
+            }
+          } else {
+            if (sample[5] <170) {
+              sum[4] += -0.220630378;
+            } else {
+              sum[4] += -0.567773521;
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+  if (sample[4] <242) {
+    if (sample[3] <14.999999) {
+      if (sample[4] <89) {
+        if (sample[4] <78) {
+          if (sample[4] <67) {
+            if (sample[4] <56) {
+              sum[5] += -0.583058476;
+            } else {
+              sum[5] += -0.46777156;
+            }
+          } else {
+            if (sample[3] <8.99999905) {
+              sum[5] += 0.503651261;
+            } else {
+              sum[5] += -0.517135739;
+            }
+          }
+        } else {
+          if (sample[3] <8.99999905) {
+            if (sample[2] <79) {
+              sum[5] += -0.488765985;
+            } else {
+              sum[5] += 2.32175112;
+            }
+          } else {
+            if (sample[3] <11.999999) {
+              sum[5] += -0.143946111;
+            } else {
+              sum[5] += -0.513373613;
+            }
+          }
+        }
+      } else {
+        if (sample[2] <86) {
+          if (sample[5] <77) {
+            if (sample[2] <71) {
+              sum[5] += -0.555521607;
+            } else {
+              sum[5] += -0.0568019226;
+            }
+          } else {
+            if (sample[1] <51) {
+              sum[5] += 0.32473591;
+            } else {
+              sum[5] += 1.75312269;
+            }
+          }
+        } else {
+          if (sample[3] <11.999999) {
+            if (sample[1] <90) {
+              sum[5] += 3.24370718;
+            } else {
+              sum[5] += 1.19586504;
+            }
+          } else {
+            if (sample[0] <46) {
+              sum[5] += 2.56638837;
+            } else {
+              sum[5] += -0.146667749;
+            }
+          }
+        }
+      }
+    } else {
+      if (sample[3] <17.9999981) {
+        if (sample[4] <178) {
+          if (sample[4] <151) {
+            if (sample[4] <120) {
+              sum[5] += -0.58320564;
+            } else {
+              sum[5] += -0.536326885;
+            }
+          } else {
+            if (sample[2] <79) {
+              sum[5] += -0.546857238;
+            } else {
+              sum[5] += -0.267570913;
+            }
+          }
+        } else {
+          if (sample[2] <96) {
+            if (sample[2] <86) {
+              sum[5] += -0.502208173;
+            } else {
+              sum[5] += -0.0217739809;
+            }
+          } else {
+            if (sample[1] <68) {
+              sum[5] += 2.21495867;
+            } else {
+              sum[5] += 0.299863786;
+            }
+          }
+        }
+      } else {
+        if (sample[3] <179) {
+          sum[5] += -0.583313704;
+        } else {
+          if (sample[4] <78) {
+            if (sample[5] <85) {
+              sum[5] += -0.261410803;
+            } else {
+              sum[5] += -0.574859142;
+            }
+          } else {
+            if (sample[0] <73) {
+              sum[5] += -0.539376736;
+            } else {
+              sum[5] += 1.62790692;
+            }
+          }
+        }
+      }
+    }
+  } else {
+    if (sample[2] <82) {
+      if (sample[2] <72) {
+        if (sample[2] <68) {
+          if (sample[2] <61) {
+            if (sample[2] <57) {
+              sum[5] += -0.583318353;
+            } else {
+              sum[5] += -0.561275423;
+            }
+          } else {
+            if (sample[1] <35) {
+              sum[5] += -0.325697392;
+            } else {
+              sum[5] += -0.575127542;
+            }
+          }
+        } else {
+          if (sample[1] <30.9999981) {
+            if (sample[1] <24.9999981) {
+              sum[5] += -0.201438859;
+            } else {
+              sum[5] += 1.86233652;
+            }
+          } else {
+            if (sample[3] <14.999999) {
+              sum[5] += -0.00379920285;
+            } else {
+              sum[5] += -0.55668515;
+            }
+          }
+        }
+      } else {
+        if (sample[1] <35) {
+          if (sample[3] <11.999999) {
+            if (sample[1] <24.9999981) {
+              sum[5] += 2.161273;
+            } else {
+              sum[5] += 2.93534231;
+            }
+          } else {
+            if (sample[2] <74) {
+              sum[5] += 1.01428139;
+            } else {
+              sum[5] += 2.33708763;
+            }
+          }
+        } else {
+          if (sample[3] <14.999999) {
+            if (sample[5] <77) {
+              sum[5] += -1.68920042e-08;
+            } else {
+              sum[5] += 1.13500106;
+            }
+          } else {
+            if (sample[1] <42) {
+              sum[5] += -0.327377826;
+            } else {
+              sum[5] += -0.55212009;
+            }
+          }
+        }
+      }
+    } else {
+      if (sample[3] <17.9999981) {
+        if (sample[3] <14.999999) {
+          if (sample[2] <89) {
+            if (sample[1] <35) {
+              sum[5] += 3.27339411;
+            } else {
+              sum[5] += 2.16883922;
+            }
+          } else {
+            if (sample[3] <11.999999) {
+              sum[5] += 3.4936626;
+            } else {
+              sum[5] += 3.39841628;
+            }
+          }
+        } else {
+          if (sample[2] <100) {
+            if (sample[2] <93) {
+              sum[5] += 0.137435392;
+            } else {
+              sum[5] += 1.15068483;
+            }
+          } else {
+            if (sample[1] <56) {
+              sum[5] += 3.24739742;
+            } else {
+              sum[5] += 2.77639771;
+            }
+          }
+        }
+      } else {
+        if (sample[3] <19.9999981) {
+          if (sample[1] <53) {
+            sum[5] += -0.545543075;
+          } else {
+            if (sample[1] <58) {
+              sum[5] += -0.175750166;
+            } else {
+              sum[5] += -0.492462307;
+            }
+          }
+        } else {
+          sum[5] += -0.582245708;
+        }
+      }
+    }
+  }
+
+
+  if (sample[4] <120) {
+    if (sample[4] <67) {
+      if (sample[4] <56) {
+        if (sample[4] <45) {
+          sum[6] += -0.583275437;
+        } else {
+          if (sample[1] <97) {
+            if (sample[1] <93) {
+              sum[6] += -0.583309233;
+            } else {
+              sum[6] += -0.558432758;
+            }
+          } else {
+            if (sample[0] <85) {
+              sum[6] += -0.0919606015;
+            } else {
+              sum[6] += -0.566559076;
+            }
+          }
+        }
+      } else {
+        if (sample[2] <96) {
+          if (sample[2] <93) {
+            if (sample[2] <89) {
+              sum[6] += -0.583271623;
+            } else {
+              sum[6] += -0.56125617;
+            }
+          } else {
+            if (sample[1] <93) {
+              sum[6] += -0.581406295;
+            } else {
+              sum[6] += -0.385582238;
+            }
+          }
+        } else {
+          if (sample[5] <109) {
+            if (sample[1] <100) {
+              sum[6] += -0.416214198;
+            } else {
+              sum[6] += 1.6208024;
+            }
+          } else {
+            if (sample[2] <163) {
+              sum[6] += -0.537023425;
+            } else {
+              sum[6] += 0.202042818;
+            }
+          }
+        }
+      }
+    } else {
+      if (sample[2] <173) {
+        if (sample[3] <30.9999981) {
+          if (sample[1] <100) {
+            if (sample[1] <97) {
+              sum[6] += -0.569518924;
+            } else {
+              sum[6] += 0.273920357;
+            }
+          } else {
+            if (sample[3] <23.9999981) {
+              sum[6] += 0.296511382;
+            } else {
+              sum[6] += 2.1474967;
+            }
+          }
+        } else {
+          if (sample[3] <38) {
+            if (sample[2] <93) {
+              sum[6] += -0.581083417;
+            } else {
+              sum[6] += -0.256281197;
+            }
+          } else {
+            sum[6] += -0.583078206;
+          }
+        }
+      } else {
+        if (sample[0] <137) {
+          if (sample[3] <19.9999981) {
+            sum[6] += -0.562893569;
+          } else {
+            if (sample[0] <114) {
+              sum[6] += 0.170761004;
+            } else {
+              sum[6] += 3.04589081;
+            }
+          }
+        } else {
+          if (sample[0] <138) {
+            if (sample[1] <184) {
+              sum[6] += 0.698544621;
+            } else {
+              sum[6] += -0.504155099;
+            }
+          } else {
+            if (sample[0] <140) {
+              sum[6] += -0.375080705;
+            } else {
+              sum[6] += -0.581585824;
+            }
+          }
+        }
+      }
+    }
+  } else {
+    if (sample[2] <204) {
+      if (sample[1] <93) {
+        if (sample[1] <87) {
+          if (sample[1] <76) {
+            if (sample[1] <73) {
+              sum[6] += -0.583083928;
+            } else {
+              sum[6] += -0.534182787;
+            }
+          } else {
+            if (sample[5] <111) {
+              sum[6] += -0.216438368;
+            } else {
+              sum[6] += -0.582926273;
+            }
+          }
+        } else {
+          if (sample[3] <30.9999981) {
+            if (sample[3] <23.9999981) {
+              sum[6] += -0.518572092;
+            } else {
+              sum[6] += 2.85540009;
+            }
+          } else {
+            if (sample[3] <38) {
+              sum[6] += -0.0998573601;
+            } else {
+              sum[6] += -0.582511008;
+            }
+          }
+        }
+      } else {
+        if (sample[3] <30.9999981) {
+          if (sample[3] <19.9999981) {
+            if (sample[3] <17.9999981) {
+              sum[6] += -0.520190835;
+            } else {
+              sum[6] += 1.26825583;
+            }
+          } else {
+            if (sample[4] <151) {
+              sum[6] += 2.77647138;
+            } else {
+              sum[6] += 3.45796657;
+            }
+          }
+        } else {
+          if (sample[3] <38) {
+            if (sample[2] <100) {
+              sum[6] += -0.533854127;
+            } else {
+              sum[6] += -0.364399284;
+            }
+          } else {
+            sum[6] += -0.582524955;
+          }
+        }
+      }
+    } else {
+      if (sample[3] <19.9999981) {
+        sum[6] += -0.582321048;
+      } else {
+        if (sample[0] <124) {
+          if (sample[3] <23.9999981) {
+            if (sample[0] <106) {
+              sum[6] += 3.34907579;
+            } else {
+              sum[6] += 0.25454542;
+            }
+          } else {
+            sum[6] += 3.49650502;
+          }
+        } else {
+          if (sample[0] <127) {
+            sum[6] += 1.10526311;
+          } else {
+            sum[6] += -0.32110092;
+          }
+        }
+      }
+    }
+  }
 
 
   return sum;
