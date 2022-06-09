@@ -192,17 +192,46 @@ This creates a file ``xgboost_classifier.cpp`` in the current working directory.
 Integrate the model in the object tracker
 -----------------------------------------
 
-Copy the generated ``xgboost_classifier.cpp`` to ``src/object_name/`` of the
-trifinger_object_tracking package.  Then open it and apply the following
-changes (they make the code more efficient):
+The generated C++ files needs to be modified a bit to be integrated into the
+trifinger_object_tracking package.
 
-1. Adjust the header include to
+The file structure is as follows:
+``src/<object_model_name>/xgboost_classifier.cpp``, where "<object_model_name>"
+is something like "cube_v2".
+
+Copy the generated ``xgboost_classifier.cpp`` to the subdirectory of the
+corresponding object model.  Then open it and apply the following changes:
+
+1. Adjust the includes:
+
+   Remove the following lines
 
    .. code-block:: c++
 
-       #include <trifinger_object_tracking/xgboost_classifier.h>
+      #include "xgboost_classifier.h"
+      #include <vector>
 
-2. Replace ``std::vector`` with ``std::array`` (for better performance):
+   and instead add
+
+   .. code-block:: c++
+
+      #include <trifinger_object_tracking/color_segmenter.hpp>
+
+2. Adjust namespace:  Remove
+
+   .. code-block:: c++
+
+      using namespace std;
+
+   Instead wrap the function in
+
+   .. code-block:: c++
+
+       namespace trifinger_object_tracking {
+       ...
+       }
+
+3. Replace ``std::vector`` with ``std::array`` (for better performance):
 
    .. code-block:: c++
 
@@ -211,5 +240,9 @@ changes (they make the code more efficient):
          std::array<float, XGB_NUM_CLASSES> sum;
          sum.fill(0.0);
 
-Finally update the ``CMakeLists.txt`` to use this file (currently done by
-setting the ``cube_model_dir`` variable).
+4. Rename the function to have unique name, something like
+   ``xgb_classify_my_model``.
+
+5. If it is a new model:  Add a declaration in
+   ``trifinger_object_tracking/color_segmenter.hpp`` and add the cpp file to the
+   list of source files of the ``cube_detector`` library in ``CMakeLists.txt``.
