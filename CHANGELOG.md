@@ -1,0 +1,30 @@
+# Changelog
+
+## [Unreleased]
+
+## [1.0.0] - 2022-06-28
+### Added
+- Executable `benchmark_with_logfile` to benchmark the time needed for the
+  object detection using a given camera log file.
+
+### Changed
+- Build models for all supported object types and select the type at run-time
+  (instead of using a build-flag).  **For this the API of several classes had to
+  be changed as the object model now needs to be passed as argument.**
+- Update the colour segmentation model for cube v2.  The new model is trained on
+  a larger dataset that contains some images of a dirty cube.  This should make
+  the model more robust against dirt/dust on the cube.
+
+### Fixed
+- Set `filtered_object_pose` in observations when using the PyBullet camera
+  driver.
+
+
+## [0.2.0] - 2021.08.04
+
+There is no changelog for this or earlier versions.
+
+
+[Unreleased]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/compare/v0.2.0...1.0.0
+[0.2.0]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/releases/tag/v0.2.0
