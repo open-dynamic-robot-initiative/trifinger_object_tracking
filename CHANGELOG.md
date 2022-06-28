@@ -26,5 +26,5 @@ There is no changelog for this or earlier versions.
 
 
 [Unreleased]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/compare/v0.2.0...1.0.0
+[1.0.0]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/compare/v0.2.0...v1.0.0
 [0.2.0]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/releases/tag/v0.2.0
