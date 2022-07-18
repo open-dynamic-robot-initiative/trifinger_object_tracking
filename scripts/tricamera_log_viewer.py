@@ -153,10 +153,12 @@ def main():
             object_pose = observation.filtered_object_pose
 
         if args.visualize_goal_pose:
-            images = cube_visualizer.draw_cube(images, goal_pose, True)
+            images = cube_visualizer.draw_cube(images, goal_pose, fill=True)
 
         if args.visualize_object_pose:
-            images = cube_visualizer.draw_cube(images, object_pose, False)
+            images = cube_visualizer.draw_cube(
+                images, object_pose, fill=False, opacity=0.8
+            )
 
         if args.show_confidence:
             images = [

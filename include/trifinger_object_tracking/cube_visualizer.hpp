@@ -60,16 +60,56 @@ public:
      *  corresponding colours.  The latter allows to verify the orientation
      *  (i.e. which face is pointing into which direction) but occludes more of
      *  the image.
+     * @param opacity  Opacity of the visualisation (in range [0, 1]).
      *
      * @return Images with the object visualisation.
      */
     std::array<cv::Mat, N_CAMERAS> draw_cube(
         const std::array<cv::Mat, N_CAMERAS> &images,
         const ObjectPose &object_pose,
-        bool fill_faces = false);
+        bool fill_faces = false,
+        float opacity = 0.5);
+
+    /**
+     * @brief Draw a circle into the images enclosing the object at the
+     *        specified pose.
+     *
+     * @param images  Images from the cameras.  The images need to be ordered in
+     *  the same way as the camera calibration parameters that are passed to the
+     *  constructor.
+     * @param object_pose  Pose of the object.
+     * @param fill  If true a filled circle is drawn with some transparency.  If
+     *  false, only a solid contour is drawn.
+     * @param opacity  Opacity of the visualisation (in range [0, 1]).
+     * @param scale  Scale factor for the circle size.  At 1.0 the cube is just
+     *  fully enclosed.
+     *
+     * @return Images with the object visualisation.
+     */
+    std::array<cv::Mat, N_CAMERAS> draw_circle(
+        const std::array<cv::Mat, N_CAMERAS> &images,
+        const ObjectPose &object_pose,
+        bool fill = true,
+        float opacity = 0.5,
+        float scale = 1.0);
 
 private:
     BaseCuboidModel::ConstPtr cube_model_;
     PoseDetector pose_detector_;
+
+    //! Get projected corner points for the given object pose.
+    std::vector<std::vector<cv::Point2f>> get_projected_points(
+        const ObjectPose &object_pose);
+
+    //! Draw cube with filled faces in the given image
+    void draw_filled_cube(cv::Mat &image,
+                          size_t camera_index,
+                          const PoseDetector &pose_detector,
+                          const std::vector<cv::Point2f> &imgpoints);
+
+    //! Draw wireframe cube in the given image
+    void draw_cube_wireframe(cv::Mat &image,
+                             size_t camera_index,
+                             const std::vector<cv::Point2f> &imgpoints);
 };
 }  // namespace trifinger_object_tracking
