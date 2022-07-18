@@ -85,5 +85,17 @@ PYBIND11_MODULE(py_tricamera_types, m)
     pybind11::class_<CubeVisualizer>(m, "CubeVisualizer")
         .def(pybind11::init<BaseCuboidModel::ConstPtr,
                             std::array<std::string, 3>>())
-        .def("draw_cube", &CubeVisualizer::draw_cube);
+        .def("draw_cube",
+             &CubeVisualizer::draw_cube,
+             pybind11::arg("images"),
+             pybind11::arg("object_pose"),
+             pybind11::arg("fill") = true,
+             pybind11::arg("opacity") = 0.5)
+        .def("draw_circle",
+             &CubeVisualizer::draw_circle,
+             pybind11::arg("images"),
+             pybind11::arg("object_pose"),
+             pybind11::arg("fill") = true,
+             pybind11::arg("opacity") = 0.5,
+             pybind11::arg("scale") = 1.0);
 }
