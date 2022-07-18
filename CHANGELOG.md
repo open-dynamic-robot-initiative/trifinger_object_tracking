@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Parameter to `CubeVisualizer::draw_cube` to set opacity of the visualisation.
+- `CubeVisualizer::draw_circle` to draw a circle at the objects position (e.g.
+  for cases where the orientation does not matter).
 
 ## [1.0.0] - 2022-06-28
 ### Added
