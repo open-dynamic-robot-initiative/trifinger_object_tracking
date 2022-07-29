@@ -1,6 +1,11 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
 ## [Unreleased]
+
+## [1.1.0] - 2022-07-29
 ### Added
 - Parameter to `CubeVisualizer::draw_cube` to set opacity of the visualisation.
 - `CubeVisualizer::draw_circle` to draw a circle at the objects position (e.g.
@@ -29,6 +34,7 @@
 There is no changelog for this or earlier versions.
 
 
-[Unreleased]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/compare/v0.2.0...v1.0.0
 [0.2.0]: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking/releases/tag/v0.2.0
