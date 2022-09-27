@@ -291,6 +291,7 @@ install_scripts(
     scripts/follow_cube.py
     scripts/get_xgb_dump.py
     scripts/plot_log_timestamps.py
+    scripts/record_debug_images.py
     scripts/train_xgb_tree.py
     scripts/tricamera_log_analyzer.py
     scripts/tricamera_log_converter.py
