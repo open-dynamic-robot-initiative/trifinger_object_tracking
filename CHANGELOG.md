@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+- Add method `get_debug_image` to `TriCameraObjectTrackerDriver` and a script
+  that uses it to create debug images from the cameras (this makes diagnosing
+  issues with the object detection easier).
 
 ## [1.1.0] - 2022-07-29
 ### Added
