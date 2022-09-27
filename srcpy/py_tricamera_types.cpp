@@ -69,7 +69,13 @@ PYBIND11_MODULE(py_tricamera_types, m)
              pybind11::arg("camera3"),
              pybind11::arg("cube_model"),
              pybind11::arg("downsample_images") = true)
-        .def("get_observation", &TriCameraObjectTrackerDriver::get_observation);
+        .def("get_observation",
+             &TriCameraObjectTrackerDriver::get_observation,
+             "Get the latest observation from the three cameras.")
+        .def("get_debug_image",
+             &TriCameraObjectTrackerDriver::get_debug_image,
+             pybind11::arg("fill_faces") = false,
+             "Fetch an observation from the cameras and create a debug image.");
 #endif
 
     pybind11::class_<PyBulletTriCameraObjectTrackerDriver,

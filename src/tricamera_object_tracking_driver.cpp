@@ -71,4 +71,10 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
     return observation;
 }
 
+cv::Mat TriCameraObjectTrackerDriver::get_debug_image(bool fill_faces)
+{
+    get_observation();
+    return cube_detector_.create_debug_image(fill_faces);
+}
+
 }  // namespace trifinger_object_tracking
