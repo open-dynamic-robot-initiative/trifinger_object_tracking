@@ -43,10 +43,23 @@ public:
                                  bool downsample_images = true);
 
     /**
-     * @brief Get the latest observation from the three cameras
+     * @brief Get the latest observation from the three cameras.
      * @return TricameraObservation
      */
     TriCameraObjectObservation get_observation();
+
+    /**
+     * @brief Fetch an observation from the cameras and create a debug image.
+     *
+     * The debug image shows various visualisations of the object detection, see
+     * @ref CubeDetector::create_debug_image.
+     *
+     * @see CubeDetector::create_debug_image
+     * @param fill_faces
+     *
+     * @return Debug image showing the result of the object detection.
+     */
+    cv::Mat get_debug_image(bool fill_faces = false);
 
 private:
     std::array<trifinger_cameras::PylonDriver, N_CAMERAS> cameras_;
