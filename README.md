@@ -23,5 +23,5 @@ See [LICENSE](LICENSE) for license details.
 
 ## Links
 
-- [Documentation](http://people.tuebingen.mpg.de/mpi-is-software/robotfingers/docs/trifinger_object_tracking)
+- [Documentation](https://open-dynamic-robot-initiative.github.io/trifinger_object_tracking/)
 - [Code on GitHub](https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking)
