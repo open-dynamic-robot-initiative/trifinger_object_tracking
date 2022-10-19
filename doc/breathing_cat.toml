@@ -1,0 +1,2 @@
+[doxygen]
+exclude_patterns = ["${PACKAGE_DIR}/include/optim/*"]
