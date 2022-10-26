@@ -4,11 +4,12 @@
  * Load images of the three cameras from files "camera{60,180,300}.png", run the
  * pose detection on them and visualize the result.
  */
-#include <trifinger_cameras/parse_yml.h>
-
 #include <iostream>
+
+#include <trifinger_cameras/parse_yml.h>
+#include <cli_utils/program_options.hpp>
+
 #include <trifinger_object_tracking/cube_detector.hpp>
-#include <trifinger_object_tracking/program_options.hpp>
 #include <trifinger_object_tracking/utils.hpp>
 
 #define VISUALIZE
@@ -34,7 +35,7 @@ std::array<cv::Mat, 3> load_images(const std::string &directory)
     return {image60, image180, image300};
 }
 
-class Args : public trifinger_object_tracking::ProgramOptions
+class Args : public cli_utils::ProgramOptions
 {
 public:
     std::string data_dir, cube_model_name, debug_out_dir;

@@ -10,15 +10,17 @@
  * - camera300.yml: Calibration parameters of camera300
  */
 #include <iostream>
-#include <opencv2/opencv.hpp>
-#include <robot_interfaces/sensors/sensor_log_reader.hpp>
 #include <string>
 
+#include <opencv2/opencv.hpp>
+
+#include <cli_utils/program_options.hpp>
+#include <robot_interfaces/sensors/sensor_log_reader.hpp>
 // TODO: not sure why but if "sensor_logger.hpp" is not included, the log reader
 // will have a cereal-related build error.
 #include <robot_interfaces/sensors/sensor_logger.hpp>
+
 #include <trifinger_object_tracking/cube_detector.hpp>
-#include <trifinger_object_tracking/program_options.hpp>
 #include <trifinger_object_tracking/tricamera_object_observation.hpp>
 #include <trifinger_object_tracking/utils.hpp>
 
@@ -41,7 +43,7 @@ bool open_video_writer(cv::VideoWriter &writer,
     return true;
 }
 
-class Args : public trifinger_object_tracking::ProgramOptions
+class Args : public cli_utils::ProgramOptions
 {
 public:
     std::string data_dir, debug_video_file, cube_model_name;

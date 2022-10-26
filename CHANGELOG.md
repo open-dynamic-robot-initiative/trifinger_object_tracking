@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   that uses it to create debug images from the cameras (this makes diagnosing
   issues with the object detection easier).
 
+### Removed
+- The `ProgramOptions` class has been moved to its own package
+  ([cli_utils](https://github.com/MPI-IS/cli_utils)).  Thus it is removed from
+  this package and the one from cli_utils is used instead.
+
+
 ## [1.1.0] - 2022-07-29
 ### Added
 - Parameter to `CubeVisualizer::draw_cube` to set opacity of the visualisation.
