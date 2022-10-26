@@ -19,6 +19,7 @@ find_package(ament_cmake REQUIRED)
 find_package(mpi_cmake_modules REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(pybind11_opencv REQUIRED)
+find_package(cli_utils REQUIRED)
 find_package(serialization_utils REQUIRED)
 find_package(time_series REQUIRED)
 find_package(trifinger_cameras REQUIRED)
@@ -29,7 +30,6 @@ find_package(LAPACK REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Armadillo REQUIRED)
-find_package(Boost REQUIRED COMPONENTS program_options)
 
 
 if (${HAS_PYLON_DRIVERS})
@@ -175,18 +175,6 @@ target_link_libraries(lightblue_segmenter
 )
 
 
-add_library(program_options
-    src/program_options.cpp
-)
-target_include_directories(program_options PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-target_link_libraries(program_options
-    Boost::program_options
-)
-
-
 # Python Bindings
 add_pybind11_module(py_object_tracker srcpy/py_object_tracker.cpp
     LINK_LIBRARIES
@@ -217,7 +205,7 @@ target_include_directories(single_observation PUBLIC
 )
 target_link_libraries(single_observation
     cube_detector
-    program_options
+    cli_utils::program_options
 )
 
 
@@ -230,7 +218,7 @@ target_include_directories(run_on_logfile PRIVATE
 target_link_libraries(run_on_logfile
     robot_interfaces::robot_interfaces
     cube_detector
-    program_options
+    cli_utils::program_options
 )
 
 
@@ -242,7 +230,7 @@ target_include_directories(benchmark_with_logfile PUBLIC
 target_link_libraries(benchmark_with_logfile
     robot_interfaces::robot_interfaces
     cube_detector
-    program_options
+    cli_utils::program_options
 )
 
 
