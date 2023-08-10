@@ -100,9 +100,8 @@ void ColorSegmenter::xgboost_mask()
         colors_sorted_descending.begin(), colors_sorted_descending.end(), 0);
     std::sort(colors_sorted_descending.begin(),
               colors_sorted_descending.end(),
-              [&color_counts](size_t i1, size_t i2) {
-                  return color_counts[i1] > color_counts[i2];
-              });
+              [&color_counts](size_t i1, size_t i2)
+              { return color_counts[i1] > color_counts[i2]; });
 
     dominant_colors_.resize(3);
     for (size_t i = 0; i < dominant_colors_.size(); i++)
