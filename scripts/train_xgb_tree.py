@@ -64,7 +64,6 @@ def create_channels(image_bgr):
 
 
 def create_features(image_bgr, flatten=False):
-
     image_bgr = cv.medianBlur(image_bgr, 7)
     channels = create_channels(image_bgr=image_bgr)
 
@@ -178,7 +177,6 @@ def prepare_data(
 
 
 def fit_model(X_train, y_train, seed=42):
-
     model = XGBClassifier(
         learning_rate=1.0,
         n_estimators=1,  # only one tree
@@ -205,7 +203,6 @@ def evaluate(model, X, y):
 
 
 def load_data_and_fit_model(input_filename, output_filename, feature_names):
-
     print("preparing training data")
     data = pd.read_pickle(input_filename)
     X_train, y_train, X_test, y_test = prepare_data(

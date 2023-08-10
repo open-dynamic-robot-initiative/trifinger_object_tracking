@@ -15,7 +15,6 @@ def show_image(image):
 
 
 def load_images(path):
-
     image_names = [n for n in os.listdir(path) if ".png" in n]
 
     images = {}

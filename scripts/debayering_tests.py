@@ -162,7 +162,6 @@ interpolation_methods = [
 
 
 def compare_interpolation():
-
     # COLOR_BAYER_BG2
     path = "./cube_v2__pro4__2020-09-20/0015/camera180.png"
     # path = './lena.png'
