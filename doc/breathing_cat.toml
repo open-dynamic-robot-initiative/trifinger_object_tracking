@@ -1,2 +1,5 @@
 [doxygen]
 exclude_patterns = ["${PACKAGE_DIR}/include/optim/*"]
+
+[html]
+logo = "doc/images/cube_pictogram.png"
