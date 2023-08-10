@@ -1,5 +1,8 @@
 [doxygen]
 exclude_patterns = ["${PACKAGE_DIR}/include/optim/*"]
 
+[intersphinx.mapping]
+trifinger_cameras = "https://open-dynamic-robot-initiative.github.io/trifinger_cameras"
+
 [html]
 logo = "doc/images/cube_pictogram.png"
