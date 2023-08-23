@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <stdexcept>
+#include <string>
 
 #include "color_model.hpp"
 

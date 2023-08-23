@@ -15,9 +15,14 @@ string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors -Werror=return-type
 # always enable optimization, otherwise object tracking is too slow
 string(APPEND CMAKE_CXX_FLAGS " -O3")
 
+# pybind11 needs to be first, otherwise other packages which also search for
+# Python can cause an 'Unknown CMake command "python3_add_library"' error.
+# Probably related to how Python is found, see
+# https://github.com/pybind/pybind11/issues/3996
+find_package(pybind11 REQUIRED)
+
 find_package(ament_cmake REQUIRED)
 find_package(mpi_cmake_modules REQUIRED)
-find_package(pybind11 REQUIRED)
 find_package(pybind11_opencv REQUIRED)
 find_package(cli_utils REQUIRED)
 find_package(serialization_utils REQUIRED)
