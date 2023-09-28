@@ -13,9 +13,9 @@ from ament_index_python.packages import get_package_share_directory
 import trifinger_simulation
 import trifinger_simulation.collision_objects
 import trifinger_simulation.finger_types_data
-import trifinger_simulation.pinocchio_utils
 import robot_interfaces
 import robot_fingers
+from robot_properties_fingers import pinocchio_utils
 
 import trifinger_object_tracking.py_object_tracker
 import trifinger_object_tracking.py_tricamera_types as tricamera
@@ -96,7 +96,7 @@ def real():
         "trifingerpro"
     )
     finger_urdf_path = os.path.join(robot_properties_path, "urdf", urdf_file)
-    kinematics = trifinger_simulation.pinocchio_utils.Kinematics(
+    kinematics = pinocchio_utils.Kinematics(
         finger_urdf_path,
         ["finger_tip_link_0", "finger_tip_link_120", "finger_tip_link_240"],
     )
