@@ -2,7 +2,8 @@
 .. image:: doc/images/detection_example_cube.jpg
    :alt: Example showing the result of the pose detection.
 
-Multi-camera pose estimation of coloured cuboids for the TriFinger robots.
+Multi-camera pose estimation of coloured cuboids for the :doc:`TriFinger
+<trifinger_docs:index>` robots.
 
 Detect coloured cuboids (with a different colour on each side) using images from
 three cameras.  This is used for object detection in the TriFinger robot
@@ -16,6 +17,7 @@ if you have a question or want to report a bug.
    :caption: General Documentation
    :maxdepth: 1
 
+   doc/installation.rst
    doc/a1_introduction.rst
    doc/a2_cube_model.rst
    doc/b1_train_colour_segmentation.rst
