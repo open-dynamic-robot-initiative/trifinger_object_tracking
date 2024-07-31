@@ -24,7 +24,7 @@ run
 
 ::
 
-    ros2 run trifinger_cameras record_image_dataset --no-downsample -o <output_directory>
+    ros2 run trifinger_cameras record_image_dataset -o <output_directory>
 
 Every time you press Enter, images of all three cameras are acquired and stored
 together as a "snapshot" in the specified output directory.  So you can place
