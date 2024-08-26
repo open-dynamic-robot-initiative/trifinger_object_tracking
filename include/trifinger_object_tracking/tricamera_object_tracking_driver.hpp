@@ -51,6 +51,16 @@ public:
         trifinger_cameras::Settings settings = trifinger_cameras::Settings());
 
     /**
+     * @brief Get the camera parameters (image size and calibration
+     * coefficients).
+     *
+     * **Important:**  The calibration coefficients are only set if the driver
+     * is initialized with calibration files (see constructor).  Otherwise,
+     * they will be empty.
+     */
+    virtual trifinger_cameras::TriCameraInfo get_sensor_info() override;
+
+    /**
      * @brief Get the latest observation from the three cameras.
      * @return TricameraObservation
      */

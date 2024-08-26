@@ -33,6 +33,11 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
 {
 }
 
+trifinger_cameras::TriCameraInfo TriCameraObjectTrackerDriver::get_sensor_info()
+{
+    return camera_driver_.get_sensor_info();
+}
+
 TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
 {
     std::array<cv::Mat, N_CAMERAS> images_bgr;
