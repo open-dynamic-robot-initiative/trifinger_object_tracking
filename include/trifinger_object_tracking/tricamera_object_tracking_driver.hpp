@@ -6,6 +6,7 @@
 #pragma once
 
 #include <chrono>
+#include <filesystem>
 
 #include <robot_interfaces/sensors/sensor_driver.hpp>
 #include <trifinger_cameras/camera_parameters.hpp>
@@ -46,6 +47,23 @@ public:
         const std::string& device_id_1,
         const std::string& device_id_2,
         const std::string& device_id_3,
+        BaseCuboidModel::ConstPtr cube_model,
+        bool downsample_images = true,
+        trifinger_cameras::Settings settings = trifinger_cameras::Settings());
+
+    /**
+     * @param camera_calibration_file_1 Calibration file of first camera
+     * @param camera_calibration_file_2 likewise, the 2nd's
+     * @param camera_calibration_file_3 and the 3rd's
+     * @param cube_model The model that is used for detecting the cube.
+     * @param downsample_images If set to true (default), images are
+     *     downsampled to half their original size.
+     * @param settings Settings for the cameras.
+     */
+    TriCameraObjectTrackerDriver(
+        const std::filesystem::path& camera_calibration_file_1,
+        const std::filesystem::path& camera_calibration_file_2,
+        const std::filesystem::path& camera_calibration_file_3,
         BaseCuboidModel::ConstPtr cube_model,
         bool downsample_images = true,
         trifinger_cameras::Settings settings = trifinger_cameras::Settings());

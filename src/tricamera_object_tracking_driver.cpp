@@ -33,6 +33,26 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
 {
 }
 
+TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
+    const std::filesystem::path& camera_calibration_file_1,
+    const std::filesystem::path& camera_calibration_file_2,
+    const std::filesystem::path& camera_calibration_file_3,
+    BaseCuboidModel::ConstPtr cube_model,
+    bool downsample_images,
+    trifinger_cameras::Settings settings)
+    : camera_driver_(camera_calibration_file_1,
+                     camera_calibration_file_2,
+                     camera_calibration_file_3,
+                     downsample_images,
+                     settings),
+      cube_detector_(
+          trifinger_object_tracking::create_trifingerpro_cube_detector(
+              cube_model)),
+      downsample_images_(downsample_images)
+
+{
+}
+
 trifinger_cameras::TriCameraInfo TriCameraObjectTrackerDriver::get_sensor_info()
 {
     return camera_driver_.get_sensor_info();
