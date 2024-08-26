@@ -29,6 +29,12 @@ PyBulletTriCameraObjectTrackerDriver::PyBulletTriCameraObjectTrackerDriver(
 {
 }
 
+trifinger_cameras::TriCameraInfo
+PyBulletTriCameraObjectTrackerDriver::get_sensor_info()
+{
+    return camera_driver_.get_sensor_info();
+}
+
 TriCameraObjectObservation
 PyBulletTriCameraObjectTrackerDriver::get_observation()
 {

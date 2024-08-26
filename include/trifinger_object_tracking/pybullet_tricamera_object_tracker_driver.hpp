@@ -48,8 +48,14 @@ public:
         bool render_images = true,
         trifinger_cameras::Settings settings = trifinger_cameras::Settings());
 
+    /**
+     * @brief Get the camera parameters (image size and calibration
+     * coefficients).
+     */
+    trifinger_cameras::TriCameraInfo get_sensor_info() override;
+
     //! @brief Get the latest observation.
-    trifinger_object_tracking::TriCameraObjectObservation get_observation();
+    trifinger_object_tracking::TriCameraObjectObservation get_observation() override;
 
 private:
     //! @brief PyBullet driver instance for rendering images.
