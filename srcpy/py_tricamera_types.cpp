@@ -33,7 +33,8 @@ PYBIND11_MODULE(py_tricamera_types, m)
 
     create_sensor_bindings<TriCameraObjectObservation>(m);
 
-    pybind11::class_<TriCameraObjectObservation>(
+    pybind11::class_<TriCameraObjectObservation,
+                     trifinger_cameras::TriCameraObservation>(
         m,
         "TriCameraObjectObservation",
         "Observation from the three cameras, including the estimated object "
