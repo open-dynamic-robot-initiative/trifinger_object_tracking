@@ -11,6 +11,8 @@
 
 #include <robot_interfaces/finger_types.hpp>
 #include <robot_interfaces/sensors/sensor_driver.hpp>
+#include <trifinger_cameras/camera_parameters.hpp>
+
 #include <trifinger_object_tracking/tricamera_object_observation.hpp>
 
 namespace trifinger_object_tracking
@@ -22,7 +24,8 @@ namespace trifinger_object_tracking
  */
 class PyBulletTriCameraObjectTrackerDriver
     : public robot_interfaces::SensorDriver<
-          trifinger_object_tracking::TriCameraObjectObservation>
+          trifinger_object_tracking::TriCameraObjectObservation,
+          trifinger_cameras::TriCameraInfo>
 {
 public:
     // For some reason the constructor needs to be in the header file to avoid a

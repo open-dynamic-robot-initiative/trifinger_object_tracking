@@ -31,7 +31,8 @@ PYBIND11_MODULE(py_tricamera_types, m)
     // import for Python bindings of ObjectPose
     pybind11::module::import("trifinger_object_tracking.py_object_tracker");
 
-    create_sensor_bindings<TriCameraObjectObservation>(m);
+    create_sensor_bindings<TriCameraObjectObservation,
+                           trifinger_cameras::TriCameraInfo>(m);
 
     pybind11::class_<TriCameraObjectObservation,
                      trifinger_cameras::TriCameraObservation>(
@@ -92,7 +93,8 @@ PYBIND11_MODULE(py_tricamera_types, m)
 
     pybind11::class_<PyBulletTriCameraObjectTrackerDriver,
                      std::shared_ptr<PyBulletTriCameraObjectTrackerDriver>,
-                     SensorDriver<TriCameraObjectObservation>>(
+                     SensorDriver<TriCameraObjectObservation,
+                                  trifinger_cameras::TriCameraInfo>>(
         m, "PyBulletTriCameraObjectTrackerDriver")
         .def(pybind11::init<pybind11::object,
                             robot_interfaces::TriFingerTypes::BaseDataPtr,
