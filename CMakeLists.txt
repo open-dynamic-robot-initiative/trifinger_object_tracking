@@ -163,6 +163,7 @@ target_link_libraries(pybullet_tricamera_object_tracker_driver
     pybind11_opencv::pybind11_opencv
     robot_interfaces::robot_interfaces
     serialization_utils::serialization_utils
+    trifinger_cameras::pybullet_tricamera_driver
     cube_detector
 )
 # using pybind11 types, therefore visibility needs to be hidden

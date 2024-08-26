@@ -19,66 +19,24 @@ namespace py = pybind11;
 
 namespace trifinger_object_tracking
 {
-trifinger_object_tracking::TriCameraObjectObservation
+PyBulletTriCameraObjectTrackerDriver::PyBulletTriCameraObjectTrackerDriver(
+    pybind11::object tracking_object,
+    robot_interfaces::TriFingerTypes::BaseDataPtr robot_data,
+    bool render_images,
+    trifinger_cameras::Settings settings)
+    : camera_driver_(robot_data, render_images, settings),
+      tracking_object_(tracking_object)
+{
+}
+
+TriCameraObjectObservation
 PyBulletTriCameraObjectTrackerDriver::get_observation()
 {
-    time_series::Index robot_t =
-        robot_data_->observation->newest_timeindex(false);
-    if (robot_t == time_series::EMPTY)
-    {
-        // As long as robot backend did not start yet, run at around 10 Hz
-        using namespace std::chrono_literals;
-        std::this_thread::sleep_for(100ms);
-    }
-    else
-    {
-        // Synchronize with robot backend:  To achieve 10 Hz, there should be
-        // one camera observation every 100 robot steps.
-        while (robot_t < last_update_robot_time_index_ + 100)
-        {
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(10ms);
-            auto new_robot_t =
-                robot_data_->observation->newest_timeindex(false);
-
-            // If robot t did not increase, assume the robot has stopped.
-            // Break this look to avoid a dead-lock.
-            if (new_robot_t == robot_t)
-            {
-                break;
-            }
-            robot_t = new_robot_t;
-        }
-        last_update_robot_time_index_ = robot_t;
-    }
-
-    trifinger_object_tracking::TriCameraObjectObservation observation;
-
-    auto current_time = std::chrono::system_clock::now();
-    double timestamp =
-        std::chrono::duration<double>(current_time.time_since_epoch()).count();
-    for (int i = 0; i < 3; i++)
-    {
-        observation.cameras[i].timestamp = timestamp;
-    }
+    trifinger_object_tracking::TriCameraObjectObservation observation =
+        camera_driver_.get_observation();
 
     {
         py::gil_scoped_acquire acquire;
-
-        if (render_images_)
-        {
-            py::list images = cameras_.attr("get_bayer_images")();
-            for (int i = 0; i < 3; i++)
-            {
-                // ensure that the image array is contiguous in memory,
-                // otherwise conversion to cv::Mat would fail
-                auto image = numpy_.attr("ascontiguousarray")(images[i]);
-                cv::Mat image_cv = image.cast<cv::Mat>();
-                // explicitly copy to ensure it is not pointing to some data
-                // that later gets invalid
-                observation.cameras[i].image = image_cv.clone();
-            }
-        }
 
         pybind11::tuple state = tracking_object_.attr("get_state")();
         observation.object_pose.position = state[0].cast<Eigen::Vector3d>();
