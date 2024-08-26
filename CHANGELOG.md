@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add method `get_debug_image` to `TriCameraObjectTrackerDriver` and a script
   that uses it to create debug images from the cameras (this makes diagnosing
   issues with the object detection easier).
+- Support `trifinger_cameras::Settings` for changing camera configuration (see
+  documentation of `trifinger_cameras`).
+- Provide information about frame rate and camera parameters via `get_sensor_info()`
+  like in `trifinger_cameras`.  For this, overloaded constructors are added to the
+  driver classes which accept camera info files instead of device IDs.
 
 ### Removed
 - The `ProgramOptions` class has been moved to its own package
