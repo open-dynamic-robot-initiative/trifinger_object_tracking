@@ -99,10 +99,7 @@ public:
 
 private:
     trifinger_cameras::TriCameraDriver camera_driver_;
-    // std::array<trifinger_cameras::PylonDriver, N_CAMERAS> cameras_;
     trifinger_object_tracking::CubeDetector cube_detector_;
-    // TODO unused?
-    bool downsample_images_;
 
     ObjectPose previous_pose_;
 };

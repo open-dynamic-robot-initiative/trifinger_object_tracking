@@ -28,8 +28,7 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
           device_id_1, device_id_2, device_id_3, downsample_images, settings),
       cube_detector_(
           trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model)),
-      downsample_images_(downsample_images)
+              cube_model))
 {
 }
 
@@ -47,9 +46,7 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
                      settings),
       cube_detector_(
           trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model)),
-      downsample_images_(downsample_images)
-
+              cube_model))
 {
 }
 
