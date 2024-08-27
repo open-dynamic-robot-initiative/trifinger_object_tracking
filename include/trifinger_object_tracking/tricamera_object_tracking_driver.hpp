@@ -69,12 +69,13 @@ public:
         trifinger_cameras::Settings settings = trifinger_cameras::Settings());
 
     /**
-     * @brief Get the camera parameters (image size and calibration
-     * coefficients).
+     * @brief Get the camera parameters.
      *
-     * **Important:**  The calibration coefficients are only set if the driver
-     * is initialized with calibration files (see constructor).  Otherwise,
-     * they will be empty.
+     * @rst
+     * Internally, this calls
+     * :cpp:func:`trifinger_cameras::TriCameraDriver::get_sensor_info`, so see
+     * there fore more information.
+     * @endrst
      */
     trifinger_cameras::TriCameraInfo get_sensor_info() override;
 

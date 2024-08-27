@@ -49,13 +49,19 @@ public:
         trifinger_cameras::Settings settings = trifinger_cameras::Settings());
 
     /**
-     * @brief Get the camera parameters (image size and calibration
-     * coefficients).
+     * @brief Get the camera parameters.
+     *
+     * @verbatim embed:rst:leading-asterisk
+     * Internally, this calls
+     * :cpp:func:`trifinger_cameras::PyBulletTriCameraDriver::get_sensor_info`,
+     * so see there fore more information.
+     * @endverbatim
      */
     trifinger_cameras::TriCameraInfo get_sensor_info() override;
 
     //! @brief Get the latest observation.
-    trifinger_object_tracking::TriCameraObjectObservation get_observation() override;
+    trifinger_object_tracking::TriCameraObjectObservation get_observation()
+        override;
 
 private:
     //! @brief PyBullet driver instance for rendering images.
