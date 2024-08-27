@@ -76,7 +76,7 @@ public:
      * is initialized with calibration files (see constructor).  Otherwise,
      * they will be empty.
      */
-    virtual trifinger_cameras::TriCameraInfo get_sensor_info() override;
+    trifinger_cameras::TriCameraInfo get_sensor_info() override;
 
     /**
      * @brief Get the latest observation from the three cameras.
