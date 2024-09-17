@@ -10,5 +10,6 @@ module = [
     "cv2",
     "trifinger_cameras.*",
     "trifinger_object_tracking.*",
+    "signal_handler",
 ]
 ignore_missing_imports = true
