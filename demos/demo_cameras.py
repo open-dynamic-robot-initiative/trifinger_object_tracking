@@ -2,6 +2,7 @@
 """Demo on how to access observations from the TriCameraObjectTrackerDriver."""
 
 import argparse
+import pathlib
 import sys
 import time
 
@@ -16,9 +17,9 @@ from trifinger_cameras import utils
 
 camera_names = ["camera60", "camera180", "camera300"]
 calib_files = [
-    "/etc/trifingerpro/camera60_cropped_and_downsampled.yml",
-    "/etc/trifingerpro/camera180_cropped_and_downsampled.yml",
-    "/etc/trifingerpro/camera300_cropped_and_downsampled.yml",
+    pathlib.Path("/etc/trifingerpro/camera60_cropped_and_downsampled.yml"),
+    pathlib.Path("/etc/trifingerpro/camera180_cropped_and_downsampled.yml"),
+    pathlib.Path("/etc/trifingerpro/camera300_cropped_and_downsampled.yml"),
 ]
 
 
@@ -36,7 +37,7 @@ def front_end_loop(
     """Run the front end to display camera images with visualized object pose."""
     camera_frontend = tricamera.Frontend(camera_data)
 
-    cube_visualizer = tricamera.CubeVisualizer(model, calib_files)
+    cube_visualizer = tricamera.CubeVisualizer(model, [str(f) for f in calib_files])
 
     print("=== Camera Info: ===")
     utils.print_tricamera_sensor_info(camera_frontend.get_sensor_info())
@@ -111,7 +112,7 @@ def main() -> int:  # noqa: D103
 
     if args.mode != "frontend-only":
         camera_driver = tricamera.TriCameraObjectTrackerDriver(
-            *camera_names, cube_model=model
+            *calib_files, cube_model=model
         )
         camera_backend = tricamera.Backend(camera_driver, camera_data)
     else:
