@@ -1,4 +1,5 @@
 """Test the "lightblue segmenter" via its Python bindings."""
+
 import os
 import pathlib
 

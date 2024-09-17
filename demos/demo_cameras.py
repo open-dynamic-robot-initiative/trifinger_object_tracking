@@ -37,7 +37,9 @@ def front_end_loop(
     """Run the front end to display camera images with visualized object pose."""
     camera_frontend = tricamera.Frontend(camera_data)
 
-    cube_visualizer = tricamera.CubeVisualizer(model, [str(f) for f in calib_files])
+    cube_visualizer = tricamera.CubeVisualizer(
+        model, [str(f) for f in calib_files]
+    )
 
     print("=== Camera Info: ===")
     utils.print_tricamera_sensor_info(camera_frontend.get_sensor_info())
@@ -45,8 +47,12 @@ def front_end_loop(
     last_print = time.time()
     while True:
         observation = camera_frontend.get_latest_observation()
-        images = [utils.convert_image(camera.image) for camera in observation.cameras]
-        images = cube_visualizer.draw_cube(images, observation.object_pose, False)
+        images = [
+            utils.convert_image(camera.image) for camera in observation.cameras
+        ]
+        images = cube_visualizer.draw_cube(
+            images, observation.object_pose, False
+        )
 
         stacked_image = np.hstack(images)
         cv2.imshow(" | ".join(camera_names), stacked_image)
@@ -54,7 +60,9 @@ def front_end_loop(
         now = time.time()
         if (now - last_print) >= 1.0:
             print("-----")
-            print("Object Pose Confidence:", observation.object_pose.confidence)
+            print(
+                "Object Pose Confidence:", observation.object_pose.confidence
+            )
             print("Object Position:", observation.object_pose.position)
             print("Object Orientation:", observation.object_pose.orientation)
             last_print = now
