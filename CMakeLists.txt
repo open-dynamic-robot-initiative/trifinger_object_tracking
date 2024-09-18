@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 # fails
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# generate compile_commands.json by default (needed for LSP)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # stop build on first error
 string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wfatal-errors -Werror=return-type")
 
@@ -138,7 +141,7 @@ if (${HAS_PYLON_DRIVERS})
     )
     target_link_libraries(tricamera_object_tracking_driver
         robot_interfaces::robot_interfaces
-        trifinger_cameras::pylon_driver
+        trifinger_cameras::tricamera_driver
         cube_detector
     )
 
@@ -160,6 +163,7 @@ target_link_libraries(pybullet_tricamera_object_tracker_driver
     pybind11_opencv::pybind11_opencv
     robot_interfaces::robot_interfaces
     serialization_utils::serialization_utils
+    trifinger_cameras::pybullet_tricamera_driver
     cube_detector
 )
 # using pybind11 types, therefore visibility needs to be hidden

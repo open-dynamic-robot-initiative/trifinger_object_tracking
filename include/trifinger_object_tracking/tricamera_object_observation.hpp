@@ -7,7 +7,7 @@
 
 #include <array>
 
-#include <trifinger_cameras/camera_observation.hpp>
+#include <trifinger_cameras/tricamera_observation.hpp>
 #include <trifinger_object_tracking/object_pose.hpp>
 
 namespace trifinger_object_tracking
@@ -16,16 +16,24 @@ namespace trifinger_object_tracking
  * @brief Observation of three cameras + object tracking
  */
 struct TriCameraObjectObservation
+    : public trifinger_cameras::TriCameraObservation
 {
-    std::array<trifinger_cameras::CameraObservation, 3> cameras;
+    trifinger_object_tracking::ObjectPose object_pose = {};
+    trifinger_object_tracking::ObjectPose filtered_object_pose = {};
 
-    trifinger_object_tracking::ObjectPose object_pose;
-    trifinger_object_tracking::ObjectPose filtered_object_pose;
+    TriCameraObjectObservation() = default;
+
+    TriCameraObjectObservation(
+        const trifinger_cameras::TriCameraObservation& observation)
+        : trifinger_cameras::TriCameraObservation(observation)
+    {
+    }
 
     template <class Archive>
     void serialize(Archive& archive)
     {
-        archive(cameras, object_pose, filtered_object_pose);
+        trifinger_cameras::TriCameraObservation::serialize(archive);
+        archive(object_pose, filtered_object_pose);
     }
 };
 

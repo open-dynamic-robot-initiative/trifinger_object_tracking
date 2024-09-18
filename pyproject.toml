@@ -3,3 +3,13 @@ line-length = 79
 
 [tool.pylint.messages_control]
 disable = "C0330, C0326"
+
+[[tool.mypy.overrides]]
+# list all modules for which no type hints are available
+module = [
+    "cv2",
+    "trifinger_cameras.*",
+    "trifinger_object_tracking.*",
+    "signal_handler",
+]
+ignore_missing_imports = true

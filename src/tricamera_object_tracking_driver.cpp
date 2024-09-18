@@ -22,30 +22,47 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     const std::string& device_id_2,
     const std::string& device_id_3,
     BaseCuboidModel::ConstPtr cube_model,
-    bool downsample_images)
-    : cameras_{trifinger_cameras::PylonDriver(device_id_1, downsample_images),
-               trifinger_cameras::PylonDriver(device_id_2, downsample_images),
-               trifinger_cameras::PylonDriver(device_id_3, downsample_images)},
+    bool downsample_images,
+    trifinger_cameras::Settings settings)
+    : camera_driver_(
+          device_id_1, device_id_2, device_id_3, downsample_images, settings),
       cube_detector_(
           trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model)),
-      last_update_time_(std::chrono::system_clock::now()),
-      downsample_images_(downsample_images)
+              cube_model))
 {
+}
+
+TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
+    const std::filesystem::path& camera_calibration_file_1,
+    const std::filesystem::path& camera_calibration_file_2,
+    const std::filesystem::path& camera_calibration_file_3,
+    BaseCuboidModel::ConstPtr cube_model,
+    bool downsample_images,
+    trifinger_cameras::Settings settings)
+    : camera_driver_(camera_calibration_file_1,
+                     camera_calibration_file_2,
+                     camera_calibration_file_3,
+                     downsample_images,
+                     settings),
+      cube_detector_(
+          trifinger_object_tracking::create_trifingerpro_cube_detector(
+              cube_model))
+{
+}
+
+trifinger_cameras::TriCameraInfo TriCameraObjectTrackerDriver::get_sensor_info()
+{
+    return camera_driver_.get_sensor_info();
 }
 
 TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
 {
-    last_update_time_ += this->rate;
-    std::this_thread::sleep_until(last_update_time_);
-
     std::array<cv::Mat, N_CAMERAS> images_bgr;
-    TriCameraObjectObservation observation;
+
+    TriCameraObjectObservation observation = camera_driver_.get_observation();
 
     for (size_t i = 0; i < N_CAMERAS; i++)
     {
-        observation.cameras[i] = cameras_[i].get_observation();
-
         cv::cvtColor(
             observation.cameras[i].image, images_bgr[i], cv::COLOR_BayerBG2BGR);
     }

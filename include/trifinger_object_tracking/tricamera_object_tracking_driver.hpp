@@ -6,9 +6,14 @@
 #pragma once
 
 #include <chrono>
+#include <filesystem>
 
 #include <robot_interfaces/sensors/sensor_driver.hpp>
+#include <trifinger_cameras/camera_parameters.hpp>
 #include <trifinger_cameras/pylon_driver.hpp>
+#include <trifinger_cameras/settings.hpp>
+#include <trifinger_cameras/tricamera_driver.hpp>
+
 #include <trifinger_object_tracking/cube_detector.hpp>
 #include <trifinger_object_tracking/tricamera_object_observation.hpp>
 
@@ -19,7 +24,8 @@ namespace trifinger_object_tracking
  * and get observations from them.
  */
 class TriCameraObjectTrackerDriver
-    : public robot_interfaces::SensorDriver<TriCameraObjectObservation>
+    : public robot_interfaces::SensorDriver<TriCameraObjectObservation,
+                                            trifinger_cameras::TriCameraInfo>
 {
 public:
     //! @brief Rate at which images are acquired.
@@ -35,18 +41,49 @@ public:
      * @param cube_model The model that is used for detecting the cube.
      * @param downsample_images If set to true (default), images are
      *     downsampled to half their original size.
+     * @param settings Settings for the cameras.
      */
-    TriCameraObjectTrackerDriver(const std::string& device_id_1,
-                                 const std::string& device_id_2,
-                                 const std::string& device_id_3,
-                                 BaseCuboidModel::ConstPtr cube_model,
-                                 bool downsample_images = true);
+    TriCameraObjectTrackerDriver(
+        const std::string& device_id_1,
+        const std::string& device_id_2,
+        const std::string& device_id_3,
+        BaseCuboidModel::ConstPtr cube_model,
+        bool downsample_images = true,
+        trifinger_cameras::Settings settings = trifinger_cameras::Settings());
+
+    /**
+     * @param camera_calibration_file_1 Calibration file of first camera
+     * @param camera_calibration_file_2 likewise, the 2nd's
+     * @param camera_calibration_file_3 and the 3rd's
+     * @param cube_model The model that is used for detecting the cube.
+     * @param downsample_images If set to true (default), images are
+     *     downsampled to half their original size.
+     * @param settings Settings for the cameras.
+     */
+    TriCameraObjectTrackerDriver(
+        const std::filesystem::path& camera_calibration_file_1,
+        const std::filesystem::path& camera_calibration_file_2,
+        const std::filesystem::path& camera_calibration_file_3,
+        BaseCuboidModel::ConstPtr cube_model,
+        bool downsample_images = true,
+        trifinger_cameras::Settings settings = trifinger_cameras::Settings());
+
+    /**
+     * @brief Get the camera parameters.
+     *
+     * @rst
+     * Internally, this calls
+     * :cpp:func:`trifinger_cameras::TriCameraDriver::get_sensor_info`, so see
+     * there fore more information.
+     * @endrst
+     */
+    trifinger_cameras::TriCameraInfo get_sensor_info() override;
 
     /**
      * @brief Get the latest observation from the three cameras.
      * @return TricameraObservation
      */
-    TriCameraObjectObservation get_observation();
+    TriCameraObjectObservation get_observation() override;
 
     /**
      * @brief Fetch an observation from the cameras and create a debug image.
@@ -62,10 +99,8 @@ public:
     cv::Mat get_debug_image(bool fill_faces = false);
 
 private:
-    std::array<trifinger_cameras::PylonDriver, N_CAMERAS> cameras_;
+    trifinger_cameras::TriCameraDriver camera_driver_;
     trifinger_object_tracking::CubeDetector cube_detector_;
-    std::chrono::time_point<std::chrono::system_clock> last_update_time_;
-    bool downsample_images_;
 
     ObjectPose previous_pose_;
 };

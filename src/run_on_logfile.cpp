@@ -47,6 +47,7 @@ class Args : public cli_utils::ProgramOptions
 {
 public:
     std::string data_dir, debug_video_file, cube_model_name;
+    float output_fps;
 
     std::string help() const override
     {
@@ -81,6 +82,9 @@ Usage:  run_on_logfile [options] <data-dir>
             ("save-video",
              po::value<std::string>(&debug_video_file),
              "Save debug video to the specified path.")
+            ("output-fps",
+             po::value<float>(&output_fps)->default_value(10.0),
+             "Frame rate of the output video (see --save-video).")
             ;
         // clang-format on
 
@@ -138,12 +142,11 @@ int main(int argc, char **argv)
 
             if (!args.debug_video_file.empty())
             {
-                constexpr double FPS = 10.0;
                 bool ok = open_video_writer(
                     debug_video,
                     args.debug_video_file,
                     cv::VideoWriter::fourcc('X', 'V', 'I', 'D'),
-                    FPS,
+                    args.output_fps,
                     debug_img.size());
                 if (!ok)
                 {

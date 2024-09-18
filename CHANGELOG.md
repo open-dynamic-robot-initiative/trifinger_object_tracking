@@ -8,11 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add method `get_debug_image` to `TriCameraObjectTrackerDriver` and a script
   that uses it to create debug images from the cameras (this makes diagnosing
   issues with the object detection easier).
+- Support `trifinger_cameras::Settings` for changing camera configuration (see
+  documentation of `trifinger_cameras`).
+- Provide information about frame rate and camera parameters via `get_sensor_info()`
+  like in `trifinger_cameras`.  For this, overloaded constructors are added to the
+  driver classes which accept camera info files instead of device IDs.
+- Add a "backend-only" mode to `demo_cameras`.  Use this if the front end is running in
+  a separate process.
 
 ### Removed
 - The `ProgramOptions` class has been moved to its own package
   ([cli_utils](https://github.com/MPI-IS/cli_utils)).  Thus it is removed from
   this package and the one from cli_utils is used instead.
+- Option `--multi-process` from `demo_cameras`.  Use `--frontend-only` instead.
 
 ### Fixed
 - pybind11 build error on Ubuntu 22.04

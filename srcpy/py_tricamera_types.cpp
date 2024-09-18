@@ -8,6 +8,7 @@
 #include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/stl/filesystem.h>
 #include <pybind11/stl_bind.h>
 
 #include <pybind11_opencv/cvbind.hpp>
@@ -31,9 +32,11 @@ PYBIND11_MODULE(py_tricamera_types, m)
     // import for Python bindings of ObjectPose
     pybind11::module::import("trifinger_object_tracking.py_object_tracker");
 
-    create_sensor_bindings<TriCameraObjectObservation>(m);
+    create_sensor_bindings<TriCameraObjectObservation,
+                           trifinger_cameras::TriCameraInfo>(m);
 
-    pybind11::class_<TriCameraObjectObservation>(
+    pybind11::class_<TriCameraObjectObservation,
+                     trifinger_cameras::TriCameraObservation>(
         m,
         "TriCameraObjectObservation",
         "Observation from the three cameras, including the estimated object "
@@ -57,7 +60,8 @@ PYBIND11_MODULE(py_tricamera_types, m)
 #ifdef Pylon_FOUND
     pybind11::class_<TriCameraObjectTrackerDriver,
                      std::shared_ptr<TriCameraObjectTrackerDriver>,
-                     SensorDriver<TriCameraObjectObservation>>(
+                     SensorDriver<TriCameraObjectObservation,
+                                  trifinger_cameras::TriCameraInfo>>(
         m, "TriCameraObjectTrackerDriver")
         .def(pybind11::init<const std::string&,
                             const std::string&,
@@ -67,6 +71,16 @@ PYBIND11_MODULE(py_tricamera_types, m)
              pybind11::arg("camera1"),
              pybind11::arg("camera2"),
              pybind11::arg("camera3"),
+             pybind11::arg("cube_model"),
+             pybind11::arg("downsample_images") = true)
+        .def(pybind11::init<const std::filesystem::path&,
+                            const std::filesystem::path&,
+                            const std::filesystem::path&,
+                            BaseCuboidModel::ConstPtr,
+                            bool>(),
+             pybind11::arg("camera_calibration_file_1"),
+             pybind11::arg("camera_calibration_file_2"),
+             pybind11::arg("camera_calibration_file_3"),
              pybind11::arg("cube_model"),
              pybind11::arg("downsample_images") = true)
         .def("get_observation",
@@ -80,7 +94,8 @@ PYBIND11_MODULE(py_tricamera_types, m)
 
     pybind11::class_<PyBulletTriCameraObjectTrackerDriver,
                      std::shared_ptr<PyBulletTriCameraObjectTrackerDriver>,
-                     SensorDriver<TriCameraObjectObservation>>(
+                     SensorDriver<TriCameraObjectObservation,
+                                  trifinger_cameras::TriCameraInfo>>(
         m, "PyBulletTriCameraObjectTrackerDriver")
         .def(pybind11::init<pybind11::object,
                             robot_interfaces::TriFingerTypes::BaseDataPtr,
