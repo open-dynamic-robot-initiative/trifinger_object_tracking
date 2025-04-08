@@ -99,7 +99,7 @@ void CubeVisualizer::draw_cube_wireframe(
                  imgpoints[it.second.c1],
                  imgpoints[it.second.c2],
                  cv::Scalar(100, 50, 0),
-                 2);
+                 line_thickness_);
     }
 
     // over-draw with the visible edges in a brighter colour
@@ -114,7 +114,7 @@ void CubeVisualizer::draw_cube_wireframe(
                      imgpoints[corner_indices[ci]],
                      imgpoints[corner_indices[(ci + 1) % 4]],
                      cv::Scalar(255, 100, 0),
-                     2);
+                     line_thickness_);
         }
     }
 }
@@ -122,8 +122,6 @@ void CubeVisualizer::draw_cube_wireframe(
 std::vector<std::vector<cv::Point2f>> CubeVisualizer::get_projected_points(
     const ObjectPose &object_pose)
 {
-    std::array<cv::Mat, CubeVisualizer::N_CAMERAS> out_images;
-
     cv::Vec3d position, rotvec;
     cv::eigen2cv(object_pose.position, position);
 

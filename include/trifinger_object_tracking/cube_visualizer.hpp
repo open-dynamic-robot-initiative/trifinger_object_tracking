@@ -97,9 +97,16 @@ public:
     std::vector<std::vector<cv::Point2f>> get_projected_points(
         const ObjectPose &object_pose);
 
+    //! Set line thickness for wireframe cube
+    void set_line_thickness(int line_thickness)
+    {
+        line_thickness_ = line_thickness;
+    }
+
 private:
     BaseCuboidModel::ConstPtr cube_model_;
     PoseDetector pose_detector_;
+    int line_thickness_ = 2;
 
     //! Draw cube with filled faces in the given image
     void draw_filled_cube(cv::Mat &image,
