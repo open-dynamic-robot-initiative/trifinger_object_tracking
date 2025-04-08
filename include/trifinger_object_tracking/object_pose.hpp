@@ -21,6 +21,34 @@ public:
     //! Confidence of the accuracy of the given pose.  Ranges from 0 to 1.
     double confidence = 0.0;
 
+    ObjectPose() = default;
+
+    // construct pose from a homogeneous 4x4 transformation matrix
+    ObjectPose(const Eigen::Matrix4d& matrix, double confidence = 0.0)
+        : confidence(confidence)
+    {
+        position = matrix.block<3, 1>(0, 3);
+        Eigen::Quaterniond q(matrix.block<3, 3>(0, 0));
+        orientation[0] = q.x();
+        orientation[1] = q.y();
+        orientation[2] = q.z();
+        orientation[3] = q.w();
+    }
+
+    //! Get the orientation as Eigen::Quaterniond.
+    Eigen::Quaterniond quaternion() const
+    {
+        constexpr int X = 0, Y = 1, Z = 2, W = 3;
+        return Eigen::Quaterniond(
+            orientation[W], orientation[X], orientation[Y], orientation[Z]);
+    }
+
+    //! Get the pose as Eigen::Affine3d.
+    Eigen::Affine3d affine() const
+    {
+        return Eigen::Translation3d(position) * quaternion();
+    }
+
     //! For serialization with cereal.
     template <class Archive>
     void serialize(Archive& archive)
