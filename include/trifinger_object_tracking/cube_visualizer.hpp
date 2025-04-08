@@ -93,13 +93,13 @@ public:
         float opacity = 0.5,
         float scale = 1.0);
 
-private:
-    BaseCuboidModel::ConstPtr cube_model_;
-    PoseDetector pose_detector_;
-
     //! Get projected corner points for the given object pose.
     std::vector<std::vector<cv::Point2f>> get_projected_points(
         const ObjectPose &object_pose);
+
+private:
+    BaseCuboidModel::ConstPtr cube_model_;
+    PoseDetector pose_detector_;
 
     //! Draw cube with filled faces in the given image
     void draw_filled_cube(cv::Mat &image,
