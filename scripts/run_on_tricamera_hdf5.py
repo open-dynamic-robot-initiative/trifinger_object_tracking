@@ -50,6 +50,13 @@ def main() -> None:
         help="Path to the HDF5 log file.",
     )
     parser.add_argument(
+        "--demosaicing",
+        type=str,
+        choices=("bilinear", "vng", "ea"),
+        default="bilinear",
+        help="Algorithm used for demosaicing.",
+    )
+    parser.add_argument(
         "--no-visualization",
         action="store_true",
         help="Disable displaying visualization images.",
@@ -70,6 +77,14 @@ def main() -> None:
     if not args.logfile.is_file():
         print(f"{args.logfile} does not exist.")
         sys.exit(1)
+
+    # default is bilinear
+    demosaicing_flag = cv2.COLOR_BAYER_BG2BGR
+    match args.demosaicing:
+        case "vng":
+            demosaicing_flag = cv2.COLOR_BAYER_BG2BGR_VNG
+        case "ea":
+            demosaicing_flag = cv2.COLOR_BAYER_BG2BGR_EA
 
     # Open HDF5 file
     with h5py.File(args.logfile, "r") as h5file:
@@ -93,7 +108,9 @@ def main() -> None:
         for frame_idx in range(n_frames):
             # Get images for all three cameras
             images = [
-                utils.convert_image(h5file["images"][frame_idx, i])
+                cv2.demosaicing(
+                    h5file["images"][frame_idx, i], demosaicing_flag
+                )
                 for i in range(len(CAMERA_NAMES))
             ]
 
