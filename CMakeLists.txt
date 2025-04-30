@@ -38,6 +38,7 @@ find_package(LAPACK REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Armadillo REQUIRED)
+find_package(fmt REQUIRED)
 
 
 if (${HAS_PYLON_DRIVERS})
@@ -243,6 +244,18 @@ target_link_libraries(benchmark_with_logfile
 )
 
 
+add_executable(manual_annotation_hdf5 src/manual_annotation_hdf5.cpp)
+target_include_directories(manual_annotation_hdf5 PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(manual_annotation_hdf5
+    fmt::fmt
+    cube_detector
+    cube_visualizer
+)
+
+
 add_executable(demo_lightblue_segmenter_cpp demos/demo_lightblue_segmenter.cpp)
 target_include_directories(demo_lightblue_segmenter_cpp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -273,6 +286,7 @@ install(
         single_observation
         run_on_logfile
         benchmark_with_logfile
+        manual_annotation_hdf5
         demo_lightblue_segmenter_cpp
 
     EXPORT export_${PROJECT_NAME}
@@ -289,6 +303,7 @@ install_scripts(
     scripts/get_xgb_dump.py
     scripts/plot_log_timestamps.py
     scripts/record_debug_images.py
+    scripts/run_on_tricamera_hdf5.py
     scripts/train_xgb_tree.py
     scripts/tricamera_log_analyzer.py
     scripts/tricamera_log_converter.py

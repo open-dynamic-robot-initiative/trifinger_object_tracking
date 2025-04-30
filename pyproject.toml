@@ -8,6 +8,7 @@ disable = "C0330, C0326"
 # list all modules for which no type hints are available
 module = [
     "cv2",
+    "h5py",
     "trifinger_cameras.*",
     "trifinger_object_tracking.*",
     "signal_handler",

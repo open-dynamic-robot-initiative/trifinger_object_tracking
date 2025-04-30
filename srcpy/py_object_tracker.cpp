@@ -10,6 +10,7 @@
 
 #include <pybind11_opencv/cvbind.hpp>
 
+#include <trifinger_cameras/camera_parameters.hpp>
 #include <trifinger_object_tracking/cube_detector.hpp>
 #include <trifinger_object_tracking/cube_model.hpp>
 #include <trifinger_object_tracking/fake_object_tracker_backend.hpp>
@@ -121,6 +122,12 @@ PYBIND11_MODULE(py_object_tracker, m)
         .def(pybind11::init<
              BaseCuboidModel::ConstPtr,
              const std::array<std::string, CubeDetector::N_CAMERAS>>())
+        .def(
+            pybind11::init<BaseCuboidModel::ConstPtr,
+                           const std::array<trifinger_cameras::CameraParameters,
+                                            CubeDetector::N_CAMERAS>&>(),
+            "model"_a,
+            "camera_parameters"_a)
         .def("detect_cube_single_thread",
              &CubeDetector::detect_cube_single_thread,
              pybind11::call_guard<pybind11::gil_scoped_release>())
