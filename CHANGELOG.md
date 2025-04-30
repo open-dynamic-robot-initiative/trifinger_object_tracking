@@ -15,6 +15,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   driver classes which accept camera info files instead of device IDs.
 - Add a "backend-only" mode to `demo_cameras`.  Use this if the front end is running in
   a separate process.
+- Add executable `run_on_tricamera_hdf5` to run the object pose estimation on a HDF5 log
+  file.
+- Add some helper methods to `ObjectPose` to more easily convert to/from other
+  representations of poses.
+- Add executable `manual_annotation_hdf5` to manually find the correct pose for a given
+  frame in a HDF5 logfile.
 
 ### Removed
 - The `ProgramOptions` class has been moved to its own package
