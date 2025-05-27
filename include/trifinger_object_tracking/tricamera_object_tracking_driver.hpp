@@ -9,6 +9,9 @@
 #include <filesystem>
 #include <memory>
 
+#include <fope/fope.hpp>
+#include <opencv2/opencv.hpp>
+
 #include <robot_interfaces/sensors/sensor_data.hpp>
 #include <robot_interfaces/sensors/sensor_driver.hpp>
 #include <robot_interfaces/sensors/sensor_frontend.hpp>
@@ -164,6 +167,7 @@ private:
 
     bool downsample_images_ = true;
     trifinger_object_tracking::CubeDetector cube_detector_;
+    std::unique_ptr<fope::PoseEstimator> fope_;
 
     std::unique_ptr<trifinger_cameras::TriCameraDriver> camera_driver_;
     std::unique_ptr<TriCameraFrontend> camera_frontend_;
@@ -180,6 +184,11 @@ private:
         std::unique_ptr<TriCameraFrontend> camera_frontend);
 
     trifinger_cameras::TriCameraObservation get_base_observation();
+
+    void init_fope();
+
+    TriCameraObjectObservation get_observation_color();
+    TriCameraObjectObservation get_observation_fope();
 };
 
 }  // namespace trifinger_object_tracking
