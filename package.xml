@@ -22,6 +22,7 @@
   <depend>time_series</depend>
   <depend>trifinger_cameras</depend>
   <depend>robot_interfaces</depend>
+  <depend>fope</depend>
 
   <exec_depend>signal_handler</exec_depend>
 

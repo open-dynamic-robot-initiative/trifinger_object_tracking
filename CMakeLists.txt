@@ -39,7 +39,10 @@ find_package(BLAS REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Armadillo REQUIRED)
 find_package(fmt REQUIRED)
+find_package(fope REQUIRED)
 
+# TODO: should more packages be listed here?
+ament_export_dependencies(fope)
 
 if (${HAS_PYLON_DRIVERS})
     add_definitions(-DPylon_FOUND)
@@ -84,6 +87,7 @@ target_link_libraries(cube_detector
     serialization_utils::serialization_utils
     cv_sub_images
     trifinger_cameras::camera_calibration_parser
+    fope::fope
 )
 
 
