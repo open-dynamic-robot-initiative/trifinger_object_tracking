@@ -23,7 +23,6 @@
   <depend>trifinger_cameras</depend>
   <depend>robot_interfaces</depend>
 
-  <exec_depend>ament_index_python</exec_depend>
   <exec_depend>signal_handler</exec_depend>
 
   <test_depend>ament_cmake_gtest</test_depend>

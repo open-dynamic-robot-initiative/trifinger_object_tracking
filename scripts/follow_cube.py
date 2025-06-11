@@ -2,20 +2,14 @@
 """Move one finger tip above the object (cube or aruco marker)."""
 import argparse
 import time
-import os
 
 import numpy as np
 import cv2
 import yaml
 
-from ament_index_python.packages import get_package_share_directory
-
-import trifinger_simulation
-import trifinger_simulation.collision_objects
-import trifinger_simulation.finger_types_data
 import robot_interfaces
 import robot_fingers
-from robot_properties_fingers import pinocchio_utils
+import robot_properties_fingers
 
 import trifinger_object_tracking.py_object_tracker
 import trifinger_object_tracking.py_tricamera_types as tricamera
@@ -89,15 +83,13 @@ def real():
     argparser.add_argument("--multi-process", action="store_true")
     args = argparser.parse_args()
 
-    robot_properties_path = get_package_share_directory(
-        "robot_properties_fingers"
+    trifinger_urdf_path = (
+        robot_properties_fingers.get_urdf_base_path("pro")
+        / "trifingerpro.urdf"
     )
-    urdf_file = trifinger_simulation.finger_types_data.get_finger_urdf(
-        "trifingerpro"
-    )
-    finger_urdf_path = os.path.join(robot_properties_path, "urdf", urdf_file)
-    kinematics = pinocchio_utils.Kinematics(
-        finger_urdf_path,
+
+    kinematics = robot_properties_fingers.Kinematics(
+        trifinger_urdf_path,
         ["finger_tip_link_0", "finger_tip_link_120", "finger_tip_link_240"],
     )
 
