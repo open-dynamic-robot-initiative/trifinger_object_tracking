@@ -217,6 +217,7 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation_fope()
     }
 
     // No filtering happening here at the moment
+    observation.object_pose.confidence = 1.0;
     observation.filtered_object_pose = observation.object_pose;
     previous_pose_ = observation.object_pose;
 
