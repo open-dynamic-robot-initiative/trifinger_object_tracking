@@ -223,15 +223,27 @@ ObjectPose CubeDetector::convert_pose(const Pose &pose)
 }
 
 CubeDetector create_trifingerpro_cube_detector(
-    BaseCuboidModel::ConstPtr cube_model)
+    BaseCuboidModel::ConstPtr cube_model, bool downsample_images)
 {
-    return CubeDetector(
-        cube_model,
-        {
-            "/etc/trifingerpro/camera60_cropped_and_downsampled.yml",
-            "/etc/trifingerpro/camera180_cropped_and_downsampled.yml",
-            "/etc/trifingerpro/camera300_cropped_and_downsampled.yml",
-        });
+    if (downsample_images)
+    {
+        return CubeDetector(
+            cube_model,
+            {
+                "/etc/trifingerpro/camera60_cropped_and_downsampled.yml",
+                "/etc/trifingerpro/camera180_cropped_and_downsampled.yml",
+                "/etc/trifingerpro/camera300_cropped_and_downsampled.yml",
+            });
+    }
+    else
+    {
+        return CubeDetector(cube_model,
+                            {
+                                "/etc/trifingerpro/camera60_cropped.yml",
+                                "/etc/trifingerpro/camera180_cropped.yml",
+                                "/etc/trifingerpro/camera300_cropped.yml",
+                            });
+    }
 }
 
 }  // namespace trifinger_object_tracking

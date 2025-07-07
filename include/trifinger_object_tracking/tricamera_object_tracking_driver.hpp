@@ -40,7 +40,7 @@ public:
      * @param device_id_3 and the 3rd's
      * @param cube_model The model that is used for detecting the cube.
      * @param downsample_images If set to true (default), images are
-     *     downsampled to half their original size.
+     *     downsampled to half their original size for object tracking.
      * @param settings Settings for the cameras.
      */
     TriCameraObjectTrackerDriver(
@@ -57,7 +57,7 @@ public:
      * @param camera_calibration_file_3 and the 3rd's
      * @param cube_model The model that is used for detecting the cube.
      * @param downsample_images If set to true (default), images are
-     *     downsampled to half their original size.
+     *     downsampled to half their original size for object tracking.
      * @param settings Settings for the cameras.
      */
     TriCameraObjectTrackerDriver(
@@ -99,6 +99,7 @@ public:
     cv::Mat get_debug_image(bool fill_faces = false);
 
 private:
+    bool downsample_images_ = true;
     trifinger_cameras::TriCameraDriver camera_driver_;
     trifinger_object_tracking::CubeDetector cube_detector_;
 

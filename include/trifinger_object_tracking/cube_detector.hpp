@@ -74,8 +74,10 @@ private:
  * a CubeDetector instance for it.
  *
  * @param cube_model The model that is used for detecting the cube.
+ * @param downsample_images If set to true (default), images are
+ *     downsampled to half their original size for object tracking.
  */
 CubeDetector create_trifingerpro_cube_detector(
-    BaseCuboidModel::ConstPtr cube_model);
+    BaseCuboidModel::ConstPtr cube_model, bool downsample_images = true);
 
 }  // namespace trifinger_object_tracking

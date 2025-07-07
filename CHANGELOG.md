@@ -28,6 +28,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   this package and the one from cli_utils is used instead.
 - Option `--multi-process` from `demo_cameras`.  Use `--frontend-only` instead.
 
+### Changed
+- In `TriCameraObjectTrackerDriver`: Set the internal camera driver to provide
+  full-resolution images an do the downsampling to half-size here.  This is needed as
+  the downsampling feature has been removed from `trifinger_cameras`.  This is just an
+  implementation detail of the interplay of this package with `trifinger_cameras` and
+  should not change the actual behaviour.
+
 ### Fixed
 - pybind11 build error on Ubuntu 22.04
 
