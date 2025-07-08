@@ -9,7 +9,9 @@
 #include <filesystem>
 #include <memory>
 
+#include <robot_interfaces/sensors/sensor_data.hpp>
 #include <robot_interfaces/sensors/sensor_driver.hpp>
+#include <robot_interfaces/sensors/sensor_frontend.hpp>
 #include <trifinger_cameras/camera_parameters.hpp>
 #include <trifinger_cameras/pylon_driver.hpp>
 #include <trifinger_cameras/settings.hpp>
@@ -69,6 +71,13 @@ public:
         bool downsample_images = true,
         trifinger_cameras::Settings settings = trifinger_cameras::Settings());
 
+    TriCameraObjectTrackerDriver(
+        robot_interfaces::SensorData<trifinger_cameras::TriCameraObservation,
+                                     trifinger_cameras::TriCameraInfo>::Ptr
+            camera_data,
+        BaseCuboidModel::ConstPtr cube_model,
+        bool downsample_images = true);
+
     /**
      * @brief Get the camera parameters.
      *
@@ -100,11 +109,20 @@ public:
     cv::Mat get_debug_image(bool fill_faces = false);
 
 private:
+    typedef robot_interfaces::SensorFrontend<
+        trifinger_cameras::TriCameraObservation,
+        trifinger_cameras::TriCameraInfo>
+        TriCameraFrontend;
+
     bool downsample_images_ = true;
-    std::unique_ptr<trifinger_cameras::TriCameraDriver> camera_driver_;
     trifinger_object_tracking::CubeDetector cube_detector_;
 
+    std::unique_ptr<trifinger_cameras::TriCameraDriver> camera_driver_;
+    std::unique_ptr<TriCameraFrontend> camera_frontend_;
+
     ObjectPose previous_pose_;
+
+    trifinger_cameras::TriCameraObservation get_base_observation() const;
 };
 
 }  // namespace trifinger_object_tracking
