@@ -24,16 +24,17 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     BaseCuboidModel::ConstPtr cube_model,
     bool downsample_images,
     trifinger_cameras::Settings settings)
+
     : downsample_images_(downsample_images),
+      cube_detector_(
+          trifinger_object_tracking::create_trifingerpro_cube_detector(
+              cube_model, downsample_images)),
       camera_driver_(std::make_unique<trifinger_cameras::TriCameraDriver>(
           device_id_1,
           device_id_2,
           device_id_3,
           false,  // downsample_images not supported anymore
-          settings)),
-      cube_detector_(
-          trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model, downsample_images))
+          settings))
 {
 }
 
@@ -45,28 +46,62 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     bool downsample_images,
     trifinger_cameras::Settings settings)
     : downsample_images_(downsample_images),
+      cube_detector_(
+          trifinger_object_tracking::create_trifingerpro_cube_detector(
+              cube_model, downsample_images)),
       camera_driver_(std::make_unique<trifinger_cameras::TriCameraDriver>(
           camera_calibration_file_1,
           camera_calibration_file_2,
           camera_calibration_file_3,
           false,  // downsample_images not supported anymore
-          settings)),
+          settings))
+{
+}
+
+TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
+    robot_interfaces::SensorData<trifinger_cameras::TriCameraObservation,
+                                 trifinger_cameras::TriCameraInfo>::Ptr
+        camera_data,
+    BaseCuboidModel::ConstPtr cube_model,
+    bool downsample_images)
+    : downsample_images_(downsample_images),
       cube_detector_(
           trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model, downsample_images))
+              cube_model, downsample_images)),
+      camera_frontend_(std::make_unique<TriCameraFrontend>(camera_data))
 {
 }
 
 trifinger_cameras::TriCameraInfo TriCameraObjectTrackerDriver::get_sensor_info()
 {
-    return camera_driver_->get_sensor_info();
+    if (camera_driver_)
+    {
+        return camera_driver_->get_sensor_info();
+    }
+    else
+    {
+        return camera_frontend_->get_sensor_info();
+    }
+}
+
+trifinger_cameras::TriCameraObservation
+TriCameraObjectTrackerDriver::get_base_observation() const
+{
+    if (camera_driver_)
+    {
+        return camera_driver_->get_observation();
+    }
+    else
+    {
+        return camera_frontend_->get_latest_observation();
+    }
 }
 
 TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
 {
     std::array<cv::Mat, N_CAMERAS> images_bgr;
 
-    TriCameraObjectObservation observation = camera_driver_->get_observation();
+    TriCameraObjectObservation observation = get_base_observation();
 
     for (size_t i = 0; i < N_CAMERAS; i++)
     {
