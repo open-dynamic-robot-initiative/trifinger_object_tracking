@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <memory>
 
 #include <robot_interfaces/sensors/sensor_driver.hpp>
 #include <trifinger_cameras/camera_parameters.hpp>
@@ -100,7 +101,7 @@ public:
 
 private:
     bool downsample_images_ = true;
-    trifinger_cameras::TriCameraDriver camera_driver_;
+    std::unique_ptr<trifinger_cameras::TriCameraDriver> camera_driver_;
     trifinger_object_tracking::CubeDetector cube_detector_;
 
     ObjectPose previous_pose_;
