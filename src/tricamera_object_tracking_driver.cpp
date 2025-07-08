@@ -25,11 +25,12 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     bool downsample_images,
     trifinger_cameras::Settings settings)
     : downsample_images_(downsample_images),
-      camera_driver_(device_id_1,
-                     device_id_2,
-                     device_id_3,
-                     false,  // downsample_images not supported anymore
-                     settings),
+      camera_driver_(std::make_unique<trifinger_cameras::TriCameraDriver>(
+          device_id_1,
+          device_id_2,
+          device_id_3,
+          false,  // downsample_images not supported anymore
+          settings)),
       cube_detector_(
           trifinger_object_tracking::create_trifingerpro_cube_detector(
               cube_model, downsample_images))
@@ -44,11 +45,12 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     bool downsample_images,
     trifinger_cameras::Settings settings)
     : downsample_images_(downsample_images),
-      camera_driver_(camera_calibration_file_1,
-                     camera_calibration_file_2,
-                     camera_calibration_file_3,
-                     false,  // downsample_images not supported anymore
-                     settings),
+      camera_driver_(std::make_unique<trifinger_cameras::TriCameraDriver>(
+          camera_calibration_file_1,
+          camera_calibration_file_2,
+          camera_calibration_file_3,
+          false,  // downsample_images not supported anymore
+          settings)),
       cube_detector_(
           trifinger_object_tracking::create_trifingerpro_cube_detector(
               cube_model, downsample_images))
@@ -57,14 +59,14 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
 
 trifinger_cameras::TriCameraInfo TriCameraObjectTrackerDriver::get_sensor_info()
 {
-    return camera_driver_.get_sensor_info();
+    return camera_driver_->get_sensor_info();
 }
 
 TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
 {
     std::array<cv::Mat, N_CAMERAS> images_bgr;
 
-    TriCameraObjectObservation observation = camera_driver_.get_observation();
+    TriCameraObjectObservation observation = camera_driver_->get_observation();
 
     for (size_t i = 0; i < N_CAMERAS; i++)
     {
