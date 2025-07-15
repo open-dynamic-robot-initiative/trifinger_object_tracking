@@ -320,6 +320,7 @@ install(
     PROGRAMS
         demos/demo_cameras.py
         demos/demo_lightblue_segmenter.py
+        demos/demo_tricamera_separate_backend.py
         demos/run_on_logfile.py
 
     DESTINATION lib/${PROJECT_NAME}
