@@ -97,24 +97,22 @@ TriCameraObjectTrackerDriver::get_base_observation()
     {
         constexpr int camera_rate_multiplier = 1;  // FIXME: make configurable
 
-        TriCameraFrontend::TimeIndex t_next =
-            camera_frontend_last_timeindex_ + camera_rate_multiplier;
-
         // Use the latest time index if falling behind.  This results in
         // inconsistent rate and thus should normally be avoided by setting the
         // desired rate slow enough.
         auto t_current = camera_frontend_->get_current_timeindex();
-        if (t_next < t_current)
+        if (camera_frontend_next_timeindex_ < t_current)
         {
             fmt::print(
                 "WARNING: Falling behind {} steps in "
                 "TriCameraObjectTrackerDriver.\n",
-                t_current - t_next);
-            t_next = t_current;
+                t_current - camera_frontend_next_timeindex_);
+            camera_frontend_next_timeindex_ = t_current;
         }
 
-        auto obs = camera_frontend_->get_observation(t_next);
-        camera_frontend_last_timeindex_ = t_next;
+        auto obs =
+            camera_frontend_->get_observation(camera_frontend_next_timeindex_);
+        camera_frontend_next_timeindex_ += camera_rate_multiplier;
 
         return obs;
     }
