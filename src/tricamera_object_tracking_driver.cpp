@@ -10,6 +10,8 @@
 #include <cmath>
 #include <thread>
 
+#include <fmt/format.h>
+
 #include <trifinger_cameras/parse_yml.h>
 
 namespace trifinger_object_tracking
@@ -85,7 +87,7 @@ trifinger_cameras::TriCameraInfo TriCameraObjectTrackerDriver::get_sensor_info()
 }
 
 trifinger_cameras::TriCameraObservation
-TriCameraObjectTrackerDriver::get_base_observation() const
+TriCameraObjectTrackerDriver::get_base_observation()
 {
     if (camera_driver_)
     {
@@ -93,16 +95,28 @@ TriCameraObjectTrackerDriver::get_base_observation() const
     }
     else
     {
-        // If there is a new camera observation since the last call, use the latest.
-        // Otherwise wait for the next one (do not use the same twice).
-        auto t = camera_frontend_->get_current_timeindex();
-        if (t == camera_frontend_last_timeindex_)
-        {
-            t++;
-        }
-        camera_frontend_last_timeindex_ = t;
+        constexpr int camera_rate_multiplier = 1;  // FIXME: make configurable
 
-        return camera_frontend_->get_observation(t);
+        TriCameraFrontend::TimeIndex t_next =
+            camera_frontend_last_timeindex_ + camera_rate_multiplier;
+
+        // Use the latest time index if falling behind.  This results in
+        // inconsistent rate and thus should normally be avoided by setting the
+        // desired rate slow enough.
+        auto t_current = camera_frontend_->get_current_timeindex();
+        if (t_next < t_current)
+        {
+            fmt::print(
+                "WARNING: Falling behind {} steps in "
+                "TriCameraObjectTrackerDriver.\n",
+                t_current - t_next);
+            t_next = t_current;
+        }
+
+        auto obs = camera_frontend_->get_observation(t_next);
+        camera_frontend_last_timeindex_ = t_next;
+
+        return obs;
     }
 }
 

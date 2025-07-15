@@ -123,7 +123,7 @@ private:
 
     ObjectPose previous_pose_;
 
-    trifinger_cameras::TriCameraObservation get_base_observation() const;
+    trifinger_cameras::TriCameraObservation get_base_observation();
 };
 
 }  // namespace trifinger_object_tracking
