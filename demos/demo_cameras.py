@@ -12,14 +12,12 @@ import numpy as np
 import signal_handler
 import trifinger_object_tracking.py_object_tracker as object_tracker
 import trifinger_object_tracking.py_tricamera_types as tricamera
-from trifinger_cameras import utils
+from trifinger_cameras import CAMERA_NAMES, utils
 
 
-camera_names = ["camera60", "camera180", "camera300"]
 calib_files = [
-    pathlib.Path("/etc/trifingerpro/camera60_cropped_and_downsampled.yml"),
-    pathlib.Path("/etc/trifingerpro/camera180_cropped_and_downsampled.yml"),
-    pathlib.Path("/etc/trifingerpro/camera300_cropped_and_downsampled.yml"),
+    pathlib.Path(f"/etc/trifingerpro/{camera}_cropped_and_downsampled.yml")
+    for camera in CAMERA_NAMES
 ]
 
 
@@ -55,7 +53,7 @@ def front_end_loop(
         )
 
         stacked_image = np.hstack(images)
-        cv2.imshow(" | ".join(camera_names), stacked_image)
+        cv2.imshow(" | ".join(CAMERA_NAMES), stacked_image)
 
         now = time.time()
         if (now - last_print) >= 1.0:
