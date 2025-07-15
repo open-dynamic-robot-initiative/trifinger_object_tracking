@@ -93,7 +93,16 @@ TriCameraObjectTrackerDriver::get_base_observation() const
     }
     else
     {
-        return camera_frontend_->get_latest_observation();
+        // If there is a new camera observation since the last call, use the latest.
+        // Otherwise wait for the next one (do not use the same twice).
+        auto t = camera_frontend_->get_current_timeindex();
+        if (t == camera_frontend_last_timeindex_)
+        {
+            t++;
+        }
+        camera_frontend_last_timeindex_ = t;
+
+        return camera_frontend_->get_observation(t);
     }
 }
 
