@@ -28,7 +28,8 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
       camera_driver_(std::move(camera_driver)),
       camera_frontend_(std::move(camera_frontend))
 {
-    if (const char* strval = std::getenv("TFOT_CAMERA_FRONTEND_RATE_MULTIPLIER"))
+    if (const char* strval =
+            std::getenv("TFOT_CAMERA_FRONTEND_RATE_MULTIPLIER"))
     {
         camera_frontend_rate_multiplier_ = std::stoi(strval);
     }

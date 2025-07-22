@@ -4,6 +4,7 @@ exclude_patterns = ["${PACKAGE_DIR}/include/optim/*"]
 [intersphinx.mapping]
 trifinger_docs = "https://open-dynamic-robot-initiative.github.io/trifinger_docs"
 trifinger_cameras = "https://open-dynamic-robot-initiative.github.io/trifinger_cameras"
+robot_interfaces = "https://open-dynamic-robot-initiative.github.io/robot_interfaces"
 
 [mainpage]
 title = "trifinger_object_tracking: Multi-camera pose estimation of coloured cuboids"
