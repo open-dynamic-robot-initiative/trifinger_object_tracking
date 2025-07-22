@@ -1,0 +1,51 @@
+Commit ID: [38;5;4m3c7a94c9b3b084d5f382532221cc3cee2db3a60c[39m
+Change ID: [38;5;5mrzkunuzytxpsouzuqzvvxyrxlqxmovrv[39m
+Author   : [38;5;3mFelix Kloss[39m <[38;5;3mfelix.kloss@uni-tuebingen.de[39m> ([38;5;6m2025-07-22 14:32:14[39m)
+Committer: [38;5;3mFelix Kloss[39m <[38;5;3mfelix.kloss@uni-tuebingen.de[39m> ([38;5;6m2025-07-22 14:47:56[39m)
+
+    Make camera frontend rate multiplier configurable
+
+    To avoid adding complex config file parsing and passing around of
+    parameters, simply use an environment variable for this.
+
+[38;5;3mModified regular file include/trifinger_object_tracking/tricamera_object_tracking_driver.hpp:[39m
+    ...
+[38;5;1m 120[39m [38;5;2m 120[39m:     std::unique_ptr<trifinger_cameras::TriCameraDriver> camera_driver_;
+[38;5;1m 121[39m [38;5;2m 121[39m:     std::unique_ptr<TriCameraFrontend> camera_frontend_;
+[38;5;1m 122[39m [38;5;2m 122[39m:     TriCameraFrontend::TimeIndex camera_frontend_next_timeindex_ = 0;
+     [38;5;2m 123[39m: [4m[38;5;2m    unsigned int camera_frontend_rate_multiplier_ =[24m[39m
+     [38;5;2m 124[39m: [4m[38;5;2m        1;  // FIXME: make configurable[24m[39m
+[38;5;1m 123[39m [38;5;2m 125[39m: 
+[38;5;1m 124[39m [38;5;2m 126[39m:     ObjectPose previous_pose_;
+[38;5;1m 125[39m [38;5;2m 127[39m: 
+    ...
+[38;5;3mModified regular file src/tricamera_object_tracking_driver.cpp:[39m
+    ...
+[38;5;1m  31[39m [38;5;2m  31[39m:       camera_driver_(std::move(camera_driver)),
+[38;5;1m  32[39m [38;5;2m  32[39m:       camera_frontend_(std::move(camera_frontend))
+[38;5;1m  33[39m [38;5;2m  33[39m: {
+     [38;5;2m  34[39m: [4m[38;5;2m    if (const char* strval = std::getenv("TFOT_CAMERA_FRONTEND_RATE_MULTIPLIER"))[24m[39m
+     [38;5;2m  35[39m: [4m[38;5;2m    {[24m[39m
+     [38;5;2m  36[39m: [4m[38;5;2m        camera_frontend_rate_multiplier_ = std::stoi(strval);[24m[39m
+     [38;5;2m  37[39m: [4m[38;5;2m    }[24m[39m
+[38;5;1m  34[39m [38;5;2m  38[39m: }
+[38;5;1m  35[39m [38;5;2m  39[39m: 
+[38;5;1m  36[39m [38;5;2m  40[39m: TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
+    ...
+[38;5;1m 109[39m [38;5;2m 113[39m:     }
+[38;5;1m 110[39m [38;5;2m 114[39m:     else
+[38;5;1m 111[39m [38;5;2m 115[39m:     {
+[38;5;1m 112[39m     : [4m[38;5;1m        constexpr int camera_rate_multiplier = 1;  // FIXME: make configurable[24m[39m
+[38;5;1m 113[39m     : [4m[38;5;1m[24m[39m
+[38;5;1m 114[39m [38;5;2m 116[39m:         // Use the latest time index if falling behind.  This results in
+[38;5;1m 115[39m [38;5;2m 117[39m:         // inconsistent rate and thus should normally be avoided by setting the
+[38;5;1m 116[39m [38;5;2m 118[39m:         // desired rate slow enough.
+    ...
+[38;5;1m 126[39m [38;5;2m 128[39m: 
+[38;5;1m 127[39m [38;5;2m 129[39m:         auto obs =
+[38;5;1m 128[39m [38;5;2m 130[39m:             camera_frontend_->get_observation(camera_frontend_next_timeindex_);
+[38;5;1m 129[39m [38;5;2m 131[39m:         camera_frontend_next_timeindex_ += [4m[38;5;1mcamera_rate_multiplier[38;5;2mcamera_frontend_rate_multiplier_[24m[39m;
+[38;5;1m 130[39m [38;5;2m 132[39m: 
+[38;5;1m 131[39m [38;5;2m 133[39m:         return obs;
+[38;5;1m 132[39m [38;5;2m 134[39m:     }
+    ...
