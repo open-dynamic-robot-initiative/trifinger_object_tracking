@@ -31,6 +31,10 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
       camera_driver_(std::move(camera_driver)),
       camera_frontend_(std::move(camera_frontend))
 {
+    if (const char* strval = std::getenv("TFOT_CAMERA_FRONTEND_RATE_MULTIPLIER"))
+    {
+        camera_frontend_rate_multiplier_ = std::stoi(strval);
+    }
 }
 
 TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
@@ -109,8 +113,6 @@ TriCameraObjectTrackerDriver::get_base_observation()
     }
     else
     {
-        constexpr int camera_rate_multiplier = 1;  // FIXME: make configurable
-
         // Use the latest time index if falling behind.  This results in
         // inconsistent rate and thus should normally be avoided by setting the
         // desired rate slow enough.
@@ -126,7 +128,7 @@ TriCameraObjectTrackerDriver::get_base_observation()
 
         auto obs =
             camera_frontend_->get_observation(camera_frontend_next_timeindex_);
-        camera_frontend_next_timeindex_ += camera_rate_multiplier;
+        camera_frontend_next_timeindex_ += camera_frontend_rate_multiplier_;
 
         return obs;
     }
