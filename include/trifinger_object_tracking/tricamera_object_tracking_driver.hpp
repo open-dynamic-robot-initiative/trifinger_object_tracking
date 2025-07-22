@@ -120,6 +120,8 @@ private:
     std::unique_ptr<trifinger_cameras::TriCameraDriver> camera_driver_;
     std::unique_ptr<TriCameraFrontend> camera_frontend_;
     TriCameraFrontend::TimeIndex camera_frontend_next_timeindex_ = 0;
+    unsigned int camera_frontend_rate_multiplier_ =
+        1;  // FIXME: make configurable
 
     ObjectPose previous_pose_;
 
