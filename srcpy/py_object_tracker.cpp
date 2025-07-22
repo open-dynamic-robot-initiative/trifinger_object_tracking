@@ -148,5 +148,7 @@ PYBIND11_MODULE(py_object_tracker, m)
           &create_trifingerpro_cube_detector,
           "Create a CubeDetector for TriFingerPro robot, automatically loading "
           "the local camera calibration.",
+          "cube_model"_a,
+          "downsample_images"_a = true,
           pybind11::call_guard<pybind11::gil_scoped_release>());
 }

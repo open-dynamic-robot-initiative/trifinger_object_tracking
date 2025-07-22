@@ -24,11 +24,15 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     BaseCuboidModel::ConstPtr cube_model,
     bool downsample_images,
     trifinger_cameras::Settings settings)
-    : camera_driver_(
-          device_id_1, device_id_2, device_id_3, downsample_images, settings),
+    : downsample_images_(downsample_images),
+      camera_driver_(device_id_1,
+                     device_id_2,
+                     device_id_3,
+                     false,  // downsample_images not supported anymore
+                     settings),
       cube_detector_(
           trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model))
+              cube_model, downsample_images))
 {
 }
 
@@ -39,14 +43,15 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     BaseCuboidModel::ConstPtr cube_model,
     bool downsample_images,
     trifinger_cameras::Settings settings)
-    : camera_driver_(camera_calibration_file_1,
+    : downsample_images_(downsample_images),
+      camera_driver_(camera_calibration_file_1,
                      camera_calibration_file_2,
                      camera_calibration_file_3,
-                     downsample_images,
+                     false,  // downsample_images not supported anymore
                      settings),
       cube_detector_(
           trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model))
+              cube_model, downsample_images))
 {
 }
 
@@ -65,6 +70,22 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
     {
         cv::cvtColor(
             observation.cameras[i].image, images_bgr[i], cv::COLOR_BayerBG2BGR);
+
+        // apply the downsampling that was done in trifinger_cameras in the past
+        if (downsample_images_)
+        {
+            // remove a bit of noise
+            cv::medianBlur(images_bgr[i], images_bgr[i], 3);
+
+            // resize image
+            constexpr float DOWNSAMPLING_FACTOR = 0.5;
+            cv::resize(images_bgr[i],
+                       images_bgr[i],
+                       cv::Size(),
+                       DOWNSAMPLING_FACTOR,
+                       DOWNSAMPLING_FACTOR,
+                       cv::INTER_LINEAR);
+        }
     }
 
     observation.object_pose =
