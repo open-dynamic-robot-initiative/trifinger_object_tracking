@@ -20,6 +20,20 @@ namespace trifinger_object_tracking
 constexpr std::chrono::milliseconds TriCameraObjectTrackerDriver::rate;
 
 TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
+    BaseCuboidModel::ConstPtr cube_model,
+    bool downsample_images,
+    std::unique_ptr<trifinger_cameras::TriCameraDriver> camera_driver,
+    std::unique_ptr<TriCameraFrontend> camera_frontend)
+    : downsample_images_(downsample_images),
+      cube_detector_(
+          trifinger_object_tracking::create_trifingerpro_cube_detector(
+              cube_model, downsample_images)),
+      camera_driver_(std::move(camera_driver)),
+      camera_frontend_(std::move(camera_frontend))
+{
+}
+
+TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     const std::string& device_id_1,
     const std::string& device_id_2,
     const std::string& device_id_3,
@@ -27,16 +41,16 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     bool downsample_images,
     trifinger_cameras::Settings settings)
 
-    : downsample_images_(downsample_images),
-      cube_detector_(
-          trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model, downsample_images)),
-      camera_driver_(std::make_unique<trifinger_cameras::TriCameraDriver>(
-          device_id_1,
-          device_id_2,
-          device_id_3,
-          false,  // downsample_images not supported anymore
-          settings))
+    : TriCameraObjectTrackerDriver(
+          cube_model,
+          downsample_images,
+          std::make_unique<trifinger_cameras::TriCameraDriver>(
+              device_id_1,
+              device_id_2,
+              device_id_3,
+              false,  // downsample_images not supported anymore
+              settings),
+          nullptr)
 {
 }
 
@@ -47,16 +61,16 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     BaseCuboidModel::ConstPtr cube_model,
     bool downsample_images,
     trifinger_cameras::Settings settings)
-    : downsample_images_(downsample_images),
-      cube_detector_(
-          trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model, downsample_images)),
-      camera_driver_(std::make_unique<trifinger_cameras::TriCameraDriver>(
-          camera_calibration_file_1,
-          camera_calibration_file_2,
-          camera_calibration_file_3,
-          false,  // downsample_images not supported anymore
-          settings))
+    : TriCameraObjectTrackerDriver(
+          cube_model,
+          downsample_images,
+          std::make_unique<trifinger_cameras::TriCameraDriver>(
+              camera_calibration_file_1,
+              camera_calibration_file_2,
+              camera_calibration_file_3,
+              false,  // downsample_images not supported anymore
+              settings),
+          nullptr)
 {
 }
 
@@ -66,11 +80,11 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
         camera_data,
     BaseCuboidModel::ConstPtr cube_model,
     bool downsample_images)
-    : downsample_images_(downsample_images),
-      cube_detector_(
-          trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model, downsample_images)),
-      camera_frontend_(std::make_unique<TriCameraFrontend>(camera_data))
+    : TriCameraObjectTrackerDriver(
+          cube_model,
+          downsample_images,
+          nullptr,
+          std::make_unique<TriCameraFrontend>(camera_data))
 {
 }
 

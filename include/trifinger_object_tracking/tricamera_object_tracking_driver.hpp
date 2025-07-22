@@ -123,6 +123,12 @@ private:
 
     ObjectPose previous_pose_;
 
+    TriCameraObjectTrackerDriver(
+        BaseCuboidModel::ConstPtr cube_model,
+        bool downsample_images,
+        std::unique_ptr<trifinger_cameras::TriCameraDriver> camera_driver,
+        std::unique_ptr<TriCameraFrontend> camera_frontend);
+
     trifinger_cameras::TriCameraObservation get_base_observation();
 };
 
