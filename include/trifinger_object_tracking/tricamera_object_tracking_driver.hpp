@@ -31,10 +31,6 @@ class TriCameraObjectTrackerDriver
                                             trifinger_cameras::TriCameraInfo>
 {
 public:
-    //! @brief Rate at which images are acquired.
-    static constexpr std::chrono::milliseconds rate =
-        std::chrono::milliseconds(100);
-
     static constexpr unsigned int N_CAMERAS = 3;
 
     /**
