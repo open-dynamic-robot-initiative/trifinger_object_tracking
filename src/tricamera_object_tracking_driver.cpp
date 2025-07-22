@@ -16,9 +16,6 @@
 
 namespace trifinger_object_tracking
 {
-// this needs to be declared here...
-constexpr std::chrono::milliseconds TriCameraObjectTrackerDriver::rate;
-
 TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     BaseCuboidModel::ConstPtr cube_model,
     bool downsample_images,
