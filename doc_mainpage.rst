@@ -20,6 +20,7 @@ if you have a question or want to report a bug.
    doc/installation.rst
    doc/a1_introduction.rst
    doc/a2_cube_model.rst
+   doc/hdf5_log_files.rst
    doc/b1_train_colour_segmentation.rst
 
 .. _GitHub: https://github.com/open-dynamic-robot-initiative/trifinger_object_tracking

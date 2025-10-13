@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   representations of poses.
 - Add executable `manual_annotation_hdf5` to manually find the correct pose for a given
   frame in a HDF5 logfile.
+- Add executable `tricamera_log_to_hdf5` to convert existing log files from the native
+  format to HDF5 (using same structure as `trifinger_cameras`).
 
 ### Removed
 - The `ProgramOptions` class has been moved to its own package
