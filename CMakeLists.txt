@@ -309,6 +309,7 @@ install_scripts(
     scripts/tricamera_log_converter.py
     scripts/tricamera_log_extract.py
     scripts/tricamera_log_extract_object_poses.py
+    scripts/tricamera_log_to_hdf5.py
     scripts/tricamera_log_viewer.py
     scripts/view_masks.py
 
