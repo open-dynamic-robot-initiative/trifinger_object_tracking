@@ -104,6 +104,11 @@ def main() -> int:
         # Add the object information
         object_group = h5.create_group("object_pose")
         object_group.create_dataset(
+            "has_pose",
+            data=[obs.object_pose.confidence > 0 for obs in log_reader.data],
+            dtype=np.bool_,
+        )
+        object_group.create_dataset(
             "position",
             data=[obs.object_pose.position for obs in log_reader.data],
             dtype=np.double,

@@ -9,6 +9,9 @@ portable HDF5 format.
 The data format is the same as described in :doc:`trifinger_cameras:doc/hdf5_log_files`
 but extended by the following datasets:
 
+- ``object_pose/has_pose``: Boolean indicating whether the object was found at all.  If
+  `false`, `confidence` is expected to be zero and values of `position` and
+  `orientation` are meaningless.
 - ``object_pose/position``: The estimated x, y, z-position of the object w.r.t. the
   world frame.  Dimensions: ``(n_observations, 3)``.
 - ``object_pose/orientation``: The estimated orientation of the object w.r.t. the world
