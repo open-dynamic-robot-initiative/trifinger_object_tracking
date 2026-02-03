@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Move one finger tip above the object (cube or aruco marker)."""
+
 import argparse
 import time
 

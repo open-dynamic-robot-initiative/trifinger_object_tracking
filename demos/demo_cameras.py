@@ -14,7 +14,6 @@ import trifinger_object_tracking.py_object_tracker as object_tracker
 import trifinger_object_tracking.py_tricamera_types as tricamera
 from trifinger_cameras import CAMERA_NAMES, utils
 
-
 calib_files = [
     pathlib.Path(f"/etc/trifingerpro/{camera}_cropped_and_downsampled.yml")
     for camera in CAMERA_NAMES

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Example on how to connect the driver to an external TriCamera backend."""
+
 import argparse
 import contextlib
 import logging
