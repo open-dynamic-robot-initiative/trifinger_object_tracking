@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run the 'lightblue' segmenter on single images"""
+
 import argparse
 import sys
 

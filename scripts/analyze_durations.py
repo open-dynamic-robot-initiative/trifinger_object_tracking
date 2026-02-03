@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Load file with numbers and compute mean, min, max, etc."""
+
 import argparse
 import numpy as np
 

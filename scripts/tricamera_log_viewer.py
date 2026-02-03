@@ -2,6 +2,7 @@
 """
 Play back TriCameraObjectObservations from a log file.
 """
+
 import argparse
 import json
 import pathlib
@@ -15,7 +16,6 @@ from matplotlib.lines import Line2D
 import trifinger_object_tracking.py_object_tracker
 import trifinger_object_tracking.py_tricamera_types as tricamera
 from trifinger_cameras import utils
-
 
 CAMERA_NAMES = ["camera60", "camera180", "camera300"]
 

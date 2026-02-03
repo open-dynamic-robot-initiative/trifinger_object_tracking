@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Convert TriCameraWithObjectObservation log file to hdf5."""
+
 # This is based on the equivalent script in trifinger_cameras.
 
 import argparse

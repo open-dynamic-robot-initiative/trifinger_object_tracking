@@ -5,6 +5,7 @@ Loads masks of the specified colours and shows them one by one.
 
 Press any key != "q" to go to next image.  Press "q" to quit.
 """
+
 import argparse
 import pathlib
 

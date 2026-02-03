@@ -4,6 +4,7 @@
 Segmentation of up to six colours is supported.  Fewer number of colours are
 possible simply by providing training data for only a subset of the colours.
 """
+
 import argparse
 import pathlib
 import random

@@ -2,6 +2,7 @@
 """
 Run object tracker on a TriCameraObjectObservations log file.
 """
+
 import argparse
 import pathlib
 import sys
@@ -11,7 +12,6 @@ import cv2
 import trifinger_object_tracking.py_object_tracker as object_tracker
 import trifinger_object_tracking.py_tricamera_types as tricamera
 from trifinger_cameras import utils
-
 
 CAMERA_NAMES = ["camera60", "camera180", "camera300"]
 
