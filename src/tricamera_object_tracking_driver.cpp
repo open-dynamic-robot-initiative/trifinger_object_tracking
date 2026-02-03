@@ -10,12 +10,30 @@
 #include <cmath>
 #include <thread>
 
+#include <fmt/format.h>
+
 #include <trifinger_cameras/parse_yml.h>
 
 namespace trifinger_object_tracking
 {
-// this needs to be declared here...
-constexpr std::chrono::milliseconds TriCameraObjectTrackerDriver::rate;
+TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
+    BaseCuboidModel::ConstPtr cube_model,
+    bool downsample_images,
+    std::unique_ptr<trifinger_cameras::TriCameraDriver> camera_driver,
+    std::unique_ptr<TriCameraFrontend> camera_frontend)
+    : downsample_images_(downsample_images),
+      cube_detector_(
+          trifinger_object_tracking::create_trifingerpro_cube_detector(
+              cube_model, downsample_images)),
+      camera_driver_(std::move(camera_driver)),
+      camera_frontend_(std::move(camera_frontend))
+{
+    if (const char* strval =
+            std::getenv("TFOT_CAMERA_FRONTEND_RATE_MULTIPLIER"))
+    {
+        camera_frontend_rate_multiplier_ = std::stoi(strval);
+    }
+}
 
 TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     const std::string& device_id_1,
@@ -24,15 +42,17 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     BaseCuboidModel::ConstPtr cube_model,
     bool downsample_images,
     trifinger_cameras::Settings settings)
-    : downsample_images_(downsample_images),
-      camera_driver_(device_id_1,
-                     device_id_2,
-                     device_id_3,
-                     false,  // downsample_images not supported anymore
-                     settings),
-      cube_detector_(
-          trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model, downsample_images))
+
+    : TriCameraObjectTrackerDriver(
+          cube_model,
+          downsample_images,
+          std::make_unique<trifinger_cameras::TriCameraDriver>(
+              device_id_1,
+              device_id_2,
+              device_id_3,
+              false,  // downsample_images not supported anymore
+              settings),
+          nullptr)
 {
 }
 
@@ -43,28 +63,80 @@ TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
     BaseCuboidModel::ConstPtr cube_model,
     bool downsample_images,
     trifinger_cameras::Settings settings)
-    : downsample_images_(downsample_images),
-      camera_driver_(camera_calibration_file_1,
-                     camera_calibration_file_2,
-                     camera_calibration_file_3,
-                     false,  // downsample_images not supported anymore
-                     settings),
-      cube_detector_(
-          trifinger_object_tracking::create_trifingerpro_cube_detector(
-              cube_model, downsample_images))
+    : TriCameraObjectTrackerDriver(
+          cube_model,
+          downsample_images,
+          std::make_unique<trifinger_cameras::TriCameraDriver>(
+              camera_calibration_file_1,
+              camera_calibration_file_2,
+              camera_calibration_file_3,
+              false,  // downsample_images not supported anymore
+              settings),
+          nullptr)
+{
+}
+
+TriCameraObjectTrackerDriver::TriCameraObjectTrackerDriver(
+    robot_interfaces::SensorData<trifinger_cameras::TriCameraObservation,
+                                 trifinger_cameras::TriCameraInfo>::Ptr
+        camera_data,
+    BaseCuboidModel::ConstPtr cube_model,
+    bool downsample_images)
+    : TriCameraObjectTrackerDriver(
+          cube_model,
+          downsample_images,
+          nullptr,
+          std::make_unique<TriCameraFrontend>(camera_data))
 {
 }
 
 trifinger_cameras::TriCameraInfo TriCameraObjectTrackerDriver::get_sensor_info()
 {
-    return camera_driver_.get_sensor_info();
+    if (camera_driver_)
+    {
+        return camera_driver_->get_sensor_info();
+    }
+    else
+    {
+        return camera_frontend_->get_sensor_info();
+    }
+}
+
+trifinger_cameras::TriCameraObservation
+TriCameraObjectTrackerDriver::get_base_observation()
+{
+    if (camera_driver_)
+    {
+        return camera_driver_->get_observation();
+    }
+    else
+    {
+        // Use the latest time index if falling behind.  This results in
+        // inconsistent rate and thus should normally be avoided by setting the
+        // desired rate slow enough.
+        auto t_current = camera_frontend_->get_current_timeindex();
+        if (camera_frontend_next_timeindex_ < t_current)
+        {
+            fmt::print(
+                "WARNING: Falling behind {} steps in "
+                "TriCameraObjectTrackerDriver.\n",
+                t_current - camera_frontend_next_timeindex_);
+            camera_frontend_next_timeindex_ = t_current;
+        }
+
+        auto obs =
+            camera_frontend_->get_observation(camera_frontend_next_timeindex_);
+        camera_frontend_next_timeindex_ += camera_frontend_rate_multiplier_;
+
+        return obs;
+    }
 }
 
 TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation()
 {
     std::array<cv::Mat, N_CAMERAS> images_bgr;
 
-    TriCameraObjectObservation observation = camera_driver_.get_observation();
+    TriCameraObjectObservation observation = get_base_observation();
 
     for (size_t i = 0; i < N_CAMERAS; i++)
     {

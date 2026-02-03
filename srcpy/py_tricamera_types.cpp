@@ -83,6 +83,14 @@ PYBIND11_MODULE(py_tricamera_types, m)
              pybind11::arg("camera_calibration_file_3"),
              pybind11::arg("cube_model"),
              pybind11::arg("downsample_images") = true)
+        .def(pybind11::init<robot_interfaces::SensorData<
+                                trifinger_cameras::TriCameraObservation,
+                                trifinger_cameras::TriCameraInfo>::Ptr,
+                            BaseCuboidModel::ConstPtr,
+                            bool>(),
+             pybind11::arg("camera_data"),
+             pybind11::arg("cube_model"),
+             pybind11::arg("downsample_images") = true)
         .def("get_observation",
              &TriCameraObjectTrackerDriver::get_observation,
              "Get the latest observation from the three cameras.")
