@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   frame in a HDF5 logfile.
 - Add executable `tricamera_log_to_hdf5` to convert existing log files from the native
   format to HDF5 (using same structure as `trifinger_cameras`).
+- Experimental: `TriCameraObjectTrackerDriver` can now alternatively use a `SensorData`
+  instance to fetch images instead of using an internal `TriCameraDriver` instance.
+  This can be used to have a pure camera backend at a higher rate and run the object
+  tracking at a lower rate.
 
 ### Removed
 - The `ProgramOptions` class has been moved to its own package
