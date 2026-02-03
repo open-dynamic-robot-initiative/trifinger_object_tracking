@@ -6,6 +6,7 @@ Usage:
     plot_timestamps.py path/to/logfile.json
 
 """
+
 import sys
 import json
 import matplotlib.pyplot as plt

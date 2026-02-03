@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 "Create a text dump from a binary xgboost model"
+
 import argparse
 import xgboost
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)

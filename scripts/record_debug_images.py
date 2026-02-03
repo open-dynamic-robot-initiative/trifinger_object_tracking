@@ -4,6 +4,7 @@
 Maintenance script to record a number of debug images (visualising results of the object
 detection) and save them to a specified directory.
 """
+
 import argparse
 import logging
 import pathlib

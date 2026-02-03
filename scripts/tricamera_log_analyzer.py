@@ -2,6 +2,7 @@
 """
 Analyze a TriCameraObjectObservation log file.
 """
+
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt

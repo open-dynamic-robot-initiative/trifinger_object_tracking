@@ -4,6 +4,7 @@ Extract object poses from a TriCameraObjectObservations log file.
 
 The extracted poses are written to a simple CSV file.
 """
+
 import argparse
 import pathlib
 
