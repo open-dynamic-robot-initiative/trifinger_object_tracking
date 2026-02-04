@@ -213,11 +213,10 @@ TriCameraObjectObservation TriCameraObjectTrackerDriver::get_observation_fope()
     {
         Eigen::Matrix4d matrix;
         cv::cv2eigen(pose->pose.matrix, matrix);
-        observation.object_pose = ObjectPose(matrix);
+        observation.object_pose = ObjectPose(matrix, pose->confidence);
     }
 
     // No filtering happening here at the moment
-    observation.object_pose.confidence = 1.0;
     observation.filtered_object_pose = observation.object_pose;
     previous_pose_ = observation.object_pose;
 
